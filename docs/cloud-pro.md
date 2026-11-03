@@ -1,24 +1,24 @@
 # OMB Cloud: the home machine
 
 OMB Cloud (the Starter, Pro and Max plans) gives one person an always-on
-OpenMausBot server of their own (a plan may instead sleep when idle: see
+Mark Bot server of their own (a plan may instead sleep when idle: see
 [Sleeping homes](#sleeping-homes-the-power-read-and-the-sleep-handshake)). The plans differ in machine size, disk and
 included allowances; everything on this page applies to all of them. Each
 customer gets one Fly app with one `home` machine that is always on, a volume
 at `/data`, and TLS at `https://<app>.fly.dev`. The desktop app, the phone and
 the web are windows onto it. Local use of the app is unchanged and free.
-Customers read its name as **MausBot Cloud** wherever they meet it (the
+Customers read its name as **Mark Bot Cloud** wherever they meet it (the
 app, the Admin's pages, emails); "OMB Cloud" is this page's shorthand, and
-the app itself is still OpenMausBot.
+the app itself is still Mark Bot.
 
 OMB Cloud includes no AI usage. The person signs in on their machine with their
 own Claude or ChatGPT subscription, or an API key, through the same sign-in
-flows as any OpenMausBot server. Nothing on a Cloud home is routed to a
+flows as any Mark Bot server. Nothing on a Cloud home is routed to a
 platform model gateway. The one exception is a free trial's Claude credit, a
 small one-time amount the Admin meters on its own relay, used only until the
 person connects their own AI ([Trial Claude credit](#trial-claude-credit)).
 
-This page is the OpenMausBot half of a contract with three parties:
+This page is the Mark Bot half of a contract with three parties:
 
 - **the home machine**: this repository's `cloud-home` image (`Dockerfile`, `deploy/fly/`);
 - **the Admin** (openmaus-cloud, `docs/consumer-cloud.md` there): provisions
@@ -32,7 +32,7 @@ Contract version: `1` (`cloudContractVersion` on the wire).
 ## What the person sees
 
 1. They subscribe on the Cloud site. The Admin creates the Fly app and machine.
-2. They open the desktop app, go to **Settings → MausBot Cloud** and sign in (the
+2. They open the desktop app, go to **Settings → Mark Bot Cloud** and sign in (the
    existing device sign-in). A **Your Cloud** card says **Setting up** until
    the machine is up.
 3. When it is ready, the machine appears under **Servers** as **My Cloud**, and
@@ -65,7 +65,7 @@ Contract version: `1` (`cloudContractVersion` on the wire).
       credit lasts and nothing of the person's own can run, a line says so
       (with the amount where the desktop app knows it), and **Use my credit for
       now** moves on.
-   3. **Files and apps**, optional: **Share folders** opens Settings → MausBot
+   3. **Files and apps**, optional: **Share folders** opens Settings → Mark Bot
       Cloud in this computer's window, one click from Files (a browser is told
       to use the desktop app), and **Connect apps** opens Connected apps on the
       Cloud.
@@ -142,7 +142,7 @@ sign-in instead of the welcome flow, which describes the person's own computer
 1. Get the phone app: the menu under your name → **Get the phone app** (App
    Store for iPhone, APK for Android).
 2. The same menu → **Connect your phone · to your Cloud (always on)**, or
-   **Settings → MausBot Cloud → Use My Cloud on your phone**. The Cloud opens in
+   **Settings → Mark Bot Cloud → Use My Cloud on your phone**. The Cloud opens in
    the app window at its phone pairing.
 3. **Create pairing code**, and scan the QR code with the phone app.
 
@@ -159,14 +159,14 @@ How it fits together (`src/lib/phone-pairing.ts`):
   Cloud (always on)* first, which does what **Use My Cloud on your phone**
   does, then *to this computer*. A paid plan whose Cloud is not Ready keeps
   the single *to this computer* line, with a note that the Cloud will show
-  there. A failed switch opens Settings → MausBot Cloud.
+  there. A failed switch opens Settings → Mark Bot Cloud.
 - **Use My Cloud on your phone** shows for a paid plan. With a Ready Cloud it
   calls `cloud-account:connectHomeForPhone`, which takes no arguments and
   connects as **Open My Cloud** does, adding the one fixed request
   `?desktop-settings=phone` (on `/pair` too, which carries it on once paired).
   The Cloud's page opens Settings on its phone pairing. It never makes a code
   by itself. Before the Cloud is Ready, or if opening it failed, the card
-  lists the two steps instead. On the Cloud itself, Settings → MausBot Cloud
+  lists the two steps instead. On the Cloud itself, Settings → Mark Bot Cloud
   offers the same button and opens the pairing directly.
 
 ### Only your own devices
@@ -392,10 +392,10 @@ shared-computer tools.
   Auto never lands on either.
 - A bot still set to either (an older or imported setting) has each task
   refused with a sentence saying so, suggesting Auto, Cloud or Browser and,
-  for This computer, the person's own computer while OpenMausBot is open on it.
+  for This computer, the person's own computer while Mark Bot is open on it.
 - Every turn's system prompt says the bot runs in the cloud. Asked about the
   person's own computer, a bot with the shared-computer tools checks for a lent
-  Mac and, finding none, says so and asks them to open OpenMausBot on it; a bot
+  Mac and, finding none, says so and asks them to open Mark Bot on it; a bot
   without them says it cannot reach it. Either offers the browser and cloud computers, never a
   place that cannot exist.
 - The built-in browser is on unless the person switches it off in Settings.
@@ -429,7 +429,7 @@ says "sign in again on your computer". A check that names no machine for the
 account ends it (a stopped machine named without its address does not). A
 call placed while a saved sign-in is still restoring, in the first seconds
 after launch, waits for it (at most 5 seconds) rather than being refused.
-Signing out of MausBot Cloud takes it away at once, and so do another
+Signing out of Mark Bot Cloud takes it away at once, and so do another
 account, companion client mode and restarting the app before a check succeeds
 (the last verified Cloud is kept in memory only); every other server's page
 stays refused. In a web browser, the browser asks for the microphone for
@@ -457,12 +457,12 @@ the Cloud's address.
   the call with one bot is a Live call, and a room has no call
   (`effectiveCallMode` in `src/lib/call-mode.ts`, `GroupCallButton`).
 
-### Open in the app: `openmausbot://cloud`
+### Open in the app: `markbot://cloud`
 
-The Cloud page (`https://cloud.openmausbot.com/cloud`) can offer **Open in the
-app** as a link to exactly `openmausbot://cloud`. The app accepts that string
+The Cloud page (`https://cloud.markbot.app/cloud`) can offer **Open in the
+app** as a link to exactly `markbot://cloud`. The app accepts that string
 and nothing else: no path, query, fragment or trailing slash, and it ignores
-any other form. Like `openmausbot://organization`, it is an action, not a
+any other form. Like `markbot://organization`, it is an action, not a
 router. It never carries an address, a pairing code or a credential; the app
 decides everything from its own verified state (`electron/cloud-entry.mjs`).
 
@@ -471,7 +471,7 @@ decides everything from its own verified state (`electron/cloud-entry.mjs`).
    that arrives before the app is ready). If the window already shows
    **My Cloud**, coming forward is all it does.
 2. Otherwise the window returns to this computer (a hosted server that was
-   showing stays saved under **Servers**) and opens **Settings → MausBot Cloud**.
+   showing stays saved under **Servers**) and opens **Settings → Mark Bot Cloud**.
    Before that view acts, the app gives a saved Cloud sign-in up to five
    seconds to finish restoring, so it is never mistaken for signed out.
 3. Opened this way, the view acts on its own, with no confirmation:
@@ -489,11 +489,11 @@ sign-out in that view starts nothing) and one automatic connection per link.
 A failed connection shows the card's error; clicking the link again retries.
 Closing Settings or choosing another section ends it. While it is open, the
 first-run welcome waits, as it does for Organization settings. A normal visit
-to **Settings → MausBot Cloud** never signs in or connects by itself.
+to **Settings → Mark Bot Cloud** never signs in or connects by itself.
 
 The link does nothing in development builds, and in companion client mode it
 explains that the app must be disconnected from the other computer first.
-The `openmausbot` scheme belongs to the installed app: on macOS through the
+The `markbot` scheme belongs to the installed app: on macOS through the
 app bundle, on Linux through the `.deb`'s desktop entry, and on Windows (and
 for an AppImage) once the installed app has started at least once, since it
 registers itself at startup. Before that, or if the app is not installed, the
@@ -612,7 +612,7 @@ The grant (`automaticGrant`) is the same for every Cloud of the person's own:
   a drive) stay lent as they were, by the same ids, so Files keeps their copies
   (`docs/files.md`); one deleted since is left out.
 - **Apps and screen**, once computer control works here: on macOS once the
-  person allowed OpenMausBot Accessibility and Screen Recording. macOS asks
+  person allowed Mark Bot Accessibility and Screen Recording. macOS asks
   through the app's own permission flow: at start-up, from Settings' Retry, and
   the first time a Cloud's bot needs apps and screen, when main starts computer
   control again (at most every 10 minutes), which asks macOS for what it never
@@ -774,7 +774,7 @@ Cloud every profile stays built-in.
   connection is dropped, and each of its calls gets "Someone else wrote in this
   conversation, so it can't use your Chrome. Start a new conversation to use it."
 - **When it can't**, the call says why in one line the bot can pass on: the
-  computer is offline, no computer lends Chrome (open OpenMausBot there), Chrome
+  computer is offline, no computer lends Chrome (open Mark Bot there), Chrome
   isn't open with remote debugging on, or Chrome did not accept the connection
   (it may be waiting for Allow). It never falls back to the built-in browser,
   whose sign-ins differ. A connection no bot has used for the desktop's browser
@@ -847,14 +847,14 @@ On the Cloud home (`server/shared-computers.ts`, `server/index.ts`):
   apps and screen or a terminal, when it was last online (written at most once
   a minute) and last used (a page opened through its internet connection
   counts, at most once a minute), and whether it stopped lending (paused there,
-  or signed out of MausBot Cloud). Never a
+  or signed out of Mark Bot Cloud). Never a
   folder name or path, a secret or anything a job carried; kept 90 days.
 - **What bots are told.** `list_shared_computers` lists online computers with
   their `device` ("PC", "Mac" or "computer"). When none is online it adds
   `offline` and a `say` sentence naming the computer, its kind and when it was
   last online ("Their PC ASH-PC is lent to My Cloud but offline (last online
   …)"), or that it no longer lends itself (paused there, or signed out of
-  MausBot Cloud, and how to resume). The Cloud prompt names the
+  Mark Bot Cloud, and how to resume). The Cloud prompt names the
   person's computer the same way and tells bots never to call a PC a Mac; an
   offline `shared_computer` call says the same.
 - The server refuses operations outside the scopes the Mac registered before
@@ -884,7 +884,7 @@ On the Cloud home (`server/shared-computers.ts`, `server/index.ts`):
   named) is never the owner's, whoever writes in it. Whenever a computer is lent but a turn can't use it,
   `list_shared_computers` answers why in `unavailable` and `say` (`cloudLendingRefusalText` in
   `server/cloud-lending.ts`), and a refused `shared_computer` call answers the same, so the bot says the reason instead
-  of asking the person to open OpenMausBot: lines from before My Cloud carried the owner's name, someone else's words ("Someone else
+  of asking the person to open Mark Bot: lines from before My Cloud carried the owner's name, someone else's words ("Someone else
   wrote in this conversation, so it can't use your Mac. Start a new conversation to use it."; in a room, "Start a new
   thread in this group chat to use it."), a changed memory, a room turn no line of the owner's started, or any other
   turn that isn't provably the owner's. A move marks the lines and answers the owner wrote in a room as theirs, as in
@@ -1076,8 +1076,8 @@ refuses to start if Node, itself, the server's entry point, Caddy or its
 config (or any folder above them) is not root's, is writable by others, or
 is on the volume. Only the `/data` volume is `maus`'s.
 
-`HOME=/data`, so `~/.claude`, `~/.codex`, `~/.grok` and OpenMausBot's own
-data (`/data/.openmausbot`) persist on the volume.
+`HOME=/data`, so `~/.claude`, `~/.codex`, `~/.grok` and Mark Bot's own
+data (`/data/.markbot`) persist on the volume.
 
 ### Memory
 
@@ -1125,7 +1125,7 @@ provider outage. So on a Cloud home (`server/engine-memory.ts`):
   start, are born with `oom_score_adj` 1000; Chrome scores its tabs 200 and
   up; the server is -800 and Caddy -900, so the health check is the last to
   go.
-- **OpenCode reaches OpenMausBot's own tools over HTTP.** The agents,
+- **OpenCode reaches Mark Bot's own tools over HTTP.** The agents,
   browser, computer, Data and HighLevel servers are endpoints of this server
   (`/api/internal/mcp-http/<name>`, `server/routes/own-mcp-http.ts`) with the
   turn's capability in the Authorization header, instead of a Node proxy
@@ -1162,7 +1162,7 @@ The Admin creates the machine through the Machines API; `deploy/fly/fly.toml`
 is the same shape for a manual deploy: `internal_port = 8080`, `force_https`,
 no auto-stop, one machine always running, a volume `omb_home` at `/data`,
 restart policy `always`, and an HTTP check on `GET /api/health` (it answers
-`{"app":"openmausbot"}` with no session). Each customer's app lives in its
+`{"app":"markbot"}` with no session). Each customer's app lives in its
 own Fly private network, so no machine can reach another's over 6PN.
 
 ## Boot contract
@@ -1177,14 +1177,14 @@ never echoes a secret.
 | --- | --- | --- |
 | `OMB_CLOUD_ROLE` | env | `home`. (`desktop` belongs to the Cloud desktop image and is refused here.) |
 | `OMB_CLOUD_MACHINE_ID` | env | The Admin's machine id (a UUID). Binds the volume. |
-| `OMB_CLOUD_ADMIN_URL` | secret | The Cloud origin, exact `https://`, e.g. `https://cloud.openmausbot.com`. |
+| `OMB_CLOUD_ADMIN_URL` | secret | The Cloud origin, exact `https://`, e.g. `https://cloud.markbot.app`. |
 | `OMB_CLOUD_BOOTSTRAP_SECRET` | secret | 43 base64url characters (256 bits): the key the Admin signs pairing requests with. |
 | `OMB_PUBLIC_URL` | env | The machine's exact `https://` origin, `https://<app>.fly.dev`. |
 
 - The machine must not also carry `OMB_ADMIN_URL`, `OMB_ADMIN_WORKSPACE` or
   `OMB_ADMIN_MEMBERSHIP`: a Cloud home is a personal server with pairing codes
   on, not a hosted team workspace with portal membership.
-- `HOME=/data` and `OMB_DATA_DIR=/data/.openmausbot` are set by the image.
+- `HOME=/data` and `OMB_DATA_DIR=/data/.markbot` are set by the image.
 - The server keeps the secret in memory and removes it from its environment at
   startup; no engine or tool it starts ever inherits it.
 
@@ -1212,14 +1212,14 @@ For each service the Admin has configured, it also sets:
 
 | Variable | Fly | Value |
 | --- | --- | --- |
-| `OMB_CLOUD_BOAT_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/boat/api/box/v1`, the Admin's Boat relay. The app speaks Boat's public API v1 (`/sandboxes`, `sandbox` envelopes); this relay still serves Boat's retired box API (`/boxes`, `box` envelopes), so for a base ending in `/api/box/v1` the app translates paths and answers in one place, `server/boat-relay.ts`. A base ending in `/api/v1` gets v1 as it is. Bots use it only for cloud computers, as a tool on their own engine; no turn runs on Boat's own agent, so nothing calls its `/prompt`, `/events`, `/prompts/{id}` or `/interrupt` routes. |
+| `OMB_CLOUD_BOAT_URL` | env | `https://cloud.markbot.app/api/cloud/services/boat/api/box/v1`, the Admin's Boat relay. The app speaks Boat's public API v1 (`/sandboxes`, `sandbox` envelopes); this relay still serves Boat's retired box API (`/boxes`, `box` envelopes), so for a base ending in `/api/box/v1` the app translates paths and answers in one place, `server/boat-relay.ts`. A base ending in `/api/v1` gets v1 as it is. Bots use it only for cloud computers, as a tool on their own engine; no turn runs on Boat's own agent, so nothing calls its `/prompt`, `/events`, `/prompts/{id}` or `/interrupt` routes. |
 | `OMB_CLOUD_BOAT_TOKEN` | secret | This machine's Boat relay token (`box_omb_…`). It is not a Boat key and works only through the relay. |
-| `OMB_CLOUD_VOICE_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/voice/v1`, the Admin's voice relay. |
+| `OMB_CLOUD_VOICE_URL` | env | `https://cloud.markbot.app/api/cloud/services/voice/v1`, the Admin's voice relay. |
 | `OMB_CLOUD_VOICE_TOKEN` | secret | This machine's voice relay token (`omb_voice_…`). |
 | `OMB_TTS_DEFAULT_VOICE` | env | An ElevenLabs voice id, used until the person picks a voice or another speech provider in Settings. |
-| `OMB_CLOUD_DECIDER_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/decider`, the Admin's Jev relay. It is a Jev base URL, used as it is: the decider adds `/v1/systemone`, the relay's only route, so every included decision goes to exactly `<OMB_CLOUD_DECIDER_URL>/v1/systemone`. |
+| `OMB_CLOUD_DECIDER_URL` | env | `https://cloud.markbot.app/api/cloud/services/decider`, the Admin's Jev relay. It is a Jev base URL, used as it is: the decider adds `/v1/systemone`, the relay's only route, so every included decision goes to exactly `<OMB_CLOUD_DECIDER_URL>/v1/systemone`. |
 | `OMB_CLOUD_DECIDER_TOKEN` | secret | This machine's decision relay token (`omb_decide_…`). It is not a Jev key and works only through the relay. |
-| `OMB_CLOUD_X_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/x`, the Admin's treg relay; the client calls `<OMB_CLOUD_X_URL>/call/<endpoint>` for the X tools' eight endpoints, `/research/search`, `/research/endpoints/<id>` and `/research/call/<id>` for the research tools, and `GET /usage` for the month's calls on the Apps page's X card (`GET /api/x/status`). A person's own treg key (Settings → API keys) wins over it and goes straight to treg. |
+| `OMB_CLOUD_X_URL` | env | `https://cloud.markbot.app/api/cloud/services/x`, the Admin's treg relay; the client calls `<OMB_CLOUD_X_URL>/call/<endpoint>` for the X tools' eight endpoints, `/research/search`, `/research/endpoints/<id>` and `/research/call/<id>` for the research tools, and `GET /usage` for the month's calls on the Apps page's X card (`GET /api/x/status`). A person's own treg key (Settings → API keys) wins over it and goes straight to treg. |
 | `OMB_CLOUD_X_TOKEN` | secret | This machine's X research relay token (`omb_x_…`). Not a treg key; it works only through the relay, within the plan's monthly X research calls. A signed-in desktop gets its own (`omb_xd_…`) from `POST /api/cloud/desktop/services/x` and hands it to its server in memory. |
 
 A service is included only when both its URL and its token are set
@@ -1299,10 +1299,10 @@ computers belong to this machine on every request.
 ### Included connected apps
 
 Connected apps (Gmail, Outlook, Slack, LinkedIn, Calendly and the rest of the
-catalog) come with the plan through OpenMausBot's managed connection service,
+catalog) come with the plan through Mark Bot's managed connection service,
 the same one the packaged desktop app uses. The Admin sets nothing for it: at
 every start the server registers the Cloud's own installation if it has none,
-keeps the token owner-only in `/data/.openmausbot/connected-apps-installation.json`
+keeps the token owner-only in `/data/.markbot/connected-apps-installation.json`
 (never in a backup, a move or `config.json`), checks it with the service, and
 retries with backoff while the service is down, without holding up the start.
 An owner's own Composio project key still wins. The details are in
@@ -1326,10 +1326,10 @@ credit, the Admin also sets:
 
 | Variable | Fly | Value |
 | --- | --- | --- |
-| `OMB_CLOUD_AI_URL` | env | `https://cloud.openmausbot.com/api/cloud/services/ai/v1`, an OpenAI-compatible base URL with its `/v1` (as the Admin sends it): `POST {url}/chat/completions` and `GET {url}/models` only. Nothing Anthropic-shaped (no `/v1/messages`) answers a credit token. |
+| `OMB_CLOUD_AI_URL` | env | `https://cloud.markbot.app/api/cloud/services/ai/v1`, an OpenAI-compatible base URL with its `/v1` (as the Admin sends it): `POST {url}/chat/completions` and `GET {url}/models` only. Nothing Anthropic-shaped (no `/v1/messages`) answers a credit token. |
 | `OMB_CLOUD_AI_TOKEN` | secret | This machine's credit token (`omb_ai_…`), sent as `Authorization: Bearer`. It works only through the relay, only for this account's credit, and not at all once it is spent or the Cloud is deleted. |
 
-- **OpenMausBot's own chat engine, nothing else.** `server/cloud-credit-provider.ts`
+- **Mark Bot's own chat engine, nothing else.** `server/cloud-credit-provider.ts`
   adds one read-only **Trial credit · Claude** engine: the OpenAI-compatible
   driver (`openai-compat`, the same chat engine and tools as any API key) with
   the relay as its address and the token as its own key, on the models the
@@ -1395,7 +1395,7 @@ x-omb-cloud-timestamp: 1790000000
 x-omb-cloud-nonce: <base64url, 16–128 characters>
 x-omb-cloud-signature: v1=<base64url HMAC-SHA256(OMB_CLOUD_BOOTSTRAP_SECRET, canonical)>
 
-{"label":"OpenMausBot app (Cloud)","ttlSeconds":300}
+{"label":"Mark Bot app (Cloud)","ttlSeconds":300}
 ```
 
 where `canonical` is
@@ -1720,7 +1720,7 @@ notice queue (below), on this computer's page and on My Cloud's own page.
 Customers couldn't find how to cancel: the plan card only said **Manage in
 your browser**. Now, while the session's `renewal` says this account pays for a
 plan that runs, the plan card in Settings (Usage & billing → Plan in Simple
-mode, MausBot Cloud in Advanced) and on the Cloud's own page in home mode
+mode, Mark Bot Cloud in Advanced) and on the Cloud's own page in home mode
 (`CloudPlanOnCloud`) shows **Cancel trial** during a free trial and **Cancel
 plan** otherwise (`src/components/CloudCancelPlan.tsx`). Someone in a team's
 Cloud never sees it: the Admin sends no `renewal` for a Cloud they don't pay
@@ -1729,7 +1729,7 @@ for.
 Its sheet asks "Before you go: what's the main reason?" with one-tap chips
 (Missing a feature, Too expensive, Hard to set up, Didn't work as I expected,
 Not using it right now, Something else; tap again to let one go), two optional
-boxes ("What did you expect MausBot to do?", "What could we have done
+boxes ("What did you expect Mark Bot to do?", "What could we have done
 better?"), "Rather talk it through? Book 30 minutes with Milind", and **Keep my
 plan** and **Cancel my trial** / **Cancel my plan**. Cancelling never needs an
 answer. The page sends only the survey's words: `cloudAccount.cancelPlan` on
@@ -1779,13 +1779,13 @@ time, and none after one closes until another launch:
    page is served on agree. This computer's workspace record counts as seen
    on every page, before its page has loaded on this build (main reads
    `config.json` in its data folder): a close kept there earlier, or the
-   welcome's MausBot Cloud step, which also keeps the
+   welcome's Mark Bot Cloud step, which also keeps the
    card after the update away; a close kept only in this computer's page's
    storage counts once that page has loaded, and is handed to main. The
-   welcome leaves its MausBot Cloud step out once main says this desktop has
+   welcome leaves its Mark Bot Cloud step out once main says this desktop has
    seen the popup. Never in a window connected to another
    computer as its remote client, which has no Cloud sign-in, Add a Cloud
-   dialog or Settings → MausBot Cloud to send anyone to, nor on a branded
+   dialog or Settings → Mark Bot Cloud to send anyone to, nor on a branded
    build, which sells no Cloud. It waits while main, the plan or the Admin's
    offer is loading; while another dialog (modal or not, the tour's
    spotlight included), My Cloud's setup checklist or the card saying the
@@ -1795,7 +1795,7 @@ time, and none after one closes until another launch:
      the Admin offers one) or **Upgrade to Cloud Pro** opens the Add a Cloud
      dialog (source `update_popup`), and so does **Compare plans** (the dialog
      lists every plan); on any plan (a trial, Starter, Personal, Pro, Max or
-     one that needs attention) **Manage plan** opens Settings → MausBot Cloud, and
+     one that needs attention) **Manage plan** opens Settings → Mark Bot Cloud, and
      there is no Compare plans. Personal → Pro is not self-serve yet, so
      Personal gets Manage plan rather than an Upgrade that would end at
      "write to us". Its numbers are the Admin's.
@@ -1803,7 +1803,7 @@ time, and none after one closes until another launch:
      (`cloud-plan:state`, asked once main has restored the Cloud sign-in), a
      plan, payment trouble or an ended sign-in gets **Manage plan**. It
      switches the window to This computer, whose page opens at Settings →
-     MausBot Cloud (where an ended sign-in can sign in again). A plan still
+     Mark Bot Cloud (where an ended sign-in can sign in again). A plan still
      being checked waits for a later launch; with none read, it is as on
      another server.
    - **On another saved server's page**, which is told nothing about the
@@ -1813,10 +1813,10 @@ time, and none after one closes until another launch:
      second time. Someone who can buy (signed out, or signed in with no
      plan) gets the Add a Cloud dialog (source `update_popup`), which loads
      the Admin's offer itself; a plan, payment trouble, a payment being
-     linked or an ended sign-in gets Settings → MausBot Cloud. A sign-in
+     linked or an ended sign-in gets Settings → Mark Bot Cloud. A sign-in
      still restoring or connecting, or a plan This computer cannot check
      right now, is waited on for ten seconds at most, then it is Settings →
-     MausBot Cloud, which says where it stands.
+     Mark Bot Cloud, which says where it stands.
 
    Main makes either switch only for a popup this desktop has not seen, and
    only when the page asks right after
@@ -1847,7 +1847,7 @@ time, and none after one closes until another launch:
    ([docs/analytics.md](analytics.md)) counts it as shown at most once a day
    on a desktop, however often it comes back, and names the page each event
    is counted on. Only `upgrade`, `manage` and `see_plans` by someone signed
-   in to MausBot Cloud first tie their analytics to their Cloud account's
+   in to Mark Bot Cloud first tie their analytics to their Cloud account's
    email, and only on this computer's page, where the app knows the email;
    My Cloud's Manage plan and a server page's Continue on this computer are
    counted on that page as `continue`, and what they open on this
@@ -1856,10 +1856,10 @@ time, and none after one closes until another launch:
    port other than its first, such a click is counted without the email,
    because an opt-out made before may be kept in the first port's storage.
 2. **The card after the update** (`CloudTrialIntro`, id `cloud-trial-intro-v1`):
-   MausBot Cloud's free trial for someone signed out or with no plan who
+   Mark Bot Cloud's free trial for someone signed out or with no plan who
    has used the app before this launch, only while the Admin offers a trial
    (it waits for one), and never on a desktop whose first-run welcome
-   showed its MausBot Cloud step. Its numbers are the Admin's: the trial's
+   showed its Mark Bot Cloud step. Its numbers are the Admin's: the trial's
    days, the lowest monthly price, the Claude credit and money-back. At most
    once a calendar day, on at most three days (one for someone who closed the
    earlier Pro card), kept in browser storage and the workspace's hint record;
@@ -1901,16 +1901,16 @@ The Cloud Pro popup gives a plan, payment trouble and a payment being linked
 still restoring or connecting, waits for a later launch while the check is
 `unavailable`, and gives Manage plan to an ended sign-in (`reauth-required`)
 and to one the app could not read and removed (`restore-removed`): Settings →
-MausBot Cloud asks both to sign in again.
+Mark Bot Cloud asks both to sign in again.
 
 In the Server menu, **My Cloud** goes through the same connection as
 **Open My Cloud** (no pairing code to type); when it cannot, the app
-opens **Settings → MausBot Cloud**, which says the next step. In the desktop app a
+opens **Settings → Mark Bot Cloud**, which says the next step. In the desktop app a
 `/pair#code=` link connects without a second click; a browser still asks. On a
 Cloud home the pairing page says where its connection starts (the environment
 descriptor's `capabilities.cloudHome`).
 
-On the person's own Cloud, open in the app's window, **Settings → MausBot Cloud**
+On the person's own Cloud, open in the app's window, **Settings → Mark Bot Cloud**
 shows the plan read only (`cloud-plan:*`: its name and whether it is active,
 **Manage in your browser** and **Switch to this computer**). It is listed only
 on an OMB Cloud home (`config.cloudHome`), never on another server open in the
@@ -1968,7 +1968,7 @@ page alike (`ogb.cloudPlan`), so the meter reads the same on both (`src/componen
   month at this level: it comes back when one reaches 100%, and next month. Never shown in a browser, without a paid plan,
   or on a Team Cloud unless the plan whose usage it is is that team's (only the person who pays for a team sees its usage;
   its members never do).
-- **Settings → General → MausBot Cloud usage**, while there is a paid plan: every allowance with its meter, when they
+- **Settings → General → Mark Bot Cloud usage**, while there is a paid plan: every allowance with its meter, when they
   start over, and Upgrade to the next plan (the others as links), "You're on the top plan" on Max, or "To change your
   team's plan, write to us" on a team's plan.
 - **Upgrade, one tap and a confirm.** Upgrade asks main for a preview (`ogb.cloudPlan.upgradePreview(plan, source)`,
@@ -1987,10 +1987,10 @@ page alike (`ogb.cloudPlan`), so the meter reads the same on both (`src/componen
 
 ## Add a Cloud
 
-The one way to buy MausBot Cloud in the app, the same for every way in:
+The one way to buy Mark Bot Cloud in the app, the same for every way in:
 the Cloud Pro popup, the card after the update, **Show me how**, **Add a
 Cloud…** in the server menu (the sidebar's and the menu bar's Server menu),
-Settings (the Cloud card in General, and MausBot Cloud), and the routine
+Settings (the Cloud card in General, and Mark Bot Cloud), and the routine
 screen's note.
 
 - **The menu item.** Main adds **Add a Cloud…** under the saved servers only
@@ -2013,7 +2013,7 @@ screen's note.
   the menu is.
 - **The dialog** (`components/CloudAddDialog.tsx`, one state→view function,
   `lib/cloud-plan` `cloudAddView`) covers the buying journey only: the offer
-  (the night card: MausBot Cloud's name and one line over a linocut night sky
+  (the night card: Mark Bot Cloud's name and one line over a linocut night sky
   where the three bots ride a cloud while this computer's laptop sleeps, with
   Compare plans in the card; then one card
   per plan the Admin sells, side by side on a wide sheet and stacked in a
@@ -2046,7 +2046,7 @@ screen's note.
   checkout already being prepared), the offer says why. A screen reader
   hears each card's button with its plan's name, and each new step takes
   focus at its heading. A payment problem, an ended sign-in or a Cloud that can't
-  be reached go to Settings → MausBot Cloud instead.
+  be reached go to Settings → Mark Bot Cloud instead.
 - **Checkout runs in the default browser, never the app.** Signed in, main
   asks the Admin for this account's checkout (`POST /api/cloud/desktop/checkout`
   with the plan and where it was opened) and opens the address only when it is
@@ -2058,7 +2058,7 @@ screen's note.
   with `&next=checkout&plan=<plan>&src=<source>` added (older Admins ignore it).
   The app follows its own session, never the return page: every 15 seconds
   for 30 minutes after it opened a checkout, and at once when the window comes
-  back or `openmausbot://cloud` arrives (which then opens the dialog).
+  back or `markbot://cloud` arrives (which then opens the dialog).
 - **Ready.** When My Cloud is ready after a checkout this app opened and the
   window is elsewhere, one system notification says so.
 
@@ -2090,7 +2090,7 @@ screen's note.
   `app_routines`, `update_popup` (main refuses any other, and any plan the
   offer doesn't sell).
 - **Interest** `POST /api/cloud/desktop/interest` `{kind: "another_cloud"}` → `{ok: true}`.
-- Every signed-in request carries this app's version in `x-openmausbot-version`.
+- Every signed-in request carries this app's version in `x-markbot-version`.
 
 Nothing in the app is a price: with the Admin's trial switch off, no card is
 shown, and the dialog offers today's plans at the Admin's prices, charged
@@ -2108,7 +2108,7 @@ itself, and from then on opens the Cloud as its only home
 thing by id over one owner session (`electron/cloud-send.mjs`), checks that it
 all arrived, and freezes this computer's copy so nothing runs in two places
 (`server/move-freeze.ts`). An older desktop's Copy this computer here gets
-`410` with "Update OpenMausBot to bring your bots here by itself."
+`410` with "Update Mark Bot to bring your bots here by itself."
 (`server/cloud-move-http.ts`); a backup file still restores from Settings →
 Backups. [docs/verification/cloud-send.md](verification/cloud-send.md) has the
 tests.
@@ -2141,8 +2141,8 @@ tests.
 ## Published image
 
 Every push to `main` and every release tag publishes the home machine image as
-`ghcr.io/milind-soni/openmausbot-cloud-home`, tagged `latest` (main only), `sha-<commit>` and the release tag.
+`ghcr.io/milind-soni/markbot-cloud-home`, tagged `latest` (main only), `sha-<commit>` and the release tag.
 It is the `Dockerfile`'s `cloud-home` target for the same commit, with Grok and the current Claude Code and
 Codex installed. The Docker workflow's summary prints the digest. Set it in the Admin as
-`OMB_CLOUD_HOME_IMAGE=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:…`; changing it rolls the new image
+`OMB_CLOUD_HOME_IMAGE=ghcr.io/milind-soni/markbot-cloud-home@sha256:…`; changing it rolls the new image
 out to existing machines one at a time, reverting automatically on a failed health check.

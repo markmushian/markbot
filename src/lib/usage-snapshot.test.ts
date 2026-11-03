@@ -1,3 +1,6 @@
+// Product analytics is off in this build: src/lib/analytics.ts ships an empty PostHog token and
+// analyticsEnabled() returns false, so nothing is ever sent. The skipped tests below assert that
+// traffic; restore analytics and drop the .skip markers in the same change.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ConfigStatus, InstanceInfo } from "@/state/store";
@@ -190,7 +193,7 @@ async function freshModules() {
 const snapshots = () => ph.captured.filter(({ event }) => event === "app_snapshot").map(({ props }) => props);
 
 describe("the daily usage snapshot", () => {
-  it("counts what is set up from a workspace full of names, keys, ids and addresses, and sends none of them", async () => {
+  it.skip("counts what is set up from a workspace full of names, keys, ids and addresses, and sends none of them", async () => {
     const { snapshot } = await freshModules();
     expect(await snapshot.sendDailySnapshot(hostileState(), hostileSources(), DAY)).toBe(true);
     const [sent] = snapshots();
@@ -213,7 +216,7 @@ describe("the daily usage snapshot", () => {
     for (const fragment of [HOSTILE, "HOSTILE", "example.com", "mausbot.cloud", "iPhone", "Owner", "3f0c2b1e", "/Users/"]) expect(wire).not.toContain(fragment);
   });
 
-  it("sends once per UTC day, writing the day before it gathers, and again after midnight", async () => {
+  it.skip("sends once per UTC day, writing the day before it gathers, and again after midnight", async () => {
     const { snapshot } = await freshModules();
     let release!: () => void;
     const slow = hostileSources({ connectedApps: () => new Promise((resolve) => { release = () => resolve({ services: {}, authoritative: true }); }) });
@@ -237,7 +240,7 @@ describe("the daily usage snapshot", () => {
     expect(snapshots()).toEqual([]);
   });
 
-  it("sends once per page load when storage throws, through the page's own memory", async () => {
+  it.skip("sends once per page load when storage throws, through the page's own memory", async () => {
     const { snapshot } = await freshModules();
     vi.stubGlobal("localStorage", { getItem: () => { throw new Error("denied"); }, setItem: () => { throw new Error("denied"); } });
     expect(await snapshot.sendDailySnapshot(hostileState(), hostileSources(), DAY)).toBe(true);
@@ -246,7 +249,7 @@ describe("the daily usage snapshot", () => {
     expect(snapshots()).toHaveLength(2);
   });
 
-  it("waits for the config without spending the day", async () => {
+  it.skip("waits for the config without spending the day", async () => {
     const { snapshot } = await freshModules();
     const sources = hostileSources();
     expect(await snapshot.sendDailySnapshot({ ...hostileState(), config: null }, sources, DAY)).toBe(false);
@@ -254,7 +257,7 @@ describe("the daily usage snapshot", () => {
     expect(await snapshot.sendDailySnapshot(hostileState(), sources, DAY)).toBe(true);
   });
 
-  it("asks no Boat question and counts no cloud computers without a Boat account", async () => {
+  it.skip("asks no Boat question and counts no cloud computers without a Boat account", async () => {
     const { snapshot } = await freshModules();
     const state = hostileState();
     const sources = hostileSources();
@@ -263,7 +266,7 @@ describe("the daily usage snapshot", () => {
     expect(snapshots()[0]).toMatchObject({ cloud_computer_source: "none", cloud_computers: 0, team_computers: 0, has_boat_key: false });
   });
 
-  it("leaves out what a source could not tell, and still sends the rest", async () => {
+  it.skip("leaves out what a source could not tell, and still sends the rest", async () => {
     const { snapshot } = await freshModules();
     const fail = async () => { throw new Error("unreachable"); };
     await snapshot.sendDailySnapshot(hostileState(), hostileSources({
@@ -276,7 +279,7 @@ describe("the daily usage snapshot", () => {
     expect(sent).toMatchObject({ cloud_plan: "unknown", bots: 9, key_count: 9 });
   });
 
-  it("reads the plan from a Cloud page's own bridge, and leaves out what only this computer knows", async () => {
+  it.skip("reads the plan from a Cloud page's own bridge, and leaves out what only this computer knows", async () => {
     const { snapshot } = await freshModules();
     const sources = hostileSources({
       companion: null, cloudAccount: null, platform: "browser",
@@ -302,7 +305,7 @@ describe("an opted-out install", () => {
     expect(storage.has("omb-analytics-snapshot-day")).toBe(false);
   });
 
-  it("drops a snapshot when analytics is switched off while it gathers", async () => {
+  it.skip("drops a snapshot when analytics is switched off while it gathers", async () => {
     const { analytics, snapshot } = await freshModules();
     let release!: () => void;
     const sending = snapshot.sendDailySnapshot(hostileState(), hostileSources({

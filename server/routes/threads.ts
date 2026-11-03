@@ -52,7 +52,7 @@ export interface ThreadRouteDeps {
   messageFileRootsForThread(senderId: string, threadId: string): string[];
   viewerFor(auth: RequestAuth): Viewer;
   visibleTo(viewer: Viewer): VisibleSet;
-  /** A Team Cloud: gives a member their own MausBot once, before their first list of bots. */
+  /** A Team Cloud: gives a member their own Mark Bot once, before their first list of bots. */
   memberDefaultBot?(email: string): unknown;
 }
 
@@ -225,7 +225,7 @@ export function createThreadRoutes(deps: ThreadRouteDeps): RouteHandler {
           // Only a client that asks for listings gets one; older clients keep the 400.
           if (body?.listFolder !== true || folderEntry || code !== "directory") throw error;
           const listing = await listMessageFolder(href, roots);
-          res.setHeader("x-openmausbot-folder", "1");
+          res.setHeader("x-markbot-folder", "1");
           res.setHeader("cache-control", "private, no-store");
           return json(res, 200, listing);
         }

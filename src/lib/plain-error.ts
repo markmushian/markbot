@@ -51,3 +51,11 @@ export function plainErrorLine(raw: string): string | undefined {
   const key = KINDS.find(([pattern]) => pattern.test(text))?.[1] ?? "error.plain.generic";
   return t(key);
 }
+
+/** Keep technical details useful without leaking common engine boilerplate in English. */
+export function localizedErrorDetail(raw: string): string {
+  const exited = raw.match(/^(.+?) exited (null|-?\d+|SIG[A-Z0-9]+) before the prompt result(?::\s*([\s\S]+))?$/i);
+  if (!exited) return raw;
+  const [, engine, code, detail] = exited;
+  return `${engine} 在返回结果前已退出（退出代码：${code}）${detail ? `：${detail}` : ""}`;
+}

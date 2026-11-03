@@ -3,7 +3,7 @@ import { ChevronLeft, Loader2, Menu } from "lucide-react";
 import { CLOUD_LINK_SETTINGS, openBot, StoreProvider, useStore } from "@/state/store";
 import { useShowThreads } from "@/lib/thread-preferences";
 import { useWelcomeViewer, WelcomeGate } from "@/components/onboarding/WelcomeGate";
-import { MausBotWelcome } from "@/components/MausBotWelcome";
+import { MarkBotWelcome } from "@/components/MarkBotWelcome";
 import { CloudTimeZoneSync } from "@/components/CloudTimeZone";
 import { cloudSignInDue, spotlightsQuiet, type WelcomeViewer } from "@/lib/onboarding";
 import { FirstConversationTour } from "@/components/onboarding/FirstConversationTour";
@@ -128,7 +128,10 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
   const language = effectiveLanguage(useLanguageChoice(), state.config?.language);
   const [, setLocaleEpoch] = useState(0);
   useEffect(() => {
-    setLocale(language || globalThis.navigator?.language);
+    // Nothing chosen yet (no saved choice, no server default): follow the system. A Chinese system opens in Chinese,
+    // which is this product's first language; anything else opens in English rather than being handed a Chinese UI.
+    const system = globalThis.navigator?.language?.toLowerCase() ?? "";
+    setLocale(language || (system.startsWith("zh") ? "zh" : "en"));
     setLocaleEpoch((epoch) => epoch + 1);
   }, [language]);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -310,7 +313,7 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
       {!calendarFocus && <button
         type="button"
         ref={menuButtonRef}
-        aria-label="Open bot list"
+        aria-label={t("app.openBotList")}
         aria-expanded={drawerOpen}
         onClick={() => setDrawerOpen(true)}
         className="absolute left-3 top-3 z-30 rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink max-md:flex max-md:size-9 max-md:items-center max-md:justify-center max-md:rounded-full max-md:border max-md:border-hairline max-md:bg-card max-md:p-0 max-md:text-ink md:hidden"
@@ -443,7 +446,7 @@ function Application() {
           <Shell viewer={viewer} />
         </ThreadRefsProvider>
         <WelcomeGate viewer={viewer} />
-        <MausBotWelcome viewer={viewer} />
+        <MarkBotWelcome viewer={viewer} />
         <CloudTimeZoneSync viewer={viewer} />
         <GuidedTour />
         <LiveCallHost />

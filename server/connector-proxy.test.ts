@@ -181,7 +181,7 @@ describe("connector MCP bridge", () => {
     const lines = start({ OMB_HARNESS_URL: harness, OMB_CONNECTOR_TOKEN: "bridge-secret", OMB_BOT_ID: "bot-1", OMB_THREAD_ID: "thread-1" });
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 3, method: "tools/call", params: { name: "COMPOSIO_MANAGE_CONNECTIONS", arguments: { toolkits: ["xero"] } } })}\n`);
     expect((await nextJson(lines)).result.content[0].text).toBe(
-      "OpenMausBot showed the user a secure connection card for xero. xero connects with the person's own Composio auth config "
+      "Mark Bot showed the user a secure connection card for xero. xero connects with the person's own Composio auth config "
       + "ac_xero1234, the most recently created of their 2 enabled ones. End this turn now. The app will continue the task "
       + "automatically after the connection finishes.",
     );
@@ -221,7 +221,7 @@ describe("connector MCP bridge", () => {
       result: {
         protocolVersion: "2024-11-05",
         capabilities: { tools: {} },
-        serverInfo: { name: "openmausbot-connectors", version: "1" },
+        serverInfo: { name: "markbot-connectors", version: "1" },
       },
     });
     expect(reply.result).not.toHaveProperty("isError");
@@ -285,7 +285,7 @@ describe("connector MCP bridge", () => {
     child!.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 2, method: "initialize", params: { protocolVersion: "2024-11-05" } })}\n`);
     const reply = await nextJson(lines);
     expect(reply.result.protocolVersion).toBe("2024-11-05");
-    expect(reply.result.serverInfo).toEqual({ name: "openmausbot-connectors", version: "1" });
+    expect(reply.result.serverInfo).toEqual({ name: "markbot-connectors", version: "1" });
     expect(upstreamAuthorization).toBe("Bearer upstream-secret");
     expect(upstreamBody).toMatchObject({ method: "initialize" });
     expect(JSON.stringify(reply)).not.toContain("upstream-secret");
@@ -334,7 +334,7 @@ describe("connector MCP bridge", () => {
     const [search, page] = (await nextJson(lines)).result.tools;
     expect(search).toEqual(tools[0]);
     expect(schemaBytes(page.inputSchema)).toBeLessThanOrEqual(12_000);
-    expect(page.description).toContain("OpenMausBot shortened this tool's parameters to fit Kimi's size limit");
+    expect(page.description).toContain("Mark Bot shortened this tool's parameters to fit Kimi's size limit");
   });
 
   it("lists no more connected-app tools than its share of the model's tool limit", async () => {

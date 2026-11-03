@@ -1,4 +1,5 @@
 import { boatCapableEngine } from "@/lib/remote-desktop";
+import { activeLocale, t } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { CalendarClock, CalendarDays, Globe, ImageOff, Loader2, Monitor, Plus, X } from "lucide-react";
 
@@ -24,7 +25,7 @@ function viewerAddress(raw: unknown): string {
 function routineScheduleLabel(routine: Routine) {
   if (routine.schedule.type === "cron" || routine.schedule.type === "limit_reset") return scheduleLabel(routine.schedule);
   if (routine.schedule.type === "once") {
-    return new Date(routine.schedule.at).toLocaleString([], {
+    return new Date(routine.schedule.at).toLocaleString(activeLocale(), {
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -35,7 +36,7 @@ function routineScheduleLabel(routine: Routine) {
     const cadence = routine.schedule.everyMinutes % 60 === 0
       ? `Every ${routine.schedule.everyMinutes / 60} hr`
       : `Every ${routine.schedule.everyMinutes} min`;
-    return `${cadence} · starting ${new Date(routine.schedule.anchorAt).toLocaleString([], {
+    return `${cadence} · starting ${new Date(routine.schedule.anchorAt).toLocaleString(activeLocale(), {
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -45,20 +46,28 @@ function routineScheduleLabel(routine: Routine) {
   const days = routine.schedule.weekdays;
   const cadence =
     days.length === 7
-      ? "Every day"
+      ? t("remote.cadence.everyDay")
       : days.join(",") === "1,2,3,4,5"
-        ? "Weekdays"
+        ? t("remote.cadence.weekdays")
         : days.map((day) => ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][day]).join(", ");
   const [hour, minute] = routine.schedule.time.split(":").map(Number);
-  return `${cadence} · ${new Date(2000, 0, 1, hour, minute).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  return `${cadence} · ${new Date(2000, 0, 1, hour, minute).toLocaleTimeString(activeLocale(), { hour: "numeric", minute: "2-digit" })}`;
+}
+
+function runStatusLabel(status: string): string {
+  if (status === "queued") return t("remote.status.queued");
+  if (status === "running") return t("remote.status.running");
+  if (status === "waiting") return t("remote.status.waiting");
+  if (status === "failed") return t("remote.status.failed");
+  return status;
 }
 
 function nextRunLabel(at: number | null) {
-  if (at == null) return "Paused";
+  if (at == null) return t("remote.cadence.paused");
   const date = new Date(at);
   const today = new Date();
   const sameDay = date.toDateString() === today.toDateString();
-  return `${sameDay ? "Today" : date.toLocaleDateString([], { month: "short", day: "numeric" })}, ${date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+  return `${sameDay ? t("remote.cadence.today") : date.toLocaleDateString(activeLocale(), { month: "short", day: "numeric" })}, ${date.toLocaleTimeString(activeLocale(), { hour: "numeric", minute: "2-digit" })}`;
 }
 
 export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
@@ -213,13 +222,13 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
     <aside className="relative z-20 flex h-full w-[400px] shrink-0 flex-col border-l border-hairline bg-panel" ref={panelRef} data-computer-panel>
       <div {...dragProps} className={cn("flex items-center justify-between border-b border-hairline px-5 py-4", padClass)}>
         <div>
-          <div className="text-[14px] font-medium text-ink">{bot.name}&apos;s computer</div>
+          <div className="text-[14px] font-medium text-ink">{t("remote.computerTitle", { name: bot.name })}</div>
           <div className="mt-0.5 text-[11px] text-ink-secondary">
-            {bot.cloudBackend === "vps" ? "Self-hosted VPS" : "Cloud desktop"}
+            {bot.cloudBackend === "vps" ? t("remote.selfHosted") : t("remote.cloudDesktop")}
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <div className="flex rounded-full bg-inset p-0.5" aria-label="Bot panel view">
+          <div className="flex rounded-full bg-inset p-0.5" aria-label={t("remote.viewAria")}>
             {(["desktop", "browser"] as const).map((option) => (
               <button
                 key={option}
@@ -229,7 +238,7 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
                 className={cn("flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px]", view === option ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink")}
               >
                 {option === "desktop" ? <Monitor size={12} /> : <Globe size={12} />}
-                {option === "desktop" ? "Desktop" : "Browser"}
+                {option === "desktop" ? t("remote.viewDesktop") : t("remote.viewBrowser")}
               </button>
             ))}
           </div>
@@ -241,7 +250,7 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
               dispatch({ type: "toggleComputer", open: false });
             }}
             className="rounded-md p-1 text-ink-secondary hover:bg-control hover:text-ink"
-            aria-label="Close computer panel"
+            aria-label={t("remote.closeComputerPanel")}
           >
             <X size={18} />
           </button>
@@ -254,7 +263,7 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
           <BrowserPanel bot={bot} signIn={signIn} />
           {error && <div role="alert" className="mt-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger">{error}</div>}
           <p className="mt-2 text-[11px] leading-relaxed text-ink-secondary">
-            Watching and driving this browser needs browser control for this paired device, in Settings → Remote access on the host computer.
+            {t("remote.browserNeedsControl")}
           </p>
         </div>
       ) : (
@@ -265,28 +274,28 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
           onClick={() => void open()}
           disabled={pending || !frame}
           className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-hairline bg-black disabled:cursor-default"
-          aria-label={frame ? `Open ${bot.name}'s live desktop` : "VPS preview unavailable"}
+          aria-label={frame ? t("remote.openLiveAria", { name: bot.name }) : t("remote.previewUnavailableAria")}
         >
           {frame ? (
-            <img src={frame} alt={`${bot.name}'s VPS desktop preview`} className="h-full w-full object-contain" />
+            <img src={frame} alt={t("remote.previewAlt", { name: bot.name })} className="h-full w-full object-contain" />
           ) : previewPending ? (
             <Loader2 size={22} className="animate-spin text-ink-secondary" />
           ) : (
             <div className="flex flex-col items-center gap-2 text-ink-secondary">
               <ImageOff size={24} />
-              <span className="text-[11px]">{previewUnavailable ? "Preview unavailable" : "Waiting for preview"}</span>
+              <span className="text-[11px]">{previewUnavailable ? t("remote.previewUnavailable") : t("remote.waitingPreview")}</span>
             </div>
           )}
           {frame && (
             <span className="absolute inset-x-0 bottom-0 bg-black/65 py-2 text-[11px] font-medium text-white opacity-0 transition-opacity group-hover:opacity-100">
-              Open live desktop
+              {t("remote.openLive")}
             </span>
           )}
         </button>
         <div>
-          <div className="text-[14px] font-medium text-ink">Open the live desktop</div>
+          <div className="text-[14px] font-medium text-ink">{t("remote.openLiveTitle")}</div>
           <p className="mt-2 text-[12px] leading-relaxed text-ink-secondary">
-            The host creates a temporary, encrypted viewer relay. VPS SSH and VNC credentials stay on the host computer.
+            {t("remote.relayHint")}
           </p>
         </div>
         <button
@@ -296,7 +305,7 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-50"
         >
           {pending ? <Loader2 size={15} className="animate-spin" /> : <Monitor size={15} />}
-          {pending ? "Opening…" : "Take control"}
+          {pending ? t("remote.opening") : t("remote.takeControl")}
         </button>
         {error && (
           <div role="alert" className="w-full rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-left text-[12px] text-danger">
@@ -304,14 +313,14 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
           </div>
         )}
         <p className="text-[11px] leading-relaxed text-ink-secondary">
-          The host must enable cloud desktop access for this paired device in Settings → Remote access.
+          {t("remote.hostMustEnable")}
         </p>
 
         <div className="w-full rounded-xl bg-card p-4 text-left">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-[15px] font-medium text-ink">
               <CalendarClock size={16} className="text-accent" />
-              Scheduled tasks
+              {t("remote.scheduledTasks")}
             </div>
             {botRoutines.length > 0 && (
               <span className="rounded-full bg-control px-2 py-0.5 text-[10px] font-medium text-ink-secondary">
@@ -327,7 +336,7 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
             >
               <Loader2 size={13} className={activeRoutineRun.status === "queued" ? "" : "animate-spin"} />
               <span className="min-w-0 flex-1 truncate">
-                {activeRoutineRun.routineName} · {activeRoutineRun.status === "waiting" ? "needs you" : activeRoutineRun.status}
+                {activeRoutineRun.routineName} · {runStatusLabel(activeRoutineRun.status)}
               </span>
             </button>
           )}
@@ -344,7 +353,7 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-medium text-ink">{routine.name}</span>
                     <span className="block truncate text-[11px] text-ink-secondary">
-                      {routineScheduleLabel(routine)}{routine.runOn === "cloud" ? " · runs on VM" : ""}
+                      {routineScheduleLabel(routine)}{routine.runOn === "cloud" ? t("remote.runsOnVm") : ""}
                     </span>
                   </span>
                   <span className="shrink-0 text-[10px] text-ink-secondary">{nextRunLabel(routine.nextRunAt)}</span>
@@ -359,16 +368,16 @@ export function RemoteDesktopPanel({ bot }: { bot: Bot }) {
               className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-accent py-2 text-[13px] font-medium text-white hover:brightness-110"
             >
               <Plus size={14} />
-              Create schedule
+              {t("remote.createSchedule")}
             </button>
             <button
               type="button"
               onClick={() => dispatch({ type: "showRoutines" })}
               className="flex items-center justify-center gap-1.5 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover"
-              title="Open schedules"
+              title={t("remote.openSchedules")}
             >
               <CalendarDays size={14} />
-              Schedules
+              {t("remote.schedules")}
             </button>
           </div>
         </div>

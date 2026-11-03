@@ -414,7 +414,7 @@ function SkillSourceDialog({ viewing, error, working, onClose, onEnable }: {
               {viewing.text}
             </pre>
             {error && <div role="alert" className="mt-2 text-[12px] text-danger">{error}</div>}
-            {viewing.review && <button type="button" disabled={working} onClick={onEnable} className="mt-4 self-end rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40">Enable reviewed skill</button>}
+            {viewing.review && <button type="button" disabled={working} onClick={onEnable} className="mt-4 self-end rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40">{t("skills.review.enable")}</button>}
           </div>
         </div>
   );

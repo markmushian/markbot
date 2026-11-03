@@ -3,6 +3,7 @@ import { useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEve
 import { useStore, type Bot } from "@/state/store";
 import { imageAttachmentFromFile } from "@/lib/composer-attachments";
 import { useOrganizationBranding } from "@/lib/use-organization-branding";
+import { t } from "@/lib/i18n";
 import {
   AVATAR_FOCUS_CENTER,
   AVATAR_ZOOM_MAX,
@@ -14,6 +15,7 @@ import {
 } from "../../shared/bot-avatar";
 import { BotAvatar } from "./Avatar";
 import { useBotEditor } from "./bot-settings/BotEditorContext";
+import { MARK_AVATARS, markAvatarFile } from "@/lib/mark-avatars";
 
 export type AvatarPatch = Partial<
   Pick<Bot, "avatarCrop" | "avatarUrl" | "avatarZoom" | "avatarFocusX" | "avatarFocusY" | "color" | "mascotExpression" | "mascotBody" | "mascotFaceColor">
@@ -22,10 +24,10 @@ export type AvatarPatch = Partial<
 export const RESET_MASCOT_PATCH: AvatarPatch = { avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotFaceColor: null };
 
 export const CROP_LABEL = {
-  mascot: "Mascot",
-  circle: "Circle",
-  rounded: "Rounded",
-  square: "Square",
+  mascot: "机器人",
+  circle: "圆形",
+  rounded: "圆角",
+  square: "方形",
 } satisfies Record<BotAvatarCrop, string>;
 
 const FRAME_SIZE = 168;
@@ -77,10 +79,10 @@ export function AvatarFraming({
         onPointerCancel={endDrag}
         onWheel={onWheel}
       >
-        <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={`${bot.name} avatar preview`} />
+        <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={t("avatarEditor.preview", { name: bot.name })} />
       </div>
       <div className="mb-1.5 mt-4 flex items-baseline justify-between">
-        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">Zoom</span>
+        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{t("avatarEditor.zoom")}</span>
         <span className="tabular-nums text-[12px] text-ink-secondary">{Math.round(zoom * 100)}%</span>
       </div>
       <input
@@ -90,7 +92,7 @@ export function AvatarFraming({
         step={0.01}
         value={zoom}
         disabled={disabled}
-        aria-label="Zoom avatar"
+        aria-label={t("avatarEditor.zoomAria")}
         aria-valuemin={AVATAR_ZOOM_MIN}
         aria-valuemax={AVATAR_ZOOM_MAX}
         aria-valuenow={zoom}
@@ -99,7 +101,7 @@ export function AvatarFraming({
         className="w-full accent-accent"
       />
       <div className="mt-1.5 flex items-center justify-between gap-3 text-[12px] text-ink-secondary">
-        <span>Drag the picture to reposition it. Scroll to zoom.</span>
+        <span>{t("avatarEditor.hint")}</span>
         {framed && (
           <button
             type="button"
@@ -107,7 +109,7 @@ export function AvatarFraming({
             onClick={() => onPatch({ avatarZoom: AVATAR_ZOOM_MIN, avatarFocusX: AVATAR_FOCUS_CENTER, avatarFocusY: AVATAR_FOCUS_CENTER })}
             className="shrink-0 rounded-md px-2 py-1 text-ink hover:bg-control disabled:opacity-50"
           >
-            Reset framing
+            {t("avatarEditor.reset")}
           </button>
         )}
       </div>
@@ -117,11 +119,23 @@ export function AvatarFraming({
 
 export function OrganizationAvatarIcons({ busy, onUpload }: { busy: boolean; onUpload: (file: File) => void }) {
   const organization = useOrganizationBranding();
-  if (!organization?.icons.length) return null;
+  const [presetError, setPresetError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const choose = async (image: string, id: string) => {
+    if (busy || loading) return;
+    setLoading(true);
+    setPresetError(null);
+    try { onUpload(await markAvatarFile(image, id)); }
+    catch (error) { setPresetError(error instanceof Error ? error.message : String(error)); }
+    finally { setLoading(false); }
+  };
   return (
     <div className="mb-3 border-b border-hairline/40 pb-3">
-      <div className="mb-2 text-[13px] font-medium text-ink-secondary">{organization.name} icons</div>
-      <div className="flex flex-wrap gap-2">{organization.icons.map(icon => <button key={icon.id} type="button" disabled={busy} title={icon.name} aria-label={`Use ${icon.name} icon`} className="flex size-12 items-center justify-center rounded-lg border border-hairline/40 hover:bg-control disabled:opacity-50" onClick={() => {
+      <div className="mb-2 text-[13px] font-medium text-ink-secondary">{t("avatarEditor.presets")}</div>
+      <div className="mb-3 grid grid-cols-5 gap-2">{MARK_AVATARS.map(icon => <button key={icon.id} type="button" disabled={busy || loading} aria-label={t("avatarEditor.usePreset", { name: icon.name })} title={icon.name} className="mark-avatar-preset flex min-w-0 flex-col items-center gap-1 disabled:opacity-50" onClick={() => void choose(icon.image, icon.id)}><img src={icon.image} alt="" className="size-14 object-contain" /><span className="w-full truncate text-center text-[11px]">{icon.name}</span></button>)}</div>
+      {presetError && <p role="alert" className="text-[12px] text-danger">{presetError}</p>}
+      {organization?.icons.length ? <div className="mb-2 text-[13px] font-medium text-ink-secondary">{t("avatarEditor.icons", { name: organization.name })}</div> : null}
+      <div className="flex flex-wrap gap-2">{organization?.icons.map(icon => <button key={icon.id} type="button" disabled={busy} title={icon.name} aria-label={`Use ${icon.name} icon`} className="flex size-12 items-center justify-center rounded-lg border border-hairline/40 hover:bg-control disabled:opacity-50" onClick={() => {
         const bytes = Uint8Array.from(atob(icon.image.slice(22)), byte => byte.charCodeAt(0));
         onUpload(new File([bytes], `${icon.id}.png`, { type: "image/png" }));
       }}><img src={icon.image} alt="" className="size-10 rounded-md object-contain" /></button>)}</div>
@@ -149,7 +163,7 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
     try {
       const saved = uploadAvatar ? null : await imageAttachmentFromFile(file);
       const avatarUrl = uploadAvatar ? await uploadAvatar(file) : saved ? botAvatarUrlFromStoredPath(saved.path) : null;
-      if (!avatarUrl) throw new Error("The uploaded image could not be used as an avatar");
+      if (!avatarUrl) throw new Error("上传的图片无法用作头像");
       const latestCrop = cropRef.current;
       onPatch({
         avatarUrl,

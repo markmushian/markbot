@@ -143,7 +143,7 @@ function sourceImageExtension(source: string | undefined): string | null {
   if (!source) return null;
   let pathname = source;
   try {
-    pathname = decodeURIComponent(new URL(source, "https://openmausbot.invalid").pathname);
+    pathname = decodeURIComponent(new URL(source, "https://markbot.invalid").pathname);
   } catch {
     pathname = source.split(/[?#]/, 1)[0] ?? source;
   }
@@ -294,7 +294,7 @@ export function useLocalFileSave(filePath: string, name?: string, message?: Mess
     request.current = controller;
     try {
       const response = await requestMessageFile(filePath, message, controller.signal, entry === undefined ? { list: true } : { entry });
-      if (response.headers.get("x-openmausbot-folder") === "1") {
+      if (response.headers.get("x-markbot-folder") === "1") {
         const listing = await response.json() as MessageFolderListing;
         if (!mounted.current || controller.signal.aborted) return;
         setFolder(listing);
@@ -602,7 +602,7 @@ export function AttachmentPreviewDialog({
           {failed ? (
             <div className="flex flex-col items-center gap-3 text-white/60" role="alert">
               <ImageOff size={34} />
-              <span className="text-[13px]">This image could not be loaded.</span>
+              <span className="text-[13px]">{t("attach.imageLoadFailed")}</span>
               <button
                 type="button"
                 onClick={retry}

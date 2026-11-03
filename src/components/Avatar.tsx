@@ -17,6 +17,7 @@ import { isHalloweenBody, type BotBodyId } from "../../shared/bot-body";
 import { useHalloweenDressed, wornBody } from "@/lib/halloween-dress";
 import { CarvedAvatar } from "./CarvedAvatar";
 import { steelBodyImage } from "@/lib/steel-body";
+import { MarkAvatar } from "./MarkAvatar";
 
 export const EYE_SCALE = 1.12;
 export const MOUTH_WEIGHT = 11;
@@ -100,6 +101,7 @@ export type MausAvatarProps = {
 
 function MausAvatarComponent(props: MausAvatarProps, ref: React.Ref<MausAvatarHandle>) {
   const { bodyId, color, size, state, motion, motionKey, gaze, trackPointer, animated, label } = props;
+  if (!bodyId || bodyId === "cursor") return <MarkAvatar ref={ref} {...props} />;
   if (isHalloweenBody(bodyId)) {
     return (
       <CarvedAvatar

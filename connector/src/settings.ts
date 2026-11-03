@@ -1,3 +1,5 @@
+import { connectorEnv } from "./env.ts";
+
 // Names, paths and limits the connector, install.sh and the e2e share. install.sh repeats the names it needs, and a
 // test holds them equal.
 
@@ -27,12 +29,12 @@ export const BACKUPS_KEPT = 3;
 
 /** Inside the connector's container. */
 export const PATHS = {
-  state: process.env.MAUSBOT_STATE_DIR || "/state",
-  docker: process.env.MAUSBOT_DOCKER_SOCKET || "/var/run/docker.sock",
+  state: connectorEnv("STATE_DIR") || "/state",
+  docker: connectorEnv("DOCKER_SOCKET") || "/var/run/docker.sock",
   /** /etc/mausbot on the host, mounted read-only: the seccomp profile install.sh put there. */
-  hostConfig: process.env.MAUSBOT_HOST_CONFIG_DIR || "/etc/mausbot",
+  hostConfig: connectorEnv("HOST_CONFIG_DIR") || "/etc/mausbot",
   /** The connector's own copies, which install.sh installs from this image. */
-  profiles: process.env.MAUSBOT_PROFILES_DIR || "/app/profiles",
+  profiles: connectorEnv("PROFILES_DIR") || "/app/profiles",
 } as const;
 
 export const SECCOMP_FILE = "seccomp-omb-home.json";
@@ -56,7 +58,7 @@ export const HOME_OOM_SCORE_ADJ = -800;
 export const LEASE_FIXED_VERSION = [0, 1, 131] as const;
 
 export function envSeconds(name: string, fallback: number, min: number, max: number): number {
-  const raw = process.env[name];
+  const raw = connectorEnv(name);
   const value = raw === undefined ? NaN : Number(raw);
   return Number.isInteger(value) && value >= min && value <= max ? value : fallback;
 }

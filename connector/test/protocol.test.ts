@@ -4,7 +4,7 @@ import { cloudRequestSignature as homeSignature } from "../../server/cloud-home.
 import { cloudRequestSignature, summarizeHealth } from "../src/home-health.ts";
 import { checkEnrollCode, checkEnrollResponse, checkHomeEnv, checkJob, checkTransferUrl, JOB_TYPES, REQUIRED_HOME_ENV } from "../src/protocol.ts";
 
-const HOME = `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"a".repeat(64)}`;
+const HOME = `ghcr.io/milind-soni/markbot-cloud-home@sha256:${"a".repeat(64)}`;
 const CONNECTOR = `ghcr.io/milind-soni/mausbot-connector@sha256:${"b".repeat(64)}`;
 const env = {
   OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
@@ -30,10 +30,10 @@ describe("the connector protocol", () => {
     expect(image("update", HOME)).toBe(true);
     expect(image("self-update", CONNECTOR)).toBe(true);
     for (const value of [
-      "ghcr.io/milind-soni/openmausbot-cloud-home:latest", "ghcr.io/milind-soni/openmausbot-cloud-home:v0.1.130",
-      `ghcr.io/someone-else/openmausbot-cloud-home@sha256:${"a".repeat(64)}`, `docker.io/library/ubuntu@sha256:${"a".repeat(64)}`,
-      `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"A".repeat(64)}`, `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"a".repeat(63)}`,
-      `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"a".repeat(64)} --privileged`, `ghcr.io/milind-soni/openmausbot@sha256:${"a".repeat(64)}`,
+      "ghcr.io/milind-soni/markbot-cloud-home:latest", "ghcr.io/milind-soni/markbot-cloud-home:v0.1.130",
+      `ghcr.io/someone-else/markbot-cloud-home@sha256:${"a".repeat(64)}`, `docker.io/library/ubuntu@sha256:${"a".repeat(64)}`,
+      `ghcr.io/milind-soni/markbot-cloud-home@sha256:${"A".repeat(64)}`, `ghcr.io/milind-soni/markbot-cloud-home@sha256:${"a".repeat(63)}`,
+      `ghcr.io/milind-soni/markbot-cloud-home@sha256:${"a".repeat(64)} --privileged`, `ghcr.io/milind-soni/markbot@sha256:${"a".repeat(64)}`,
     ]) {
       expect(image("start", value), value).toBe(false);
       expect(image("update", value), value).toBe(false);
@@ -75,7 +75,7 @@ describe("the connector protocol", () => {
     }
   });
 
-  it("keeps an enrolment answer only when every field is the Admin's shape, and a code only as MausBot shows it", () => {
+  it("keeps an enrolment answer only when every field is the Admin's shape, and a code only as Mark Bot shows it", () => {
     const good = { serverId: "srv_1a2b", cloudId: "cloud_3c4d", agentToken: "ombs_" + "t".repeat(43) };
     expect(checkEnrollResponse(good)).toEqual({ ok: true, value: good });
     expect(checkEnrollResponse({ ...good, extra: 1 })).toEqual({ ok: true, value: good });

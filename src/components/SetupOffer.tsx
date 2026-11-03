@@ -18,6 +18,18 @@ const LETTERS = "ABCDEFGH";
 const FALLBACK_CHOICES: LocaleKey[] = [
   "chat.setupCard.research", "chat.setupCard.watch", "chat.setupCard.inbox", "chat.setupCard.errands", "chat.setupCard.data",
 ];
+const ENGLISH_DEFAULT_CHOICES = [
+  "Research and digging into topics", "Keeping an eye on things for me", "Email, calendar and messages",
+  "Bookings, shopping and errands", "Data, spreadsheets and reports",
+];
+
+function localizedChoices(choices: readonly string[] | undefined): string[] {
+  if (!choices?.length || choices.length === ENGLISH_DEFAULT_CHOICES.length
+    && choices.every((choice, index) => choice === ENGLISH_DEFAULT_CHOICES[index])) {
+    return FALLBACK_CHOICES.map((key) => t(key));
+  }
+  return [...choices];
+}
 /** How long the card waits for answers being written after it first sees the wait, and how old a wait can be before it
  * is one a restart left behind: the server ends a wait within 7 s. */
 const PENDING_GRACE_MS = 8_000;
@@ -66,7 +78,7 @@ export function SetupOffer({ botId, threadId, message, transcript }: { botId: st
   const updating = rewriting && !settled;
   if (pending || updating) waitedOnce.current = true;
   if (shown.current?.id !== message.id || (showedWait.current && !pending && !updating)) {
-    shown.current = { id: message.id, choices: message.setupChoices?.length ? message.setupChoices : FALLBACK_CHOICES.map((key) => t(key)) };
+    shown.current = { id: message.id, choices: localizedChoices(message.setupChoices) };
   }
   showedWait.current = pending || updating;
   const quiet = settled || updating;

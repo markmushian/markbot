@@ -1,6 +1,8 @@
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 
+import { t } from "@/lib/i18n";
+
 export interface SelectPopupOption {
   label: string;
   disabled: boolean;
@@ -58,7 +60,7 @@ export function SelectPopup({ options, selectedIndex, anchor, bounds, onChoose, 
       <div
         ref={list}
         role="listbox"
-        aria-label="Choose an option"
+        aria-label={t("common.chooseOption")}
         aria-activedescendant={active >= 0 ? `select-option-${active}` : undefined}
         tabIndex={0}
         onKeyDown={onKeyDown}

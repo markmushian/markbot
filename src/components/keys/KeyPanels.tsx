@@ -3,6 +3,7 @@ import { Loader2, TriangleAlert } from "lucide-react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
+import { DOCS_URL } from "@/lib/app-links";
 import { Switch } from "../SettingsPrimitives";
 import { KEY_FIELD } from "./KeyRow";
 import { cleanKey, looksLikeKey } from "./key-save";
@@ -168,7 +169,7 @@ export function VpsConnection() {
     <div className="flex flex-col gap-2">
       <p className="text-[12px] leading-4 text-ink-secondary">
         {t("keys.vps.descBefore")}
-        <a href="https://github.com/milind-soni/OpenMausBot/blob/main/docs/byo-vps.md" target="_blank" rel="noopener noreferrer" className="text-accent-text hover:underline">
+        <a href={`${DOCS_URL}/byo-vps.md`} target="_blank" rel="noopener noreferrer" className="text-accent-text hover:underline">
           {t("keys.vps.descLink")}
         </a>
         {t("keys.vps.descAfter")}

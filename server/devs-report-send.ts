@@ -1,9 +1,9 @@
-// Sending one @devs report to the MausBot team's endpoint and reading its answer: 201 {id}; 400 or 413 {error}; 429
+// Sending one @devs report to the Mark Bot team's endpoint and reading its answer: 201 {id}; 400 or 413 {error}; 429
 // {error, retryAfter} (seconds, also Retry-After).
 import { DEVS_REPORT_LIMITS, withoutContact, type DevsReportPayload } from "./devs-report.ts";
 
 export const BUG_REPORT_PATH = "/api/bug-reports";
-export const PRODUCTION_CLOUD_ORIGIN = "https://cloud.openmausbot.com";
+export const PRODUCTION_CLOUD_ORIGIN = "http://127.0.0.1:9";
 export const STAGING_CLOUD_ORIGIN = "https://omb-cloud-staging.fly.dev";
 const SEND_TIMEOUT_MS = 20_000;
 const ANSWER_MAX_BYTES = 16 * 1024;

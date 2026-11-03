@@ -51,7 +51,6 @@ export function SimpleGeneralPage({ has, peopleOpen, onLooks }: { has: Has; peop
         <SettingsGroup label={t("settings.group.account")} block="general">
           <SettingsRows>
             {has("general") && <ProfileSummaryRow />}
-            {has("general") && <CloudPlanRow place="account" />}
             {has("people") && <div data-settings-block="people" className="scroll-mt-4"><PeopleSection simple startOpen={peopleOpen} /></div>}
           </SettingsRows>
         </SettingsGroup>

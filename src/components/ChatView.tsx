@@ -38,7 +38,8 @@ import { ClaudeUpdatePrompt } from "./ClaudeUpdatePrompt";
 import { MacCuaRecoveryActions } from "./MacCuaRecoveryActions";
 import { macCuaPermissionMessage, missingMacCuaPermissions } from "@/lib/mac-cua-permissions";
 import { failedTurnCause, signedOutEngine } from "@/lib/failed-turn";
-import { plainErrorLine } from "@/lib/plain-error";
+import { localizedSeededGreeting } from "@/lib/localized-seed";
+import { localizedErrorDetail, plainErrorLine } from "@/lib/plain-error";
 import { openPlaceAction, placeRowViewFor, usePlaceSeat, worksOnSimpleLabel } from "@/lib/place-view";
 import type { PlaceRow } from "../../shared/place-view";
 import { trialCreditKind, type TrialCreditRefusal } from "../../shared/trial-credit";
@@ -213,7 +214,7 @@ export function ErrorRow({
           <AlertTriangle size={15} className="mt-0.5 shrink-0" />
           <span className="min-w-0 break-words">{headline}</span>
         </div>
-        {headline !== message && <details className="mt-2 text-[12px] text-ink-secondary"><summary className="cursor-pointer">{macCuaReason ? t("computer.mac.permission.driverDetail") : t("chat.error.details")}</summary><p className="mt-1 break-words">{message}</p></details>}
+        {headline !== message && <details className="mt-2 text-[12px] text-ink-secondary"><summary className="cursor-pointer">{macCuaReason ? t("computer.mac.permission.driverDetail") : t("chat.error.details")}</summary><p className="mt-1 break-words">{localizedErrorDetail(message)}</p></details>}
         {macCuaReason &&
           <MacCuaRecoveryActions reason={message} />}
         {usageUrl ? (
@@ -223,7 +224,7 @@ export function ErrorRow({
         ) : isProviderSafetyBlock(message) ? (
           <p className="mt-2 text-[13px] leading-relaxed text-ink-secondary">
             {PROVIDER_SAFETY_GUIDANCE}{" "}
-            <a href={PROVIDER_SAFETY_HELP_URL} target="_blank" rel="noreferrer" className="underline">About provider safety checks</a>
+            <a href={PROVIDER_SAFETY_HELP_URL} target="_blank" rel="noreferrer" className="underline">{t("chat.providerSafety")}</a>
           </p>
         ) : setupInstance &&
         !(setupInstance.snapshot.state === "available" && setupInstance.snapshot.authenticated !== false) ? (
@@ -363,7 +364,7 @@ const Bubble = memo(function Bubble({
   const [viewRaw, setViewRaw] = useState(false);
   const speech = useSpeech();
   const speaking = speech.messageId === message.id && speech.status !== "idle";
-  const rawText = peer ? peer.body : (message.text ?? "");
+  const rawText = localizedSeededGreeting(peer ? peer.body : message.text ?? "", message.role === "bot" && message.setupOffer);
   const text = user ? rawText : stripLeakedSystemHarnessMessages(rawText);
   const botMenu = useBotMessageMenu({
     text,

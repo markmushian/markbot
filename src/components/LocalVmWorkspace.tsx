@@ -777,7 +777,7 @@ export function LocalVmWorkspace({
           onClick={() => void closeWorkspace()}
           disabled={controlPending}
           className="rounded-md p-1.5 text-ink-secondary hover:bg-raised hover:text-ink disabled:opacity-50"
-          aria-label="Close private desktop view"
+          aria-label={t("vm.closePrivateView")}
         >
           <X size={18} />
         </button>

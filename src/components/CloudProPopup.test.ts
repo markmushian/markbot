@@ -1,4 +1,8 @@
 // @vitest-environment happy-dom
+// Product analytics is off for good in this build: src/lib/analytics.ts ships an
+// empty PostHog token and analyticsEnabled() returns false, so no click, choice
+// or identify reaches the wire. The four tests below check that traffic, so they
+// are skipped, not deleted: restore analytics and drop the .skip markers together.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import vm from "node:vm";
@@ -96,19 +100,19 @@ describe("what the popup offers, by plan", () => {
     expect(signedOut.points).toContain("$5 of Claude credit to start");
     const costlier = { ...PLAIN_OFFER, plans: PLAIN_OFFER.plans.map(plan => ({ ...plan, amount: plan.amount + 1000 })) };
     expect(cloudProPopupView(free, costlier)).toMatchObject({ primary: { via: "add-cloud", label: "Upgrade to Cloud Pro" },
-      plan: "none", signedIn: true, email: "person@example.test", badge: null, price: "MausBot Cloud plans from $25/month + tax.", moneyBack: null });
+      plan: "none", signedIn: true, email: "person@example.test", badge: null, price: "Mark Bot Cloud plans from $25/month + tax.", moneyBack: null });
     expect((cloudProPopupView(free, costlier) as CloudProPopupView).points).toContain("Voice and cloud desktops by Boat included");
   });
 
-  it("a plan: Manage plan in Settings → MausBot Cloud for every plan, no Compare plans, never a checkout, a price or the browser", () => {
+  it("a plan: Manage plan in Settings → Mark Bot Cloud for every plan, no Compare plans, never a checkout, a price or the browser", () => {
     const cases: Array<[CloudAccountState, string, string, string | null]> = [
-      [onPlan("personal"), "personal", "Manage plan", "Personal active · verified by MausBot Cloud"],
-      [onPlan("pro", { trial: running }), "trial", "Manage plan", "Pro free trial · verified by MausBot Cloud"],
-      [onPlan("pro"), "pro", "Manage plan", "Pro active · verified by MausBot Cloud"],
-      [onPlan(undefined), "pro", "Manage plan", "Pro active · verified by MausBot Cloud"],
-      [onPlan("max"), "max", "Manage plan", "Max active · verified by MausBot Cloud"],
-      [onPlan("ultra"), "other", "Manage plan", "Cloud active · verified by MausBot Cloud"],
-      [{ ...free, purchase: { state: "confirming" } }, "none", "Manage plan", "MausBot Cloud · payment received"],
+      [onPlan("personal"), "personal", "Manage plan", "Personal active · verified by Mark Bot Cloud"],
+      [onPlan("pro", { trial: running }), "trial", "Manage plan", "Pro free trial · verified by Mark Bot Cloud"],
+      [onPlan("pro"), "pro", "Manage plan", "Pro active · verified by Mark Bot Cloud"],
+      [onPlan(undefined), "pro", "Manage plan", "Pro active · verified by Mark Bot Cloud"],
+      [onPlan("max"), "max", "Manage plan", "Max active · verified by Mark Bot Cloud"],
+      [onPlan("ultra"), "other", "Manage plan", "Cloud active · verified by Mark Bot Cloud"],
+      [{ ...free, purchase: { state: "confirming" } }, "none", "Manage plan", "Mark Bot Cloud · payment received"],
       [{ ...free, entitlement: { plan: "pro", tier: "pro", status: "inactive", expiresAt: null, version: 3 } }, "none", "Manage plan", "Pro · not active right now"],
       [{ status: "reauth-required", message: "expired", lastPlan: { tier: "pro", active: true } }, "unknown", "Manage plan", "Sign in again to use the Cloud on this computer. Your plan is not affected."],
       [{ status: "signed-out", message: "restore-removed" }, "none", "Manage plan", null],
@@ -122,12 +126,12 @@ describe("what the popup offers, by plan", () => {
 
   it("My Cloud's page: a plan manages in that page's Settings, never the plan page in the browser; a plan being checked waits; no plan read offers none", () => {
     const cases: Array<[CloudPlanSnapshot, string, boolean, string]> = [
-      [{ status: "paid", tier: "personal" }, "personal", true, "Personal active · verified by MausBot Cloud"],
-      [{ status: "paid", tier: "pro", trial: running }, "trial", true, "Pro free trial · verified by MausBot Cloud"],
-      [{ status: "paid" }, "pro", true, "Pro active · verified by MausBot Cloud"],
-      [{ status: "paid", tier: "ultra" }, "other", true, "Cloud active · verified by MausBot Cloud"],
+      [{ status: "paid", tier: "personal" }, "personal", true, "Personal active · verified by Mark Bot Cloud"],
+      [{ status: "paid", tier: "pro", trial: running }, "trial", true, "Pro free trial · verified by Mark Bot Cloud"],
+      [{ status: "paid" }, "pro", true, "Pro active · verified by Mark Bot Cloud"],
+      [{ status: "paid", tier: "ultra" }, "other", true, "Cloud active · verified by Mark Bot Cloud"],
       [{ status: "attention", tier: "max" }, "none", true, "Max · not active right now"],
-      [{ status: "attention" }, "none", true, "MausBot Cloud · not active right now"],
+      [{ status: "attention" }, "none", true, "Mark Bot Cloud · not active right now"],
       [{ status: "signin", tier: "pro" }, "unknown", false, "Sign in again to use the Cloud on this computer. Your plan is not affected."],
     ];
     for (const [snapshot, plan, signedIn, current] of cases) {
@@ -165,7 +169,7 @@ describe("the popup as a dialog", () => {
     show();
     const dialog = container.querySelector('[role="dialog"]')!;
     expect(dialog.getAttribute("aria-modal")).toBe("true");
-    expect(document.getElementById(dialog.getAttribute("aria-labelledby")!)!.textContent).toBe("MausBot Cloud Pro");
+    expect(document.getElementById(dialog.getAttribute("aria-labelledby")!)!.textContent).toBe("Mark Bot Cloud Pro");
     expect(document.getElementById(dialog.getAttribute("aria-describedby")!)!.textContent).toContain("Then from $15/month + tax.");
     expect(document.activeElement!.id).toBe("cloud-pro-popup-title");
     const order: Array<string | null> = [];
@@ -299,7 +303,7 @@ describe("who clicked, through the app's analytics", () => {
   }
   afterEach(() => { vi.unstubAllGlobals(); delete (window as { ogb?: Ogb }).ogb; setURL(START); });
 
-  it("a click by someone signed in is tied to their Cloud account's email first; showing, Not now and close never are", async () => {
+  it.skip("a click by someone signed in is tied to their Cloud account's email first; showing, Not now and close never are", async () => {
     const report = await fresh(true);
     for (const action of ["upgrade", "manage", "see_plans"] as const) report(action, person, "local");
     for (const action of ["shown", "not_now", "close"] as const) report(action, person, "local");
@@ -329,7 +333,7 @@ describe("who clicked, through the app's analytics", () => {
     expect(ph.calls).toEqual([]);
   });
 
-  it("the desktop's latest choice wins over an older one left in a port's storage", async () => {
+  it.skip("the desktop's latest choice wins over an older one left in a port's storage", async () => {
     const desktop = oneDesktop();
     const first = await pageOn(desktop, port(8799), new Map([["omb-analytics-opt-out", "1"]]));
     first.analytics.setAnalyticsEnabled(true);
@@ -339,7 +343,7 @@ describe("who clicked, through the app's analytics", () => {
     expect(sent()).toEqual([identify, ["capture", "cloud_pro_popup", { action: "manage", plan: "none", signed_in: true, page: "local" }]]);
   });
 
-  it("with no switch kept yet, a page on another port than the first counts a click without the email: the first port's storage may hold an older opt-out", async () => {
+  it.skip("with no switch kept yet, a page on another port than the first counts a click without the email: the first port's storage may hold an older opt-out", async () => {
     const desktop = oneDesktop();
     const fallback = await pageOn(desktop, port(18799), new Map());
     expect(fallback.analytics.analyticsEnabled(), "this port's storage holds no choice").toBe(true);
@@ -355,7 +359,7 @@ describe("who clicked, through the app's analytics", () => {
     expect(sent(), "once the desktop keeps a switch, every port knows").toEqual([identify, upgrade]);
   });
 
-  it("turned off in the desktop app, My Cloud's page in its window starts with it off: its popup sends nothing, and it cannot turn the desktop's switch on", async () => {
+  it.skip("turned off in the desktop app, My Cloud's page in its window starts with it off: its popup sends nothing, and it cannot turn the desktop's switch on", async () => {
     const desktop = oneDesktop();
     const local = await pageOn(desktop, port(8799), new Map());
     local.analytics.setAnalyticsEnabled(false);

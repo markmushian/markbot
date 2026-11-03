@@ -123,6 +123,7 @@ export function appHostContext(args: { width: number; maxHeight: number }): AppH
     ...(timeZone ? { timeZone } : {}),
     platform: appPlatform(),
     deviceCapabilities: { touch: matches("(pointer: coarse)") || (typeof navigator !== "undefined" && navigator.maxTouchPoints > 0), hover: matches("(hover: hover)") },
-    userAgent: `MausBot/${appVersion()}`,
+    // A User-Agent product token carries no spaces, so the readable name is run together here.
+    userAgent: `MarkBot/${appVersion()}`,
   };
 }

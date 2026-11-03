@@ -8,7 +8,9 @@ import { cn } from "@/lib/cn";
 import { activeLocale, t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 
-export const CLOUD_CALL_URL = "https://cal.com/milind-soni-002qed/30min";
+/** Empty until Mark Bot has a booking page of its own: the cancel flow then hides the offer instead of sending a
+ * person to another product's calendar. */
+export const CLOUD_CALL_URL = "";
 const ANSWERS: readonly CloudCancelAnswer[] = ["feature", "price", "setup", "broken", "later", "other"];
 const ANSWER_LABEL: Record<CloudCancelAnswer, LocaleKey> = {
   feature: "cloudCancel.answer.feature", price: "cloudCancel.answer.price", setup: "cloudCancel.answer.setup",
@@ -139,8 +141,8 @@ export function CloudCancelSheet({ renewal, actions, onClose }: { renewal: Cloud
               <textarea rows={2} maxLength={BOX_MAX} value={expected} disabled={busy} onChange={event => setExpected(event.target.value)} className={box} /></label>
             <label className="mt-3 block text-[13px] text-ink">{t("cloudCancel.improve")} <span className="text-ink-secondary">{t("cloudCancel.optional")}</span>
               <textarea rows={2} maxLength={BOX_MAX} value={improve} disabled={busy} onChange={event => setImprove(event.target.value)} className={box} /></label>
-            <p className="mt-3 text-[12px] text-ink-secondary">{t("cloudCancel.talk")}{" "}
-              <a href={CLOUD_CALL_URL} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">{t("cloudCancel.book")}</a></p>
+            {CLOUD_CALL_URL ? <p className="mt-3 text-[12px] text-ink-secondary">{t("cloudCancel.talk")}{" "}
+              <a href={CLOUD_CALL_URL} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">{t("cloudCancel.book")}</a></p> : null}
             {alert}
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <button type="button" className="ui-button" disabled={busy} onClick={close}>{t("cloudCancel.keep")}</button>

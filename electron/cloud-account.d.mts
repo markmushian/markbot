@@ -190,7 +190,7 @@ export interface CloudPlanSnapshot {
 export interface CloudPlanBridge {
   state(): Promise<CloudPlanSnapshot>;
   manage(): Promise<void>;
-  /** This device's MausBot Cloud sign-in, again, once it has ended: only from the person's click. */
+  /** This device's Mark Bot Cloud sign-in, again, once it has ended: only from the person's click. */
   signIn?(): Promise<void>;
   /** The trial's popup due now was shown: main shows it no more today. Absent on an older app. */
   noticeSeen?(): Promise<void>;

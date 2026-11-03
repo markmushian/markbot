@@ -111,9 +111,10 @@ async function thinMacPlatformTools(resources, arch) {
 // repair and revalidate the exact tree after resources are copied and before
 // either artifact target is assembled.
 export default async function afterPack(context) {
+  const markBotOss = process.env.MARKBOT_OSS === "1";
   const resources = context.packager?.getResourcesDir?.(context.appOutDir) ?? (
     context.electronPlatformName === "darwin"
-      ? path.join(context.appOutDir, "OpenMausBot.app", "Contents", "Resources")
+      ? path.join(context.appOutDir, "Mark Bot.app", "Contents", "Resources")
       : path.join(context.appOutDir, "resources")
   );
   await validateCloudflared(resources, context.electronPlatformName, Boolean(context.packager));
@@ -125,11 +126,11 @@ export default async function afterPack(context) {
   const arch = { 1: "x64", 3: "arm64" }[context.arch];
   // electron-builder warns and skips missing extraResources. A real package
   // must fail here, before signing, rather than silently ship without Chrome.
-  if (hasBrowser || context.packager) {
+  if (!markBotOss && (hasBrowser || context.packager)) {
     if (!arch) throw new Error(`Unsupported desktop browser package architecture: ${context.arch}`);
     await verifyBrowserBundle(browserRoot, `${context.electronPlatformName}-${arch}`);
   }
-  await validateDuckdb(resources, context.electronPlatformName, arch, Boolean(context.packager));
+  if (!markBotOss) await validateDuckdb(resources, context.electronPlatformName, arch, Boolean(context.packager));
   if (context.electronPlatformName === "darwin") await thinMacPlatformTools(resources, arch);
 
   if (context.electronPlatformName !== "linux") return;

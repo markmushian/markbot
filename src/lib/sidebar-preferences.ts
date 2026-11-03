@@ -7,16 +7,16 @@ export type SidebarToolsLayout = "rows" | "toolbar";
 export const SIDEBAR_DENSITIES: readonly SidebarDensity[] = ["comfortable", "compact", "icons"];
 export const SIDEBAR_TOOLS_LAYOUTS: readonly SidebarToolsLayout[] = ["rows", "toolbar"];
 
-export const SIDEBAR_DENSITY_KEY = "openmausbot.sidebarDensity";
-export const SIDEBAR_TOOLS_LAYOUT_KEY = "openmausbot.sidebarToolsLayout";
-export const SIDEBAR_WIDTH_KEY = "openmausbot.sidebarWidth";
-export const SIMPLE_SIDEBAR_WIDTH_KEY = "openmausbot.sidebarWidth.simple";
-export const SIDEBAR_ATTENTION_PINNED_KEY = "openmausbot.sidebarAttentionPinned.v1";
-export const SIDEBAR_COLLAPSED_SECTIONS_KEY = "openmausbot.sidebarCollapsedSections.v1";
-export const SIDEBAR_SECTION_ORDER_KEY = "openmausbot.sidebarSectionOrder.v1";
-export const PINNED_CIRCLES_KEY = "openmausbot.pinnedCircles";
-export const UNIVERSAL_PINS_KEY = "openmausbot.universalPins";
-export const PINNED_CIRCLE_ORDER_KEY = "openmausbot.pinnedCircleOrder.v1";
+export const SIDEBAR_DENSITY_KEY = "markbot.sidebarDensity";
+export const SIDEBAR_TOOLS_LAYOUT_KEY = "markbot.sidebarToolsLayout";
+export const SIDEBAR_WIDTH_KEY = "markbot.sidebarWidth";
+export const SIMPLE_SIDEBAR_WIDTH_KEY = "markbot.sidebarWidth.simple";
+export const SIDEBAR_ATTENTION_PINNED_KEY = "markbot.sidebarAttentionPinned.v1";
+export const SIDEBAR_COLLAPSED_SECTIONS_KEY = "markbot.sidebarCollapsedSections.v1";
+export const SIDEBAR_SECTION_ORDER_KEY = "markbot.sidebarSectionOrder.v1";
+export const PINNED_CIRCLES_KEY = "markbot.pinnedCircles";
+export const UNIVERSAL_PINS_KEY = "markbot.universalPins";
+export const PINNED_CIRCLE_ORDER_KEY = "markbot.pinnedCircleOrder.v1";
 
 export function parseSidebarDensity(value: string | null): SidebarDensity {
   switch (value) {

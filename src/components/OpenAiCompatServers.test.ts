@@ -58,6 +58,17 @@ describe("other OpenAI-compatible servers", () => {
     expect(html).toContain("No other servers yet.");
   });
 
+  it("offers the Chinese providers people here buy keys from, above the manual form", () => {
+    const html = render([instance("openaiCompat", "Other (OpenAI-compatible)")]);
+    expect(html).toContain("data-cn-providers");
+    expect(html).toContain("Zhipu GLM");
+    expect(html).toContain("Alibaba Qwen");
+    expect(html).toContain("ByteDance Doubao");
+    expect(html).toContain("Moonshot Kimi");
+    expect(html).toContain("SiliconFlow");
+    expect(html.indexOf("Zhipu GLM")).toBeLessThan(html.indexOf('aria-label="Display name"'));
+  });
+
   it("reads model IDs separated by commas, CJK commas or spaces", () => {
     expect(modelIds("glm-4.6, glm-5，glm-4.6、qwen3 ")).toEqual(["glm-4.6", "glm-5", "qwen3"]);
     expect(modelIds("  ")).toEqual([]);

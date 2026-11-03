@@ -1,17 +1,18 @@
 import { useState, type KeyboardEvent } from "react";
 import { cn } from "@/lib/cn";
-import { t } from "@/lib/i18n";
+import { activeLocale, listSeparator, t } from "@/lib/i18n";
 import { WIDGET_WEEKDAYS, type WidgetNode } from "../../../shared/widget";
 import { useWidgetField } from "./WidgetControls";
 
-let names: { narrow: string[]; short: string[]; long: string[] } | undefined;
+let names: { locale: string; narrow: string[]; short: string[]; long: string[] } | undefined;
 
-/** 1 January 2024 was a Monday. */
+/** 1 January 2024 was a Monday. The names follow the interface language, not the computer's. */
 export function widgetDayNames(): { narrow: string[]; short: string[]; long: string[] } {
-  if (names) return names;
+  const locale = activeLocale();
+  if (names?.locale === locale) return names;
   const days = WIDGET_WEEKDAYS.map((_, index) => new Date(2024, 0, 1 + index));
-  const name = (weekday: "narrow" | "short" | "long") => days.map((day) => new Intl.DateTimeFormat(undefined, { weekday }).format(day));
-  names = { narrow: name("narrow"), short: name("short"), long: name("long") };
+  const name = (weekday: "narrow" | "short" | "long") => days.map((day) => new Intl.DateTimeFormat(locale, { weekday }).format(day));
+  names = { locale, narrow: name("narrow"), short: name("short"), long: name("long") };
   return names;
 }
 
@@ -22,7 +23,7 @@ export function widgetDaysCaption(value: string): string {
   if (key === "mon,tue,wed,thu,fri") return t("widget.days.weekdays");
   if (key === "sat,sun") return t("widget.days.weekends");
   if (!picked.length) return t("widget.days.none");
-  return picked.map((day) => widgetDayNames().short[WIDGET_WEEKDAYS.indexOf(day)]).join(", ");
+  return picked.map((day) => widgetDayNames().short[WIDGET_WEEKDAYS.indexOf(day)]).join(listSeparator());
 }
 
 export function WidgetDayPicker({ node, labelledBy, end = false }: { node: WidgetNode; labelledBy?: string; end?: boolean }) {

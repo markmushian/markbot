@@ -11,15 +11,15 @@ ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 OUT=${OUT:-$(mktemp -d)}
 mkdir -p "$OUT"
 # Two published homes with the same 32-check bot box (v0.1.129 and v0.1.130).
-HOME_A=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:2909b6a9e02565f524db94d9ea5759f0290c8c90fc9d6e753d7f284ca5e5ba75
-HOME_B=ghcr.io/milind-soni/openmausbot-cloud-home@sha256:495c1bd14a5677a1f9e8b6f8560e4971093e64bb07934fb8e8920de9f66da9d6
+HOME_A=ghcr.io/milind-soni/markbot-cloud-home@sha256:2909b6a9e02565f524db94d9ea5759f0290c8c90fc9d6e753d7f284ca5e5ba75
+HOME_B=ghcr.io/milind-soni/markbot-cloud-home@sha256:495c1bd14a5677a1f9e8b6f8560e4971093e64bb07934fb8e8920de9f66da9d6
 CONNECTOR_IMAGE=mausbot-connector:e2e
 PORT=18990
 ADMIN="http://127.0.0.1:$PORT"
 CODE="MB-E2E-$(openssl rand -hex 4 | tr a-f A-F)"
 SECRET=$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n')
 if [ -n "${GITHUB_ACTIONS:-}" ]; then echo "::add-mask::$SECRET"; fi
-INSTALL_ENV=(MAUSBOT_ADMIN_URL="$ADMIN" MAUSBOT_CONNECTOR_IMAGE="$CONNECTOR_IMAGE" MAUSBOT_UPDATE_WAIT_S=90)
+INSTALL_ENV=(MARKBOT_ADMIN_URL="$ADMIN" MARKBOT_CONNECTOR_IMAGE="$CONNECTOR_IMAGE" MARKBOT_UPDATE_WAIT_S=90)
 
 step() { printf '\n== %s\n' "$*"; }
 fail() {
@@ -70,7 +70,7 @@ control state >/dev/null || fail "the fake Admin did not start: $(cat "$OUT/admi
 
 step "install.sh with the code, as a person runs it"
 sudo env "${INSTALL_ENV[@]}" sh "$ROOT/connector/install.sh" "$CODE" | tee "$OUT/install.txt"
-[ "$(tail -n 1 "$OUT/install.txt")" = "Connected. Your server shows up in MausBot in a minute." ] || fail "install.sh did not end connected"
+[ "$(tail -n 1 "$OUT/install.txt")" = "Connected. Your server shows up in Mark Bot in a minute." ] || fail "install.sh did not end connected"
 state=$(control state)
 expect '.connected and (.servers | length) == 1' "$state" "enrolled once"
 expect '.servers[0].host | .arch == "x86_64" and .apparmor and .userns and .cpus >= 2 and .diskGb >= 20 and (.docker | length) > 0' "$state" "enrolled with the host's facts"
@@ -81,7 +81,7 @@ state_dir=/var/lib/docker/volumes/mausbot-connector/_data
 
 step "running it again repairs and stays connected, without a new code"
 sudo env "${INSTALL_ENV[@]}" sh "$ROOT/connector/install.sh" | tee "$OUT/repair.txt"
-[ "$(tail -n 1 "$OUT/repair.txt")" = "Connected. Your server shows up in MausBot in a minute." ] || fail "the repair did not end connected"
+[ "$(tail -n 1 "$OUT/repair.txt")" = "Connected. Your server shows up in Mark Bot in a minute." ] || fail "the repair did not end connected"
 expect '(.servers | length) == 1 and .connections >= 2 and .connected' "$(control state)" "the same server, connected again"
 
 step "a heartbeat with every check passing"

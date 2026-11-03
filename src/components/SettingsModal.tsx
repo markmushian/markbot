@@ -31,8 +31,6 @@ import { PlaceLookCard } from "./PlaceLookCard";
 import { ChromeRailRow } from "./ChromeRailToggle";
 import { OrganizationSettings } from "./OrganizationSettings";
 import { CloudAccountSettings } from "./CloudAccountSettings";
-import { ProSettingsCard } from "./ProIntroduction";
-import { CloudUsageSettings } from "./CloudUsageMeter";
 import { Card, SettingsGroup, SIMPLE_BUTTONS } from "./SettingsPrimitives";
 import { shortcutLabel } from "./ShortcutHint";
 import { UsageSection } from "./UsageSection";
@@ -116,7 +114,7 @@ export const SIMPLE_PAGES: SimpleSettingsPage[] = [
     keywords: ["account", "theme", "looks", "open at login", "startup", "analytics", "advanced mode"] },
   { id: "ai", labelKey: "settings.group.ai", icon: Sparkles, sections: ["engines", "connections"] },
   { id: "computer", labelKey: "settings.simple.page.computer", icon: Monitor, sections: ["companion", "desktopWorkspaces", "computer", "logins"] },
-  { id: "billing", labelKey: "settings.simple.page.billing", icon: ChartNoAxesColumn, sections: ["usage", "cloudAccount"], keywords: ["billing", "included", "allowance", "cloud hours", "voice"] },
+  { id: "usage", labelKey: "settings.section.usage", icon: ChartNoAxesColumn, sections: ["usage", "cloudAccount"], keywords: ["用量", "额度", "模型", "tokens", "usage", "billing", "plan", "subscription"] },
   { id: "updates", labelKey: "settings.simple.page.updates", icon: CloudDownload, sections: ["updates"],
     keywords: ["update", "version", "release", "product updates", "newsletter", "email updates", "welcome", "tour", "diagnostics", "logs", "support"] },
 ];
@@ -331,8 +329,6 @@ export function SettingsModal() {
             <DefaultBotSidebarRow />
             <TalkShortcutRow />
 
-            <ProSettingsCard />
-            <CloudUsageSettings />
             <Card title={t("settings.profile.title")} subtitle={t("settings.profile.sharedSubtitle")}>
               <ProfileFields />
             </Card>
@@ -425,7 +421,7 @@ export function SettingsModal() {
         : <SimpleGeneralPage has={has} peopleOpen={section === "people"} onLooks={() => setLooks(true)} />;
       case "ai": return <SimpleAiPage has={has} disclose={disclose} connections={renderSection("connections")} />;
       case "computer": return <SimpleComputerPage has={has} remoteAccess={remoteAccess} servers={renderSection("desktopWorkspaces")} disclose={disclose} />;
-      case "billing": return <SimpleBillingPage has={has} disclose={disclose} cloudAccount={renderSection("cloudAccount")} />;
+      case "usage": return <SimpleBillingPage has={has} disclose={disclose} cloudAccount={renderSection("cloudAccount")} />;
       case "updates": return <SimpleUpdatesPage remoteActive={remoteActive} />;
       default:
         return page.sections.map((id) => <section key={id} data-settings-block={id} className="flex scroll-mt-4 flex-col gap-4">{renderSection(id)}</section>);

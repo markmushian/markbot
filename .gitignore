@@ -11,10 +11,13 @@ dist-server
 .DS_Store
 *.tsbuildinfo
 electron/resources/speech-helper
-electron/resources/OpenMausBot Speech.app
+electron/resources/Mark Bot Speech.app
 # stale helper from the removed Teach a skill recorder
-electron/resources/OpenMausBot Recorder.app
+electron/resources/Mark Bot Recorder.app
+# packaged builds: electron-builder writes release/, and past attempts left release-v08/, release-v09/ behind.
+# A bundled .exe is over GitHub's file limit and has no place in history.
 release
+release-*/
 .omb-scratch
 .wrangler/
 .dev.vars

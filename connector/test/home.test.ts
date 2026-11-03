@@ -11,7 +11,7 @@ import { StateStore, type Operation } from "../src/state.ts";
 import type { Transfer } from "../src/transfer.ts";
 import { FakeDocker } from "./fake-docker.ts";
 
-const image = (letter: string) => `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${letter.repeat(64)}`;
+const image = (letter: string) => `ghcr.io/milind-soni/markbot-cloud-home@sha256:${letter.repeat(64)}`;
 const A = image("a"), B = image("b"), C = image("c");
 const SECRET = "Bootstrap-secret-0123456789abcdefghijklmnopq";
 const RELAY = "box_omb_relay-token-0123456789abcdefghijklmnop";
@@ -20,7 +20,7 @@ const env = {
   OMB_PUBLIC_URL: "https://acme.example.test", OMB_CLOUD_BOOTSTRAP_SECRET: SECRET, OMB_CLOUD_BOAT_TOKEN: RELAY,
 };
 const SECCOMP = '{"defaultAction":"SCMP_ACT_ERRNO","syscalls":[]}';
-const LEASE = ".openmausbot/openmausbot-server.lease";
+const LEASE = ".markbot/markbot-server.lease";
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -124,12 +124,12 @@ describe("the home on an own server", () => {
   it("clears the lease a killed home left before each start, until the image clears it itself, and never while a home runs", async () => {
     const f = fixture();
     await f.docker.createVolume("mausbot-data", {});
-    for (const path of [LEASE, `${LEASE}.reap-0f5e6c4a-1b2c-4d3e-8f9a-0b1c2d3e4f5a`, ".openmausbot/.openmausbot-server-child/openmausbot-server.lease"]) f.write(path, "{}");
-    f.write(".openmausbot/state.json", "keep");
-    f.write("notes/openmausbot-server.lease", "someone's file");
+    for (const path of [LEASE, `${LEASE}.reap-0f5e6c4a-1b2c-4d3e-8f9a-0b1c2d3e4f5a`, ".markbot/.markbot-server-child/markbot-server.lease"]) f.write(path, "{}");
+    f.write(".markbot/state.json", "keep");
+    f.write("notes/markbot-server.lease", "someone's file");
     await started(f);
-    expect(f.data()).toEqual({ ".openmausbot/state.json": "keep", "notes/openmausbot-server.lease": "someone's file" });
-    expect(f.lines.some((line) => line.startsWith("cleared the data-directory lease records a stopped home left: /data/.openmausbot/openmausbot-server.lease"))).toBe(true);
+    expect(f.data()).toEqual({ ".markbot/state.json": "keep", "notes/markbot-server.lease": "someone's file" });
+    expect(f.lines.some((line) => line.startsWith("cleared the data-directory lease records a stopped home left: /data/.markbot/markbot-server.lease"))).toBe(true);
     // A start while the home runs never touches its live lease.
     f.write(LEASE, "{}");
     const finds = () => f.docker.helperRuns.filter((command) => command[0] === "find" && command[1] === "/data").length;
@@ -378,7 +378,7 @@ describe("the home on an own server", () => {
     expect(failed.code).toBe("docker");
     expect(JSON.stringify(failed.toJobError())).not.toContain(SECRET);
     f.docker.startFailures.set("mausbot-home", "driver failed programming external connectivity: Bind for 127.0.0.1:8080 failed: port is already allocated");
-    expect((await failure(f.home.restart())).toJobError()).toEqual({ code: "port_in_use", message: "Port 8080 on this server's loopback is used by another program, and MausBot's home needs it." });
+    expect((await failure(f.home.restart())).toJobError()).toEqual({ code: "port_in_use", message: "Port 8080 on this server's loopback is used by another program, and Mark Bot's home needs it." });
     f.docker.startFailures.set("mausbot-home", "OCI runtime create failed: apparmor failed to apply profile: write /proc/self/attr/apparmor/exec: no such file or directory");
     expect((await failure(f.home.restart())).code).toBe("box_unavailable");
     expect(existsSync(f.state.path("agent.json"))).toBe(false);

@@ -6,11 +6,11 @@ import { api, useStore } from "@/state/store";
 import { APP_REPOSITORY } from "@/lib/app-links";
 import { track } from "@/lib/analytics";
 import { brandStatus } from "@/lib/brand";
-import { buyOfferAllowed, cloudNoticeKind, cloudPlanView, cloudTrialNotice, cloudTrialView, offerTrialDays } from "@/lib/cloud-plan";
+import { buyOfferAllowed, cloudNoticeKind, cloudPlanView, cloudTrialView } from "@/lib/cloud-plan";
 import { jobRoutine, useCloudIntent } from "@/lib/cloud-intent";
 import { CLOUD_INTENT_GIVEN, cloudSetupStage } from "@/lib/cloud-setup";
 import { cornerPopupWaits, firstReplyPending } from "@/lib/corner-popup";
-import { CLOUD_INTRO, CLOUD_NOTICE, CLOUD_PRO_UPDATE_NOTICE, CLOUD_TRIAL_NOTICE, dismissNotice, introShown, introStage, nextNotice, noticeSeen, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_UNTIL, PRODUCT_HUNT_URL, SIMPLE_MODE_NOTICE, STAR_NOTICE, UPDATES_CONSENT_NOTICE, usedBefore } from "@/lib/notices";
+import { CLOUD_INTRO, CLOUD_NOTICE, CLOUD_PRO_UPDATE_NOTICE, CLOUD_TRIAL_NOTICE, dismissNotice, introShown, introStage, nextNotice, noticeSeen, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_URL, SIMPLE_MODE_NOTICE, STAR_NOTICE, UPDATES_CONSENT_NOTICE } from "@/lib/notices";
 import { useSimpleModePromptSeen } from "@/lib/simple-mode-prompt";
 import { cloudSignInDue, onboardingCloudOffered, welcomeFinishedThisLaunch, type WelcomeViewer } from "@/lib/onboarding";
 import { launchDialogShown, markLaunchDialog } from "@/lib/launch-dialogs";
@@ -21,12 +21,11 @@ import { CLOUD_NOTICE_CARD, cloudNoticeStep, CloudNoticeCard } from "./CloudNoti
 import { CLOUD_PRO_POPUP_SOURCE, CloudProPopup, cloudProCloudPageView, cloudProPopupView, reportCloudProPopup, useDesktopNotices, useOtherDialogOpen,
   type CloudProPopupAction } from "./CloudProPopup";
 import { CloudTrialIntroCard } from "./CloudTrialIntro";
-import { useMoveQuiet } from "./CloudSendStrip";
 import { CloudTrialNoticeCard, useCloudPlanSnapshot } from "./CloudTrialNotice";
 import { LinkButton, NoticeCard, NoticeToast, NotNowButton } from "./NoticeCard";
 import { localDesktopPage } from "./onboarding/WelcomeGate";
 import { UpdatesConsentDialog, updatesConsentBridge, useUpdatesConsent } from "./UpdatesConsent";
-import { useMausBotWelcomeDue } from "./MausBotWelcome";
+import { useMarkBotWelcomeDue } from "./MarkBotWelcome";
 import { reportSimpleModePrompt, SimpleModePrompt } from "./SimpleModePrompt";
 
 function StarCard({ onDismiss }: { onDismiss: () => void }) {
@@ -79,8 +78,7 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
   const [consentDone, setConsentDone] = useState(false);
   const updater = useUpdaterState();
   const intent = useCloudIntent();
-  const moving = useMoveQuiet(now);
-  const mausBot = useMausBotWelcomeDue(viewer);
+  const mausBot = useMarkBotWelcomeDue(viewer);
   useEffect(() => {
     if (!bridge) return;
     let active = true, updated = false;
@@ -101,7 +99,6 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
   const record = state.config?.onboarding;
   const introAllowed = Boolean(bridge) && brandStatus().source !== "file" && organization !== true && !onboardingCloudOffered(record);
   const stage = introStage(record, now());
-  const trialDue = cloudTrialNotice(plan);
   const popupHere = Boolean(desktop) && (local ? Boolean(bridge) : viewer?.cloudHome === true) && brandStatus().source !== "file";
   const seenHere = local && (noticeSeen(record, CLOUD_PRO_UPDATE_NOTICE) || onboardingCloudOffered(record));
   const popupPending = popupHere && !seenHere && (!desktopState
@@ -124,7 +121,6 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
     : bridge ? cloudProPopupView(account, !bridge.offer ? null : offerFor === offerKey ? offer : undefined)
     : planBridge ? cloudProCloudPageView(plan) : "loading";
   const popupView = typeof popupState === "object" ? popupState : null;
-  const popupBlocked = useOtherDialogOpen(popupPending) || Boolean(state.liveCall && state.liveCall.status !== "ended");
   const consentDue = consent.state?.available === true && consent.state.due && !consentDone;
   const consentBlocked = useOtherDialogOpen(consentDue) || Boolean(state.liveCall && state.liveCall.status !== "ended");
   const consentFact = !consentHere || consentDone ? false : consent.state === undefined ? null : consentDue ? (consentBlocked ? null : true) : false;
@@ -140,20 +136,12 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
       engineReady: state.instances.some(engineReady), onboarding: setupRecord, planned: Boolean(jobRoutine(state.routines, intent.sent)) }));
   const waits = cornerPopupWaits(state, updater, { quiet, idle: true, viewer }) || Boolean(state.cloudAdd) || state.cloudHowTo || setupHere;
   const kind = view ? cloudNoticeKind(view, account) : null;
-  const introDue = (): boolean | null => {
-    if (!introAllowed || !view) return false;
-    if (view.kind === "unknown" || view.kind === "connecting" || organization === null) return null;
-    if (!buyOfferAllowed(view) || !usedBefore(state.bots)) return false;
-    if (offer === undefined) return null;
-    if (offerTrialDays(offer) === null) return false;
-    return introOpen || stage === "due" ? true : null;
-  };
   const cards = Boolean(bridge || planBridge);
   // Promotions never land on a new install's first chat: they wait for its first reply, and the full-screen Cloud Pro popup
   // also for a launch after the one whose welcome just finished. Account and billing notices keep their own rules.
   // Unknown (null) until the bots have loaded, so nothing lower in the queue flashes up before them.
   const firstChat = firstReplyPending(state);
-  // MausBot's first-launch card goes first: the popup and the question wait while it is due. The popup skips a launch the
+  // Mark Bot's first-launch card goes first: the popup and the question wait while it is due. The popup skips a launch the
   // card used; the question may follow the card once it closes, as it follows the popup.
   const afterWelcome = welcomeFinishedThisLaunch() || launchDialogShown() === "mausbot" || firstChat;
   const consentWaits = welcomeFinishedThisLaunch() || firstChat;
@@ -161,25 +149,22 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
   const consentNow = consentWaits === true || consentFact === false ? false : consentWaits === null || mausBotFirst ? null : consentFact;
   // After a closed popup only the product-updates question may follow in this launch; nothing else does.
   const notice = waits ? null : closed ? (consentNow === true ? UPDATES_CONSENT_NOTICE : null) : cards || popupHere || consentHere || simpleDue ? nextNotice({
-    // As the Cloud Pro popup: never in the launch whose welcome just finished, nor over MausBot's first-launch card.
+    // As the Cloud Pro popup: never in the launch whose welcome just finished, nor over Mark Bot's first-launch card.
     [SIMPLE_MODE_NOTICE]: !simpleDue || afterWelcome === true ? false : afterWelcome === null || mausBotFirst || simpleBlocked ? null : true,
-    [CLOUD_PRO_UPDATE_NOTICE]: !popupPending || moving || afterWelcome === true ? false
-      : afterWelcome === null || mausBotFirst || popupState === "loading" || moving === null || (popupView !== null && popupBlocked) ? null : popupView !== null,
+    [CLOUD_PRO_UPDATE_NOTICE]: false,
     [UPDATES_CONSENT_NOTICE]: consentNow,
-    [PRODUCT_HUNT_NOTICE]: !cards || moving || firstChat === true || brandStatus().source === "file" || now() >= PRODUCT_HUNT_UNTIL ? false
-      : organization === null || moving === null || firstChat === null ? null : !organization,
-    [CLOUD_INTRO]: moving ? false : moving === null ? null : introDue(),
-    [CLOUD_TRIAL_NOTICE]: planBridge && plan === null ? null : Boolean(key && (trialDue || trialOpen === key)),
-    [CLOUD_NOTICE]: !view ? false : view.kind === "unknown" ? null
-      : Boolean(kind && !noticeSeen(record, CLOUD_NOTICE_CARD[kind].dismissed)),
-    [STAR_NOTICE]: !bridge || moving || brandStatus().source === "file" || !usedBefore(state.bots) ? false : moving === null ? null : true,
+    [PRODUCT_HUNT_NOTICE]: false,
+    [CLOUD_INTRO]: false,
+    [CLOUD_TRIAL_NOTICE]: false,
+    [CLOUD_NOTICE]: false,
+    [STAR_NOTICE]: false,
   }, id => id === CLOUD_INTRO ? stage === "done" && !introOpen
     : id === STAR_NOTICE || id === PRODUCT_HUNT_NOTICE ? noticeSeen(record, id) : false) : null;
 
   const shownKey = notice === CLOUD_TRIAL_NOTICE ? key : notice;
   useEffect(() => {
     if (!shownKey) return;
-    // The popups and the question own this launch: MausBot's first-launch card waits for a later one.
+    // The popups and the question own this launch: Mark Bot's first-launch card waits for a later one.
     if (shownKey === SIMPLE_MODE_NOTICE || shownKey === CLOUD_PRO_UPDATE_NOTICE || shownKey === UPDATES_CONSENT_NOTICE) markLaunchDialog("notices");
     if (shownKey === CLOUD_INTRO) {
       setIntroOpen(true);

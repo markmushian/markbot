@@ -32,7 +32,10 @@ describe("the note's way to My Cloud", () => {
     vi.doMock("@/state/store", () => ({ useStore: () => ({ state: { config: { cloudHome: false } }, dispatch: vi.fn() }) }));
     vi.doMock("./ProIntroduction", () => ({ useCloudPlan: () => ({ view: { kind: "paid", label: "Pro", checking: false }, account: { machine: { status: "ready" } } }) }));
     vi.doMock("./onboarding/WelcomeGate", () => ({ localDesktopPage: () => true }));
-    vi.doMock("@/lib/brand", () => ({ brandStatus: () => ({ source: "default" }), productName: () => "MausBot" }));
+    vi.doMock("@/lib/brand", () => ({ brandStatus: () => ({ source: "default" }), productName: () => "Mark Bot" }));
+    // resetModules reloads i18n, which starts on the product's own default; this file asserts English.
+    const { setLocale } = await import("@/lib/i18n");
+    setLocale("en");
     const { RoutineScheduleNote } = await import("./RoutineScheduleNote");
     const html = renderToStaticMarkup(createElement(RoutineScheduleNote));
     expect(html.replace(/<[^>]+>/g, "")).toContain("To run routines 24/7, create them in the Cloud. Open the Cloud");

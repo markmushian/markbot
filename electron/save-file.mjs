@@ -34,10 +34,24 @@ async function canonicalPath(target, fsp, message) {
   }
 }
 
-function assertInside(root, target) {
-  if (target !== root && !target.startsWith(root + path.sep)) {
+const BOT_DATA_DIRS = [".markbot-oss", ".markbot"];
+
+function assertInside(roots, target) {
+  if (!roots.some((root) => target === root || target.startsWith(root + path.sep))) {
     throw new Error("Only files created by your bots can be saved");
   }
+}
+
+async function botDataRoots(home, fsp) {
+  const roots = [];
+  for (const name of BOT_DATA_DIRS) {
+    try {
+      roots.push(await fsp.realpath(path.join(home, name)));
+    } catch {
+    }
+  }
+  if (roots.length === 0) throw new Error("Only files created by your bots can be saved");
+  return roots;
 }
 
 function assertRegularFile(stats) {
@@ -51,19 +65,15 @@ function isSameFile(left, right) {
 // Paths come from model-rendered markdown, so they are untrusted.
 async function resolveSource(rawPath, { home, fsp, platform }) {
   const target = normalizeSourcePath(rawPath);
-  const root = await canonicalPath(
-    path.join(home, ".openmausbot"),
-    fsp,
-    "Only files created by your bots can be saved",
-  );
+  const roots = await botDataRoots(home, fsp);
   const filePath = await canonicalPath(target, fsp, "That file no longer exists");
-  assertInside(root, filePath);
+  assertInside(roots, filePath);
 
   const stats = await fsp.stat(filePath, { bigint: true });
   assertRegularFile(stats);
   if (platform === "win32") {
     const pathAfterStat = await canonicalPath(filePath, fsp, "That file no longer exists");
-    assertInside(root, pathAfterStat);
+    assertInside(roots, pathAfterStat);
   }
   return { filePath, stats };
 }

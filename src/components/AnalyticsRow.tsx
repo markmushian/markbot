@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { analyticsEnabled, setAnalyticsEnabled } from "@/lib/analytics";
 import { t } from "@/lib/i18n";
+import { DOCS_URL } from "@/lib/app-links";
 import { SettingRow, Switch } from "./SettingsPrimitives";
 
-const ANALYTICS_DOC_URL = "https://github.com/milind-soni/OpenMausBot/blob/main/docs/analytics.md";
+const ANALYTICS_DOC_URL = `${DOCS_URL}/analytics.md`;
 
 export function AnalyticsRow({ simple = false }: { simple?: boolean }) {
   const [on, setOn] = useState(analyticsEnabled);

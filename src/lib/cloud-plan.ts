@@ -62,8 +62,8 @@ export function xResearchAction(view: CloudPlanView | null): "connecting" | "sig
 export function cloudPlanLine(view: CloudPlanView): string | null {
   switch (view.kind) {
     case "paid": return t(view.trial ? "cloudAccount.trialPlan" : "cloudAccount.pro", { plan: view.label });
-    case "attention": return t("cloudAccount.inactive", { plan: view.label ?? "MausBot Cloud" });
-    case "purchase": return t("cloudAccount.purchaseReceived", { plan: view.label ?? "MausBot Cloud" });
+    case "attention": return t("cloudAccount.inactive", { plan: view.label ?? "Mark Bot Cloud" });
+    case "purchase": return t("cloudAccount.purchaseReceived", { plan: view.label ?? "Mark Bot Cloud" });
     case "unverified": return view.label ? t("cloudAccount.lastPlan", { plan: view.label }) : null;
     case "reauth": return view.label ? t("cloudAccount.planName", { plan: view.label }) : null;
     case "free": return t("cloudAccount.free");
@@ -77,9 +77,16 @@ export function trialRunning(trial: CloudTrial | undefined): boolean {
 
 const shortDate = (value: number) => new Intl.DateTimeFormat(activeLocale(), { day: "numeric", month: "short" }).format(new Date(value));
 
+/** Charges stay in USD, so the app's language only decides how that reads: 中文 says "US$99", never a bare "$99"
+ * that a Chinese reader could take for yuan. Every other language keeps the plain "$99". */
+function moneyFormat(minimumFractionDigits: number): Intl.NumberFormat {
+  const locale = activeLocale();
+  return new Intl.NumberFormat(locale.startsWith("zh") ? locale : "en-US", { style: "currency", currency: "USD", minimumFractionDigits });
+}
+
 export function usd(dollars: number): string {
   const cents = Math.round(dollars * 100);
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: cents % 100 ? 2 : 0 }).format(cents / 100);
+  return moneyFormat(cents % 100 ? 2 : 0).format(cents / 100);
 }
 
 export type CloudTrialAction = "manage" | "subscribe" | "status";
@@ -247,7 +254,7 @@ export function sameTerms(shown: CloudOffer | null | undefined, mine: CloudOffer
 }
 
 export function dueToday(cents: number): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(cents / 100);
+  return moneyFormat(2).format(cents / 100);
 }
 
 

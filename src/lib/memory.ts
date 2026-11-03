@@ -1,4 +1,5 @@
 import { ApiError, api } from "@/state/store";
+import { activeLocale } from "@/lib/i18n";
 
 export const MEMORY_INDEX = "MEMORY.md";
 
@@ -175,7 +176,7 @@ export function relativeTime(at: number, now = Date.now()): string {
   const days = Math.round(hours / 24);
   if (days === 1) return "yesterday";
   if (days < 7) return `${days} days ago`;
-  return new Date(at).toLocaleDateString([], { month: "short", day: "numeric" });
+  return new Date(at).toLocaleDateString(activeLocale(), { month: "short", day: "numeric" });
 }
 
 export function localizedRelativeTime(at: number, locale: string, now = Date.now()): string {

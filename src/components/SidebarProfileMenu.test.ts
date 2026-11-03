@@ -35,7 +35,7 @@ import {
 } from "@/lib/phone-pairing";
 import type { CloudAccountState } from "../../electron/cloud-account.mjs";
 import type { CloudMachine } from "../../electron/cloud-home.mjs";
-import { PHONE_APPS, PhoneAppDialog, type PhoneAppConnect } from "./PhoneAppDialog";
+import { LISTED_PHONE_APPS, PHONE_APPS, PhoneAppDialog, type PhoneAppConnect } from "./PhoneAppDialog";
 import type { UpdaterState } from "@/lib/updater";
 import type { SidebarMenuItem } from "./SidebarPopoverMenu";
 import { moveMenuItems } from "./AccountMove";
@@ -112,7 +112,7 @@ describe("updatePhase", () => {
 describe("updateLabel", () => {
   it("names the version it is ready to install", () => {
     expect(updateLabel("downloaded", state({ status: "downloaded", version: "0.2.0" }))).toBe(
-      "Restart to update to MausBot 0.2.0",
+      "Restart to update to Mark Bot 0.2.0",
     );
   });
 
@@ -126,7 +126,7 @@ describe("updateLabel", () => {
     expect(updateLabel("installing", state({ status: "installing", message: "Restart is taking longer than expected." })))
       .toBe("Restart is taking longer than expected.");
     expect(updateLabel("downloaded", state({ status: "downloaded", version: "0.2.0", installMode: "handoff" })))
-      .toBe("Install MausBot 0.2.0");
+      .toBe("Install Mark Bot 0.2.0");
     expect(updateLabel("installing", state({ status: "installing", installMode: "handoff" })))
       .toBe("Opening a terminal…");
   });
@@ -198,13 +198,19 @@ describe("updateNoteworthy", () => {
 });
 
 describe("outward links", () => {
+  // Every outward link belongs to Mark Bot itself: one that still names the upstream project, its author or its
+  // community chats is a brand leak, and anything but https breaks when the packaged app hands it to the browser.
+  const UPSTREAM = /openmausbot|milind-soni|discord\.gg/i;
+
   it("sends Help Center to the docs the website also links to", () => {
     expect(HELP_CENTER_URL).toBe(DOCS_URL);
-    expect(DOCS_URL).toBe("https://github.com/milind-soni/OpenMausBot/tree/main/docs");
+    expect(new URL(DOCS_URL).protocol).toBe("https:");
+    expect(DOCS_URL).not.toMatch(UPSTREAM);
   });
 
-  it("sends Send Feedback to the Discord community", () => {
-    expect(FEEDBACK_URL).toBe("https://discord.gg/9Wb8MEpXRs");
+  it("sends Send Feedback to a page of our own", () => {
+    expect(new URL(FEEDBACK_URL).protocol).toBe("https:");
+    expect(FEEDBACK_URL).not.toMatch(UPSTREAM);
   });
 });
 
@@ -271,7 +277,7 @@ describe("the phone entries", () => {
 
   it("never offers the iOS-only entry it replaced", () => {
     for (const target of ["computer", "server"] as const) {
-      expect(items(target, null).list.map((item) => item.label)).not.toContain("Get OpenMausBot for iOS");
+      expect(items(target, null).list.map((item) => item.label)).not.toContain("Get Mark Bot for iOS");
     }
   });
 
@@ -310,7 +316,7 @@ describe("choosing where the phone connects", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it("when the Cloud cannot be opened, lands on Settings → MausBot Cloud, which says what to do", async () => {
+  it("when the Cloud cannot be opened, lands on Settings → Mark Bot Cloud, which says what to do", async () => {
     const bridge = { connectHomeForPhone: vi.fn().mockRejectedValue(new Error("offline")) };
     const dispatch = vi.fn();
     selectPhoneDestination(destinations(readyCloud)[0]!, { bridge, dispatch });
@@ -328,10 +334,13 @@ describe("choosing where the phone connects", () => {
 });
 
 describe("Get the phone app", () => {
-  it("offers iPhone and Android with the links the website and Cloud page use", () => {
-    expect(PHONE_APPS.map((app) => [app.id, app.url])).toEqual([["ios", IOS_APP_STORE_URL], ["android", ANDROID_APK_URL]]);
-    expect(IOS_APP_STORE_URL).toBe("https://apps.apple.com/in/app/mausbot/id6803387923");
-    expect(ANDROID_APK_URL).toBe("https://github.com/milind-soni/OpenMausBot/releases/download/android-v1.5.0/OpenMausBot.apk");
+  it("lists no store until Mark Bot ships a phone app of its own", () => {
+    // The old links pointed at another product's App Store page and APK, which would hand people the wrong app.
+    // Set them in src/lib/app-links.ts when Mark Bot publishes its own, and this test moves with them.
+    expect(PHONE_APPS.map((app) => app.id)).toEqual(["ios", "android"]);
+    expect(IOS_APP_STORE_URL).toBe("");
+    expect(ANDROID_APK_URL).toBe("");
+    expect(LISTED_PHONE_APPS).toEqual([]);
   });
 
   const render = (connect?: PhoneAppConnect[]) => {
@@ -344,13 +353,11 @@ describe("Get the phone app", () => {
   };
   const to = (key: string, subtitle: string): PhoneAppConnect => ({ key, subtitle, onSelect: () => {} });
 
-  it("draws a code to scan for each, and points on to Connect your phone where this window can pair", () => {
+  it("draws no code while there is nothing to install, and still points on to Connect your phone where this window can pair", () => {
     const html = render([to("here", "to this computer")]);
-    expect(html).toContain('data-phone-app="ios"');
-    expect(html).toContain('data-phone-app="android"');
-    expect(html.match(/<svg/g)?.length).toBe(2);
-    expect(html).toContain("Open in the App Store");
-    expect(html).toContain("Download the APK");
+    expect(html).not.toContain('data-phone-app="ios"');
+    expect(html).not.toContain('data-phone-app="android"');
+    expect(html).toContain("no phone app of its own yet");
     expect(html).toContain("Connect your phone");
     expect(html).toContain("to this computer");
     expect(render()).not.toContain("Connect your phone");
@@ -374,7 +381,7 @@ describe("profileMenuItems", () => {
     phone: [{ key: "phone-app", label: "Get the phone app", onSelect: noop }],
     usage: true,
     update: null,
-    account: "OpenMausBot Cloud",
+    account: "Mark Bot Cloud",
     onUsage: noop, onSettings: noop, onShortcuts: noop, onAbout: noop, onHelp: noop, onFeedback: noop, onAccount: noop,
     ...patch,
   });
@@ -384,7 +391,7 @@ describe("profileMenuItems", () => {
     expect(items.map((item) => item.key)).toEqual(["usage", "phone-app", "support", "settings", "account"]);
     expect(items.filter((item) => item.separatorBefore).map((item) => item.key)).toEqual(["account"]);
     expect(items.find((item) => item.key === "support")!.submenu!.map((item) => item.key)).toEqual(["help", "feedback", "shortcuts", "about"]);
-    expect(items.find((item) => item.key === "account")!.label).toBe("OpenMausBot Cloud");
+    expect(items.find((item) => item.key === "account")!.label).toBe("Mark Bot Cloud");
   });
 
   it("only offers what this window has: no usage on a remote server, no account without one", () => {
@@ -424,7 +431,7 @@ describe("Simple mode's account menu", () => {
     phone: simplePhoneItems({ connected: false, onGetApp: noop }),
     usage: true,
     update: { key: "update", label: "Check for updates", onSelect: noop },
-    account: "MausBot Cloud",
+    account: "Mark Bot Cloud",
     simple: { tools, places: placeMenuItems(place(), { owner: null, onCloudSettings: noop }) },
     onUsage: noop, onSettings: noop, onShortcuts: noop, onAbout: noop, onHelp: noop, onFeedback: noop, onAccount: noop,
     ...patch,
@@ -446,7 +453,7 @@ describe("Simple mode's account menu", () => {
   });
 
   it("raises an update that is ready or failed to its own top row with a pill, and keeps it out of support", () => {
-    const update = { key: "update", label: "Restart to update to MausBot 0.2.0", subtitle: "notes", attention: true, onSelect: noop };
+    const update = { key: "update", label: "Restart to update to Mark Bot 0.2.0", subtitle: "notes", attention: true, onSelect: noop };
     const items = build({ update, updateTop: { label: "Update ready", action: "Restart" } });
     expect(groups(items)[0]).toEqual(["update"]);
     expect(items[0]).toMatchObject({ label: "Update ready", subtitle: undefined, attention: false });
@@ -519,7 +526,7 @@ describe("Simple mode's account menu", () => {
 
   it("puts the move's row first, in its own group, above a raised update", () => {
     const move = [{ key: "cloud-move", label: "Try My Cloud move again", title: "My Cloud did not answer.", onSelect: noop }];
-    const update = { key: "update", label: "OpenMausBot 0.2.0 ready, restart", onSelect: noop };
+    const update = { key: "update", label: "Mark Bot 0.2.0 ready, restart", onSelect: noop };
     expect(groups(build({ move }))).toEqual([
       ["cloud-move"],
       ["usage", "phone-app", "support", "settings"],

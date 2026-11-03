@@ -262,7 +262,7 @@ function RoomTextMessage({
                 }}
               />}
               {m.via === "api" && (
-                <div className="mt-1 text-[11px] text-ink-secondary">Sent through the API, not typed here</div>
+                <div className="mt-1 text-[11px] text-ink-secondary">{t("chat.sentThroughApi")}</div>
               )}
               {collapsible && (
                 <button type="button" onClick={() => setExpanded(true)} className="mt-1 text-[13px] text-ink-secondary hover:text-ink">

@@ -70,7 +70,7 @@ afterEach(() => {
 describe("Inspector on the app's live stream", () => {
   it("shows this thread's runtime events and opens no stream of its own", async () => {
     await mount(InspectorPanel);
-    const events = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent === "events")!;
+    const events = [...document.querySelectorAll<HTMLButtonElement>('[role="tab"]')].find((tab) => tab.textContent?.toLowerCase() === "events")!;
     flushSync(() => events.click());
     flushSync(() => {
       frame(runtime("e1", { type: "item.started", itemType: "tool", title: "List the files" }));

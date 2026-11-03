@@ -45,7 +45,7 @@ async function connected(options: { handle?: (job: Job) => Promise<JobReply | nu
   return { admin, origin, record, agent, handled, statuses, lines };
 }
 
-describe("the connector's connection to MausBot", () => {
+describe("the connector's connection to Mark Bot", () => {
   it("enrols once with the one-time code, then connects with its own token and sends a heartbeat every interval", async () => {
     const { admin, record, statuses, lines } = await connected();
     const [server] = admin.servers.values();
@@ -57,7 +57,7 @@ describe("the connector's connection to MausBot", () => {
     expect(admin.connections).toHaveLength(1);
     expect(lines.join("\n")).not.toContain(record.agentToken);
     await expect(enroll({ admin: admin.origin, code: [...admin.codes][0] ?? "MB-USED-CODE", host, connector })).rejects.toThrow(
-      "This code isn't valid anymore: a code works once, for one hour. Make a new one in MausBot and run the install command again.");
+      "This code isn't valid anymore: a code works once, for one hour. Make a new one in Mark Bot and run the install command again.");
   });
 
   it("answers each job once: the same id again gets the same reply, and never a second run", async () => {
@@ -83,7 +83,7 @@ describe("the connector's connection to MausBot", () => {
   it("keeps a reply made while the connection is down, comes back with backoff, and delivers it", async () => {
     let finish: (reply: JobReply) => void = () => {};
     const { admin } = await connected({ handle: (job) => new Promise((resolve) => { finish = resolve; void job; }) });
-    admin.send({ id: "slow-1", type: "update", args: { image: `ghcr.io/milind-soni/openmausbot-cloud-home@sha256:${"b".repeat(64)}` } });
+    admin.send({ id: "slow-1", type: "update", args: { image: `ghcr.io/milind-soni/markbot-cloud-home@sha256:${"b".repeat(64)}` } });
     await new Promise((resolve) => setTimeout(resolve, 50));
     admin.drop();
     await until(() => !admin.connected);
@@ -102,7 +102,7 @@ describe("the connector's connection to MausBot", () => {
     expect(backoffMs(20, 0.5)).toBe(60_000);
   });
 
-  it("slows right down when MausBot no longer knows its token, and says so", async () => {
+  it("slows right down when Mark Bot no longer knows its token, and says so", async () => {
     const waits: number[] = [];
     const { admin, record, statuses, lines } = await connected({
       setTimer: (callback, ms) => {
@@ -114,20 +114,20 @@ describe("the connector's connection to MausBot", () => {
     admin.drop();
     await until(() => statuses.some((patch) => patch.unauthorized === true));
     expect(waits).toContain(5 * 60_000);
-    expect(lines).toContain("MausBot no longer knows this server; run the install command again with a new code to connect it");
+    expect(lines).toContain("Mark Bot no longer knows this server; run the install command again with a new code to connect it");
     expect(CLOSE_UNAUTHORIZED).toBe(4401);
   });
 
   it("connects to the Admin's own origin over wss, and to a test Admin on loopback over ws only", () => {
-    expect(connectUrl("https://cloud.openmausbot.com")).toBe("wss://cloud.openmausbot.com/api/cloud/servers/agent/connect");
+    expect(connectUrl("https://cloud.markbot.app")).toBe("wss://cloud.markbot.app/api/cloud/servers/agent/connect");
     expect(connectUrl("http://127.0.0.1:9000")).toBe("ws://127.0.0.1:9000/api/cloud/servers/agent/connect");
-    expect(adminOrigin("https://cloud.openmausbot.com/")).toBe("https://cloud.openmausbot.com");
+    expect(adminOrigin("https://cloud.markbot.app/")).toBe("https://cloud.markbot.app");
     expect(adminOrigin("http://127.0.0.1:9000")).toBe("http://127.0.0.1:9000");
-    for (const bad of ["http://cloud.openmausbot.com", "https://user:pw@cloud.openmausbot.com", "ftp://x", undefined]) expect(() => adminOrigin(bad)).toThrow();
+    for (const bad of ["http://cloud.markbot.app", "https://user:pw@cloud.markbot.app", "ftp://x", undefined]) expect(() => adminOrigin(bad)).toThrow();
   });
 
-  it("says plainly when MausBot cannot be reached at enrolment", async () => {
-    await expect(enroll({ admin: "http://127.0.0.1:9", code: "MB-1A2B-3C4D", host, connector })).rejects.toThrow(/^This server can't reach MausBot at http:\/\/127\.0\.0\.1:9 /);
-    await expect(enroll({ admin: "http://127.0.0.1:9", code: "MB 1A2B", host, connector })).rejects.toThrow("the code is the one-time code MausBot shows next to the install command");
+  it("says plainly when Mark Bot cannot be reached at enrolment", async () => {
+    await expect(enroll({ admin: "http://127.0.0.1:9", code: "MB-1A2B-3C4D", host, connector })).rejects.toThrow(/^This server can't reach Mark Bot at http:\/\/127\.0\.0\.1:9 /);
+    await expect(enroll({ admin: "http://127.0.0.1:9", code: "MB 1A2B", host, connector })).rejects.toThrow("the code is the one-time code Mark Bot shows next to the install command");
   });
 });

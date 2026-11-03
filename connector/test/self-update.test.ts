@@ -22,7 +22,7 @@ const envOf = (container: FakeContainer) => Object.fromEntries((container.spec.E
 function installed(instance: string): ContainerSpec {
   return {
     Image: OLD,
-    Env: [`MAUSBOT_INSTANCE=${instance}`, `MAUSBOT_CONNECTOR_IMAGE=${OLD}`, "MAUSBOT_UPDATE_WAIT_S=60", "PATH=/usr/local/bin:/usr/bin:/bin"],
+    Env: [`MARKBOT_INSTANCE=${instance}`, `MARKBOT_CONNECTOR_IMAGE=${OLD}`, "MARKBOT_UPDATE_WAIT_S=60", "PATH=/usr/local/bin:/usr/bin:/bin"],
     Cmd: ["run"],
     Labels: { "com.mausbot.role": "connector", "com.mausbot.instance": instance },
     HostConfig: {
@@ -61,7 +61,7 @@ describe("the connector replacing itself", () => {
     const f = await fixture();
     let candidateReply: JobReply | null = null;
     f.docker.onConnectorStart = async (container) => {
-      const started = await f.updater(envOf(container).MAUSBOT_INSTANCE).atStart(async () => true);
+      const started = await f.updater(envOf(container).MARKBOT_INSTANCE).atStart(async () => true);
       if (started.role === "candidate") candidateReply = started.reply;
     };
     const reply = await f.updater("instance-old").run(f.job, f.agent);
@@ -70,9 +70,10 @@ describe("the connector replacing itself", () => {
     expect([...f.docker.containers.keys()]).toEqual(["mausbot-connector"]);
     const now = f.docker.container("mausbot-connector")!;
     expect(now.spec.Image).toBe(NEW);
-    const instance = envOf(now).MAUSBOT_INSTANCE;
+    const instance = envOf(now).MARKBOT_INSTANCE;
     expect(instance).not.toBe("instance-old");
-    expect(envOf(now)).toEqual({ MAUSBOT_UPDATE_WAIT_S: "60", MAUSBOT_INSTANCE: instance, MAUSBOT_CONNECTOR_IMAGE: NEW });
+        // The waiting window carries over from the container that ran before; the identity is written fresh.
+    expect(envOf(now)).toEqual({ MARKBOT_UPDATE_WAIT_S: "60", MARKBOT_INSTANCE: instance, MARKBOT_CONNECTOR_IMAGE: NEW });
     expect(now.spec.Labels).toMatchObject({ "com.mausbot.role": "connector", "com.mausbot.instance": instance });
     expect(now.spec.HostConfig).toEqual(installed("x").HostConfig);
     expect(now.spec.Cmd).toEqual(["run"]);
@@ -86,7 +87,7 @@ describe("the connector replacing itself", () => {
   it("keeps the running connector when the new one never connects, and removes the new one", async () => {
     const f = await fixture();
     const reply = await f.updater("instance-old").run(f.job, f.agent);
-    expect(reply).toEqual({ id: "self-1", ok: false, error: { code: "self_update_failed", message: "The new connector did not connect to MausBot within 3 minutes; kept this one." } });
+    expect(reply).toEqual({ id: "self-1", ok: false, error: { code: "self_update_failed", message: "The new connector did not connect to Mark Bot within 3 minutes; kept this one." } });
     expect([...f.docker.containers.keys()]).toEqual(["mausbot-connector"]);
     expect(f.docker.container("mausbot-connector")!.spec.Image).toBe(OLD);
     expect(f.agent).toMatchObject({ paused: 1, resumed: 1 });
@@ -97,7 +98,7 @@ describe("the connector replacing itself", () => {
     const f = await fixture();
     let role = "";
     f.docker.onConnectorStart = async (container) => {
-      role = (await f.updater(envOf(container).MAUSBOT_INSTANCE).atStart(async () => false)).role;
+      role = (await f.updater(envOf(container).MARKBOT_INSTANCE).atStart(async () => false)).role;
     };
     const reply = await f.updater("instance-old").run(f.job, f.agent);
     expect(role).toBe("superseded");

@@ -99,9 +99,10 @@ describe("bot-first sidebar", () => {
       const markup = renderToStaticMarkup(createElement(Capture));
       const row = findElement(tree, "data-sidebar-bot-row", bot.id)!;
       expect(String(row.props.className).split(" ")).toEqual(expect.arrayContaining([...spacing]));
+      // The default portrait is the MarkAvatar PNG, which carries its size in a style, not as SVG attributes.
       expect(markup).toContain(avatar.avatarUrl
         ? `width="${size}" height="${size}"`
-        : `width="${size}px" height="${size}px"`);
+        : `width:${size}px;height:${size}px`);
       // Simple draws its mascot larger than the 36px it takes in the row, so the text stays where it was.
       if (!advanced && density === "comfortable") expect(markup).toContain('<span class="relative flex shrink-0 -m-[3px]">');
     }
@@ -302,7 +303,7 @@ describe("bot-first sidebar", () => {
     const markup = renderToStaticMarkup(createElement(Capture));
     const row = findElement(tree, "data-sidebar-group-row", group.id)!;
     expect(String(row.props.className).split(" ")).toEqual(expect.arrayContaining([...spacing]));
-    expect(markup).toContain(`width="${face}px" height="${face}px"`);
+    expect(markup).toContain(`width:${face}px;height:${face}px`);
     expect(markup).toMatch(new RegExp(`truncate text-\\[14px\\] text-ink ${name}`));
     expect(markup).toContain(`truncate text-ink-secondary ${preview}`);
   });

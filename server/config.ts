@@ -1,4 +1,4 @@
-// ~/.openmausbot/config.json, with env vars overriding its credentials.
+// ~/.markbot/config.json, with env vars overriding its credentials.
 import { readFileSync, mkdirSync, existsSync, renameSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -730,7 +730,7 @@ export function changedInstanceIds(before: Record<string, unknown>, after: Recor
     .filter((id) => !isDeepStrictEqual(before[id], after[id]));
 }
 
-export const DATA_DIR = process.env.OMB_DATA_DIR ?? join(homedir(), ".openmausbot");
+export const DATA_DIR = process.env.OMB_DATA_DIR ?? join(homedir(), ".markbot");
 const LEGACY_DATA_DIR = join(homedir(), ".opengrokbot");
 export const EVENTS_DIR = join(DATA_DIR, "events");
 export const NATIVE_DIR = join(DATA_DIR, "native");
@@ -1214,14 +1214,23 @@ export function instanceConfigs(cfg: AppConfig): InstanceConfigMap {
   }
   for (const [id, sourceEntry] of Object.entries(map)) {
     // Copy: writing into the caller's persisted entry would freeze the workspace URL into it.
-    const entry = { ...sourceEntry };
+    const workBuddyCli = typeof (sourceEntry.config as { cli?: unknown } | undefined)?.cli === "string"
+      ? (sourceEntry.config as { cli: string }).cli : "";
+    // WorkBuddy 2.165 ships only its lite-wb stream-json bundle. Its advertised --acp mode exits 0
+    // without answering initialize, while the Claude-compatible stream-json transport is healthy.
+    const workBuddyCompat = sourceEntry.driver === "customAcp"
+      && sourceEntry.environment?.CODEBUDDY_FORCE_LITE_WB_BUNDLE === "1"
+      && /(?:^|[\\/])codebuddy\s+--acp\s*$/iu.test(workBuddyCli);
+    const entry = workBuddyCompat
+      ? { ...sourceEntry, driver: "claudeAgent", config: { ...sourceEntry.config as object, cli: workBuddyCli.replace(/\s+--acp\s*$/u, "") } }
+      : { ...sourceEntry };
     map[id] = entry;
     const environment = { ...entry.environment };
     const builtIn = API_KEY_FLEET[id];
     const routingDefaults = builtIn?.driver === entry.driver
       ? builtIn.config as { url?: string; apiKeyEnv?: string } | undefined
       : undefined;
-    const ownsRouting = instanceOwnsRouting(cfg, entry, routingDefaults);
+    const ownsRouting = workBuddyCompat || instanceOwnsRouting(cfg, entry, routingDefaults);
     if (!ownsRouting) {
       for (const [key, value] of injectedEnvironment(cfg, id, entry.driver)) environment[key] = value;
     }

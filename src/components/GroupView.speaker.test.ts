@@ -60,8 +60,8 @@ describe("room speaker names", () => {
     expect(html).toContain('class="text-[11px] font-medium bot-identity" data-bot-color="blue"');
     expect(html).toContain(">Ada<");
     expect(html).toContain(">Kai<");
-    expect(html).toContain("var(--identity-blue)");
-    expect(html).toContain("var(--identity-orange)");
+    expect(html).toContain("hue-rotate(60deg)");
+    expect(html).toContain("hue-rotate(215deg)");
     expect(html).not.toContain('data-bot-color="blue">still me');
     expect(html).toContain("bg-bubble-user");
     expect(html).not.toContain("user-bubble-colored");

@@ -63,34 +63,34 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
 
   const title =
     s.status === "downloaded"
-      ? `${productName()} ${s.version} is ready`
+      ? t("update.banner.ready", { app: productName(), version: s.version ?? "" })
       : installing
         ? handoff
-          ? "Opening a terminal…"
-          : "Restarting to update…"
+          ? t("update.banner.openingTerminal")
+          : t("update.banner.restarting")
         : s.status === "handed-off"
-          ? "Finish in a terminal"
-          : "Update failed";
+          ? t("update.banner.finishInTerminal")
+          : t("update.banner.installFailed");
   const subtitle =
     s.status === "downloaded"
       ? handoff
-        ? "Copy the install command and open a terminal."
+        ? t("update.banner.copyAndOpen")
         : s.installsByItself
           ? t("update.card.idleNote", { app: productName() })
-          : "Restart to finish updating."
+          : t("update.banner.restartToFinish")
       : installing
         ? handoff
-          ? "Copying the command…"
-          : s.message || `${productName()} will reopen in a moment.`
+          ? t("update.banner.copying")
+          : s.message || t("update.banner.reopenSoon", { app: productName() })
         : s.status === "handed-off"
           ? // when the automatic install could not run, say why before the steps
             `${s.message ? `${s.message} ` : ""}${
               s.terminalOpened
-                ? "Command copied — paste it in the terminal that opened."
-                : "Command copied — paste it in a terminal to finish."
+                ? t("update.banner.copiedOpened")
+                : t("update.banner.copied")
             }`
           : s.retryable === false
-            ? `${friendlyError(s.message?.split(" Quit and reopen ")[0])} Quit and reopen ${productName()} before trying the update again.`
+            ? t("update.banner.quitAndReopen", { error: friendlyError(s.message?.split(" Quit and reopen ")[0]) ?? "", app: productName() })
             : friendlyError(s.message);
 
   return (
@@ -128,7 +128,7 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             disabled
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-control py-1.5 text-[13px] font-medium text-ink-secondary"
           >
-            <Loader2 size={13} className="animate-spin" /> {handoff ? "Opening…" : "Restarting…"}
+            <Loader2 size={13} className="animate-spin" /> {t(handoff ? "update.banner.opening" : "update.banner.restartingShort")}
           </button>
         </div>
       )}
@@ -146,15 +146,15 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             >
               {pending === "install" ? (
                 <>
-                  <Loader2 size={13} className="animate-spin" /> {handoff ? "Opening…" : "Restarting…"}
+                  <Loader2 size={13} className="animate-spin" /> {t(handoff ? "update.banner.opening" : "update.banner.restartingShort")}
                 </>
               ) : handoff ? (
                 <>
-                  <PackageOpen size={13} /> Install
+                  <PackageOpen size={13} /> {t("update.banner.install")}
                 </>
               ) : (
                 <>
-                  <RefreshCw size={13} /> Restart to update
+                  <RefreshCw size={13} /> {t("update.card.restart")}
                 </>
               )}
             </button>
@@ -170,10 +170,10 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             >
               {pending === "check" ? (
                 <>
-                  <Loader2 size={13} className="animate-spin" /> Checking…
+                  <Loader2 size={13} className="animate-spin" /> {t("update.banner.checking")}
                 </>
               ) : (
-                "Try again"
+                t("update.card.tryAgain")
               )}
             </button>
           )}
@@ -182,7 +182,7 @@ export function UpdateBanner({ sidebarIndicator = false }: UpdateBannerProps) {
             disabled={pending !== null}
             className="rounded-lg px-3 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50 disabled:hover:bg-transparent"
           >
-            {s.status === "handed-off" || s.retryable === false ? "Dismiss" : "Later"}
+            {t(s.status === "handed-off" || s.retryable === false ? "update.banner.dismiss" : "update.banner.later")}
           </button>
         </div>
       )}

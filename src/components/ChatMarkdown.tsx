@@ -222,7 +222,7 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
   const diagram = <>
     {error && (
       <p role="alert" className="px-3 pt-2 text-[12px] text-danger">
-        Diagram could not be rendered: {error}
+        {t("code.diagramFailed", { error })}
       </p>
     )}
     {markup && <div className="overflow-x-auto p-3 [&_svg]:!max-w-full" dangerouslySetInnerHTML={markup} />}
@@ -244,8 +244,8 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
   return (
     <div ref={frame} dir="ltr" className="my-2 overflow-hidden rounded-lg border border-hairline/40 bg-inset">
       <div className="flex items-center justify-between gap-2 border-b border-hairline/30 bg-raised/30 px-3 py-1.5 text-xs">
-        <span title="Mermaid diagram" className="min-w-0 truncate rounded border border-hairline/40 bg-raised px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-ink select-none">
-          Mermaid diagram
+        <span title={t("code.mermaid")} className="min-w-0 truncate rounded border border-hairline/40 bg-raised px-1.5 py-0.5 text-[11px] font-medium tracking-wide text-ink select-none">
+          {t("code.mermaid")}
         </span>
         <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
           <button
@@ -256,19 +256,19 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
                 ? "bg-accent/15 text-accent font-medium"
                 : "text-ink-secondary hover:bg-raised hover:text-ink"
             }`}
-            title={showSource ? "Hide diagram source" : "Show diagram source"}
-            aria-label={showSource ? "Hide diagram source" : "Show diagram source"}
+            title={t(showSource ? "code.hideSource" : "code.showSource")}
+            aria-label={t(showSource ? "code.hideSource" : "code.showSource")}
             aria-pressed={showSource}
           >
             <WrapText size={12} aria-hidden="true" />
-            <span className="hidden sm:inline">{showSource ? "Hide source" : "Show source"}</span>
+            <span className="hidden sm:inline">{t(showSource ? "code.hideSource" : "code.showSource")}</span>
           </button>
           <button
             type="button"
             onClick={copy}
             className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] text-ink-secondary hover:bg-raised hover:text-ink transition-colors"
-            title={copied === "copied" ? "Copied to clipboard" : copied === "failed" ? t("common.copyFailed") : "Copy diagram source"}
-            aria-label={copied === "copied" ? "Diagram source copied to clipboard" : copied === "failed" ? t("common.copyFailed") : "Copy diagram source to clipboard"}
+            title={copied === "copied" ? t("code.copiedTitle") : copied === "failed" ? t("common.copyFailed") : t("code.copySource")}
+            aria-label={copied === "copied" ? t("code.copySourceDoneAria") : copied === "failed" ? t("common.copyFailed") : t("code.copySourceAria")}
           >
             {copied === "failed" ? (
               <>
@@ -278,12 +278,12 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
             ) : copied === "copied" ? (
               <>
                 <Check size={12} className="text-success" aria-hidden="true" />
-                <span className="text-success font-medium hidden sm:inline">Copied!</span>
+                <span className="text-success font-medium hidden sm:inline">{t("code.copied")}</span>
               </>
             ) : (
               <>
                 <Copy size={12} aria-hidden="true" />
-                <span className="hidden sm:inline">Copy</span>
+                <span className="hidden sm:inline">{t("code.copy")}</span>
               </>
             )}
           </button>
@@ -299,14 +299,14 @@ export function MermaidDiagram({ code }: MermaidDiagramProps) {
 function LocalFileLink({ filePath, name, children, message }: { filePath: string; name?: string; children?: ReactNode; message?: MessageAttachmentContext }) {
   const save = useLocalFileSave(filePath, name, message);
   if (!message) {
-    return <span title="Unavailable legacy file reference" className="break-words text-ink-secondary">{children}</span>;
+    return <span title={t("file.legacyRef")} className="break-words text-ink-secondary">{children}</span>;
   }
   const label = save.state === "saving"
-    ? "Saving…"
+    ? t("file.saving")
     : save.state === "saved"
-      ? "Saved"
+      ? t("common.saved")
       : save.state === "failed"
-        ? "Retry"
+        ? t("chat.retry")
         : null;
 
   return (
@@ -316,7 +316,7 @@ function LocalFileLink({ filePath, name, children, message }: { filePath: string
         type="button"
         onClick={() => void save.save()}
         disabled={save.state === "saving"}
-        title="Save a copy"
+        title={t("file.saveCopy")}
         className="inline-flex items-center gap-1 break-words text-start text-accent underline decoration-accent/40 hover:decoration-accent disabled:cursor-wait"
       >
         {children}
@@ -362,8 +362,8 @@ function Spoiler({ children }: { children?: ReactNode }) {
         </span>
         <button
           type="button"
-          aria-label="Reveal spoiler"
-          title="Reveal spoiler"
+          aria-label={t("spoiler.reveal")}
+          title={t("spoiler.reveal")}
           onClick={() => setRevealed(true)}
           className="absolute inset-0 rounded bg-raised/90"
         />
@@ -375,12 +375,12 @@ function Spoiler({ children }: { children?: ReactNode }) {
       {children}
       <button
         type="button"
-        aria-label="Hide spoiler"
-        title="Hide spoiler"
+        aria-label={t("spoiler.hide")}
+        title={t("spoiler.hide")}
         onClick={() => setRevealed(false)}
         className="ms-1 rounded px-0.5 text-[11px] text-ink-secondary hover:text-ink"
       >
-        Hide
+        {t("spoiler.hideAction")}
       </button>
     </span>
   );
@@ -692,7 +692,7 @@ const MARKDOWN_COMPONENTS: Components = {
   },
 };
 
-const MAY_LINK_THREAD = /#|openmausbot/i;
+const MAY_LINK_THREAD = /#|markbot/i;
 const NO_THREAD_REFS: ThreadRefsValue = { threads: [] };
 
 function ChatMarkdownComponent({ text, message, mentionPeers = NO_MENTION_PEERS, everyone = false, mentionPerson, delivered }: {

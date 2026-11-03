@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "OpenMausBot",
-  "short_name": "OpenMausBot",
+  "name": "Mark Bot",
+  "short_name": "Mark Bot",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -63,7 +63,7 @@ import { readLastBotSection, rememberBotSection } from "@/lib/last-bot-section";
 import { showNotification } from "@/lib/notify";
 import { useShowThreads } from "@/lib/thread-preferences";
 import { speechOwner, spokenReplyStream } from "@/lib/spoken-reply-stream";
-import { t } from "@/lib/i18n";
+import { activeLocale, t } from "@/lib/i18n";
 import { createBotPatchQueue, type BotUpdatePatch } from "./bot-patch-queue";
 import { useChatErrorClear } from "./chat-error";
 import { openLiveEvents, publishLiveFrame, publishMissedFrames } from "@/lib/live-events";
@@ -3379,10 +3379,12 @@ export function BotEditorStore({ value, children }: { value: ReturnType<typeof u
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
-const TIME_FORMAT = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+let timeFormat: { locale: string; value: Intl.DateTimeFormat } | undefined;
 
 export function formatTime(at: number) {
   const date = new Date(at);
-  // toLocaleTimeString's output, where Intl.DateTimeFormat.format would throw
-  return Number.isNaN(date.getTime()) ? "Invalid Date" : TIME_FORMAT.format(date);
+  if (Number.isNaN(date.getTime())) return "Invalid Date";
+  const locale = activeLocale();
+  if (timeFormat?.locale !== locale) timeFormat = { locale, value: new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "2-digit" }) };
+  return timeFormat.value.format(date);
 }

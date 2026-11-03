@@ -128,16 +128,16 @@ describe("message-linked files", () => {
     )).toBe(false);
   });
 
-  it("keeps a Windows path's backslash before punctuation, as in \\.openmausbot", () => {
-    const report = "C:\\Users\\Maus\\.openmausbot\\workspaces\\bot\\_drafts\\report.md";
-    const chart = "C:\\Users\\Maus\\.openmausbot\\workspaces\\bot\\chart.png";
-    const notes = "C:\\Users\\Maus\\.openmausbot\\release notes.md";
+  it("keeps a Windows path's backslash before punctuation, as in \\.markbot", () => {
+    const report = "C:\\Users\\Maus\\.markbot\\workspaces\\bot\\_drafts\\report.md";
+    const chart = "C:\\Users\\Maus\\.markbot\\workspaces\\bot\\chart.png";
+    const notes = "C:\\Users\\Maus\\.markbot\\release notes.md";
     const markdown = `[Report](${report})\n\n![Chart](${chart})\n\n[Notes][notes]\n\n[notes]: <${notes}>`;
 
     expect(messageReferencesFile(markdown, report)).toBe(true);
     expect(messageReferencesFile(markdown, notes)).toBe(true);
     expect(messageImageTargetAt(markdown, markdown.indexOf("![Chart]"))).toBe(chart);
-    expect(messageReferencesFile(markdown, "C:\\Users\\Maus.openmausbot\\workspaces\\bot_drafts\\report.md")).toBe(false);
+    expect(messageReferencesFile(markdown, "C:\\Users\\Maus.markbot\\workspaces\\bot_drafts\\report.md")).toBe(false);
   });
 
   it("resolves only definitions used by rendered reference links", () => {

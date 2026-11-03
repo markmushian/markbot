@@ -5,7 +5,7 @@ import { DESKTOP_PORTS } from "../../electron/desktop-ports.mjs";
 import { appVersion } from "@/lib/app-links";
 import { readAdvancedMode } from "@/lib/interface-mode";
 
-const TOKEN = "phc_m2hP39w8y2gLPvHgDvSXAu6xcZ3agjf4ruL56rGcMZEe";
+const TOKEN = "";
 
 // Read before init(): an opted-out install must never call posthog.init(), so no request leaves the machine.
 const OPT_OUT_KEY = "omb-analytics-opt-out";
@@ -23,18 +23,8 @@ let client: PostHog | undefined;
 let loading: Promise<void> | undefined;
 let pending: Array<(ph: PostHog) => void> = [];
 
-// Outranks storage, so a rejected write cannot lose an opt-out.
-let choice: boolean | undefined;
-
 export function analyticsEnabled(): boolean {
-  if (choice !== undefined) return choice;
-  const desktop = desktopSwitch()?.enabled();
-  if (typeof desktop === "boolean") return desktop;
-  try {
-    return localStorage.getItem(OPT_OUT_KEY) !== "1";
-  } catch {
-    return true;
-  }
+  return false;
 }
 
 export type OptAction = "init" | "opt-in" | "opt-out" | "none";
@@ -44,7 +34,6 @@ export function optAction(enabled: boolean, running: boolean): OptAction {
 }
 
 export function setAnalyticsEnabled(enabled: boolean) {
-  choice = enabled;
   void desktopSwitch()?.set?.(enabled).catch(() => {});
   try {
     localStorage.setItem(OPT_OUT_KEY, enabled ? "0" : "1");
@@ -97,7 +86,7 @@ function start(posthog: PostHog) {
     return;
   }
   posthog.init(TOKEN, {
-    api_host: "https://us.i.posthog.com",
+    api_host: "http://127.0.0.1:9",
     autocapture: false, // never capture clicked-element text (conversation leak)
     capture_pageview: false,
     person_profiles: "identified_only",
@@ -210,7 +199,7 @@ export function track(event: string, props?: Record<string, unknown>) {
 }
 
 // Sends a personal identifier, so it is gated on analyticsEnabled(), not on opt_out_capturing() alone. Only a counted
-// Cloud Pro popup click by someone signed in to MausBot Cloud calls it; the first-run screen asks for no email.
+// Cloud Pro popup click by someone signed in to Mark Bot Cloud calls it; the first-run screen asks for no email.
 export function identifyEmail(email: string) {
   whenReady((ph) => {
     ph.identify(email, { email });

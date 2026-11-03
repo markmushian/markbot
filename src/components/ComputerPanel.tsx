@@ -1042,7 +1042,7 @@ export function ComputerPanel({
   };
 
   const openVmSettings = () => {
-    window.sessionStorage.setItem("openmausbot.settings.section", "computer");
+    window.sessionStorage.setItem("markbot.settings.section", "computer");
     dispatch({ type: "toggleAppSettings", open: true });
   };
 

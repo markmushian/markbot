@@ -31,8 +31,8 @@ const NODE_REQUIRE = {
 const ENTRY_POINTS = [
   "index.ts",
   "message-search.worker.ts",
-  // the `openmausbot` command
-  "openmausbot.ts",
+  // the `markbot` command
+  "markbot.ts",
   "pair-cli.ts",
   "workspace-backup.worker.ts",
   // the OMB Cloud Pro home image's entry point
@@ -90,7 +90,7 @@ await build({
   logLevel: "info",
 });
 
-// `openmausbot serve --tunnel` spawns the connector guardian as its own
+// `markbot serve --tunnel` spawns the connector guardian as its own
 // process, so it must exist as a file beside the server.
 await build({
   entryPoints: [join(root, "electron", "managed-companion-guardian-main.mjs")],
@@ -119,7 +119,7 @@ await build({
 // The enterprise layer (enterprise/LICENSE; delete the folder for pure OSS).
 // Shipped bundled to dist-server/enterprise/server/index.js, where the server
 // finds it; its own license travels with it.
-if (existsSync(join(root, "enterprise", "server", "index.ts"))) {
+if (process.env.MARKBOT_INCLUDE_ENTERPRISE === "1" && existsSync(join(root, "enterprise", "server", "index.ts"))) {
   await build({
     entryPoints: [join(root, "enterprise", "server", "index.ts")],
     bundle: true,

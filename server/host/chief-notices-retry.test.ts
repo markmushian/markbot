@@ -67,15 +67,15 @@ describe("why a Chief's retry of a teammate's thread is refused", () => {
 
 const CRASH = "claude exited 3 before result: fake-claude: simulated crash before result";
 const DENIED = "One or more tool operations failed or were denied. See the tool results; the final response is not an execution receipt.";
-const RETRIED = "OpenMausBot already retried this run once by itself; the failure above is how that retry ended.";
+const RETRIED = "Mark Bot already retried this run once by itself; the failure above is how that retry ended.";
 
-describe("OpenMausBot's one automatic retry of a teammate's failed thread", () => {
+describe("Mark Bot's one automatic retry of a teammate's failed thread", () => {
   it("runs the thread once more before its Chief hears, then tells the Chief how that retry ended, and never retries the retry", () => {
     const f = fixture();
     f.store.appendMessage("ada-job", { role: "user", kind: "text", text: "Reconcile the September invoices." });
     f.notices.reportIncident({ kind: "failed", bot: f.ada as never, threadId: "ada-job", detail: CRASH });
-    expect(f.turnsOf("ada")).toEqual([{ threadId: "ada-job", text: expect.stringMatching(/^\[Retry requested by OpenMausBot, automatically, once, before telling Clive, your Chief of Staff,/) }]);
-    expect(f.turnsOf("ada")[0]!.text).toContain("Continue the request above from where it stopped and finish it.");
+    expect(f.turnsOf("ada")).toEqual([{ threadId: "ada-job", text: expect.stringMatching(/^\[重试请求来自 Mark Bot，自动重试一次；/) }]);
+    expect(f.turnsOf("ada")[0]!.text).toContain("请从中断处继续完成上面的请求。");
     expect(f.turnsOf("chief")).toEqual([]);
 
     // The retry fails too: the Chief hears now, with the original request, and nothing is retried again.
@@ -113,8 +113,7 @@ describe("OpenMausBot's one automatic retry of a teammate's failed thread", () =
   it("leaves a run that answered the Chief's own retry to the Chief", async () => {
     const f = fixture();
     await f.notices.retryThread({ chief: f.chief as never, bot: f.ada as never, threadId: "ada-job", unattended: true, note: "The service was down." });
-    expect(f.turnsOf("ada")[0]!.text).toBe("[Retry requested by Clive, your Chief of Staff, after this thread's last run stopped. Note from Clive: The service was down. " +
-      "Continue the request above from where it stopped and finish it. If the same problem comes back, say exactly what is blocking and stop.]");
+    expect(f.turnsOf("ada")[0]!.text).toBe("[重试请求来自 Clive（你的首席助手）；在线程上次运行停止后执行。 Clive 的备注：The service was down.请从中断处继续完成上面的请求。如果同一问题再次出现，请准确说明阻碍并停止。]");
     f.notices.reportIncident({ kind: "failed", bot: f.ada as never, threadId: "ada-job", detail: CRASH });
     expect(f.turnsOf("ada")).toHaveLength(1);
     expect(f.turnsOf("chief")).toHaveLength(1);
@@ -129,7 +128,7 @@ describe("OpenMausBot's one automatic retry of a teammate's failed thread", () =
     waiting.shift()!();
     await new Promise((resolve) => setImmediate(resolve));
     expect(f.turnsOf("ada")).toEqual([]);
-    expect(f.turnsOf("chief")[0]!.text).toContain(`OpenMausBot did not retry it: its retry could not start (${RETRY_BLOCKED.running}).`);
+    expect(f.turnsOf("chief")[0]!.text).toContain(`Mark Bot did not retry it: its retry could not start (${RETRY_BLOCKED.running}).`);
   });
 
   it("tells the Chief, without retrying, when someone wrote in the thread since it failed", () => {
@@ -142,13 +141,13 @@ describe("OpenMausBot's one automatic retry of a teammate's failed thread", () =
       f.store.appendMessage("ada-job", { role: "user", kind: "text", text: "Never mind, I did it myself." });
       waiting.shift()!();
       expect(f.turnsOf("ada")).toEqual([]);
-      expect(f.turnsOf("chief")[0]!.text).toContain("OpenMausBot did not retry it: someone wrote in that thread since.");
+      expect(f.turnsOf("chief")[0]!.text).toContain("Mark Bot did not retry it: someone wrote in that thread since.");
     } finally {
       vi.useRealTimers();
     }
   });
 
   it("opens its retry with a lead the delivered-note rules know, so the request it retries stays the thread's request", () => {
-    expect(AUTO_RETRY_LEAD.startsWith("[Retry requested by ")).toBe(true);
+    expect(AUTO_RETRY_LEAD.startsWith("[重试请求来自 ")).toBe(true);
   });
 });

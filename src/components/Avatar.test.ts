@@ -20,8 +20,9 @@ const renderBot = (bot: Partial<BotAvatarProps["bot"]>) =>
   );
 
 describe("MausAvatar body", () => {
-  it("wears the cursor when no body is given", () => {
-    expect(render({})).toContain(MASCOT_BODIES.cursor.fit);
+  it("uses the original Mark avatar when no body is given", () => {
+    expect(render({})).toContain('/mark-avatars/guide.png');
+    expect(render({})).toContain('class="mark-mascot"');
   });
 
   it("wears the body it is given", () => {
@@ -48,7 +49,7 @@ describe("MausAvatar body", () => {
 describe("mascot facial feature colors", () => {
   it.each(["white", "black"] as const)("uses %s for both eyes and mouth on every body type", (mascotFaceColor) => {
     const ink = mascotFaceColor === "white" ? "#ffffff" : "#000000";
-    for (const mascotBody of ["cursor", "star", "pumpkin", "vampire"] as const) {
+    for (const mascotBody of ["star", "pumpkin", "vampire"] as const) {
       for (const color of ["green", "chrome"] as const) {
         const markup = renderBot({ color, mascotBody, mascotFaceColor });
         expect(markup).toContain(`fill="${ink}"`);
@@ -59,9 +60,9 @@ describe("mascot facial feature colors", () => {
   });
 
   it("keeps default inks when an override is reset or comes from an older profile", () => {
-    expect(renderBot({ color: "chrome", mascotFaceColor: null })).toContain('stroke="#1E2833"');
+    expect(renderBot({ color: "chrome", mascotBody: "star", mascotFaceColor: null })).toContain('stroke="#1E2833"');
     expect(renderBot({ mascotBody: "pumpkin" })).toContain('stroke="#0d0a10"');
-    expect(renderBot({})).toContain('stroke="#ffffff"');
+    expect(renderBot({ mascotBody: "star" })).toContain('stroke="#ffffff"');
   });
 
   it("does not paint features over an uploaded image", () => {
@@ -99,16 +100,16 @@ describe("BotAvatar's two avatar outcomes", () => {
     expect(markup).not.toContain("radialGradient");
   });
 
-  it("renders the gradient mascot when the crop is mascot, image or not", () => {
+  it("renders the Mark mascot when the crop is mascot, image or not", () => {
     const markup = renderBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "mascot" });
-    expect(markup).not.toContain("<img");
-    expect(markup).toContain("<svg");
+    expect(markup).toContain('/mark-avatars/guide.png');
+    expect(markup).toContain('class="mark-mascot"');
   });
 
-  it("falls back to the gradient mascot when a flat crop has no valid image", () => {
+  it("falls back to the Mark mascot when a flat crop has no valid image", () => {
     const markup = renderBot({ avatarUrl: undefined, avatarCrop: "circle" });
-    expect(markup).not.toContain("<img");
-    expect(markup).toContain("<svg");
+    expect(markup).toContain('/mark-avatars/guide.png');
+    expect(markup).toContain('class="mark-mascot"');
   });
 });
 

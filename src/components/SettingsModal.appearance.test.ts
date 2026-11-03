@@ -434,7 +434,7 @@ describe("Settings → Appearance", () => {
     expect(local).toContain("Server address or pairing link");
     expect(local).toContain("Name (optional)");
     expect(local).toContain("Your servers");
-    expect(local).toContain("npx openmausbot pair --label");
+    expect(local).toContain("npx markbot pair --label");
     fixture.section = "general";
     vi.stubGlobal("window", { ogb: { workspaces: {} } });
     expect(render()).not.toContain('<option value="desktopWorkspaces"');
@@ -453,11 +453,10 @@ describe("Settings → Appearance", () => {
     expect(render()).not.toContain('<option value="organization"');
     expect(render()).toContain("Midnight");
   });
-  it("offers personal Cloud separately and only through the local desktop bridge", () => {
+  it("offers personal Cloud as a block of Usage and only through the local desktop bridge", () => {
     fixture.section = "cloudAccount";
     vi.stubGlobal("window", { ogb: { cloudAccount: {} } });
-    expect(render()).toContain('<option value="cloudAccount" selected="">MausBot Cloud</option>');
-    expect(render()).toContain("Free local use");
+    expect(render()).toContain('<option value="cloudAccount" selected="">Mark Bot Cloud</option>');
     fixture.section = "appearance";
     vi.stubGlobal("window", {}); expect(render()).not.toContain('<option value="cloudAccount"');
     vi.stubGlobal("window", { ogb: { cloudAccount: {}, remoteClient: { active: true } } });

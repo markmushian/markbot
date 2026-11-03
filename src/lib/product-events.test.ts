@@ -1,3 +1,6 @@
+// Product analytics is off in this build: src/lib/analytics.ts ships an empty PostHog token and
+// analyticsEnabled() returns false, so nothing is ever sent. The skipped tests below assert that
+// traffic; restore analytics and drop the .skip markers in the same change.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/state/store";
@@ -71,7 +74,7 @@ describe("what a saved key's check said", () => {
 });
 
 describe("what reaches PostHog", () => {
-  it("is exactly provider, via and result for a key save, with app_version and surface registered beside it", async () => {
+  it.skip("is exactly provider, via and result for a key save, with app_version and surface registered beside it", async () => {
     vi.resetModules();
     vi.doMock("posthog-js", () => ph.module());
     const analytics = await import("./analytics");
@@ -87,7 +90,7 @@ describe("what reaches PostHog", () => {
     ]);
   });
 
-  it("names a starting role only from the built-in list, and never a preset", async () => {
+  it.skip("names a starting role only from the built-in list, and never a preset", async () => {
     vi.resetModules();
     vi.doMock("posthog-js", () => ph.module());
     const analytics = await import("./analytics");

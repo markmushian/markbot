@@ -144,25 +144,25 @@ export function CallTargetButton({
       : liveMode
       ? t("call.live.callWith", { name: targetName })
       : !capabilitiesReady
-      ? "Checking call availability"
+      ? t("call.view.checkingAvailability")
       : !supported
-        ? capabilityHelp?.label ?? "Call unavailable"
+        ? capabilityHelp?.label ?? t("call.view.unavailable")
         : !configured
-          ? "Set up a voice in an agent profile to make calls"
+          ? t("call.view.needSetup")
           : !voiceReady
-            ? "Pick a voice in an agent profile to make calls"
-            : `Call ${targetName}`;
+            ? t("call.view.needVoice")
+            : t("call.view.callWith", { name: targetName });
 
   const reason = !capabilitiesReady
-    ? "Checking whether this device can make calls."
+    ? t("call.view.checkingDetail")
     : capabilityHelp
       ? capabilityHelp.reason
         : !configured
-          ? "Set up ElevenLabs, Fish Audio, Chatterbox, or a built-in Mac voice so the bot can speak during calls."
+          ? t("call.view.needProvider")
           : !voiceReady
             ? voices.length > 1
-              ? "Give every group member a voice before starting a group call."
-              : "Choose a voice before starting a call."
+              ? t("call.view.groupNeedsVoices")
+              : t("call.view.chooseVoice")
             : "";
 
   const closePopovers = useCallback(() => {
@@ -339,10 +339,10 @@ export function CallTargetButton({
         <div
           id={helpId}
           role="group"
-          aria-label="Call unavailable"
+          aria-label={t("call.view.unavailable")}
           className={cn("absolute right-0 z-30 w-[280px]", composer ? "bottom-full mb-1.5" : "mt-1.5", "rounded-xl border border-hairline bg-panel p-3 text-left shadow-2xl", helpMotion.className)} {...helpMotion.exitProps}
         >
-          <div className="text-[13px] font-medium text-ink">Call unavailable</div>
+          <div className="text-[13px] font-medium text-ink">{t("call.view.unavailable")}</div>
           <div className="mt-1 text-[12px] leading-[1.45] text-ink-secondary">{reason}</div>
           {canLive && (
             <button
@@ -636,18 +636,18 @@ function Call({ bot }: { bot: Bot }) {
     const offEnd = bridge.onSpeechEnd(({ code, reason }) => {
       if (!alive.current || currentCall() !== bot.id) return;
       if (code === 2) {
-        setNote("Calls need macOS dictation, which isn't available here yet.");
+        setNote(t("call.view.dictationMissing"));
         return;
       }
       if (code === 1) {
         setNote(
           reason === "helper-build-failed"
-            ? "The dictation helper couldn't be built. Install Apple's Command Line Tools and try again."
+            ? t("call.view.dictationHelperFailed")
             : reason === "dictation-disabled"
-              ? "Turn on Dictation in System Settings → Keyboard, then try again."
+              ? t("call.view.dictationOff")
               : reason === "speech-not-authorized"
-                ? "Allow Speech Recognition in System Settings → Privacy & Security, then try again."
-                : "Dictation couldn't start. Try again.",
+                ? t("call.view.speechNotAllowed")
+                : t("call.view.dictationFailed"),
         );
         return;
       }
@@ -765,19 +765,19 @@ function Call({ bot }: { bot: Bot }) {
   const status =
     phase === "listening"
       ? pushToTalk
-        ? "Push to talk"
-        : "Listening"
+        ? t("call.view.pushToTalk")
+        : t("call.view.listening")
       : phase === "sending"
-        ? "One moment"
+        ? t("call.view.oneMoment")
         : phase === "speaking"
           ? bot.name
-          : "Working";
+          : t("call.view.working");
 
   return (
     <>
       <button
         onClick={() => endCall(bot.id)}
-        aria-label="Hang up"
+        aria-label={t("call.live.hangUp")}
         className="absolute right-5 top-5 rounded-md p-2 text-ink-secondary hover:bg-raised hover:text-ink"
       >
         <X size={18} />
@@ -797,7 +797,7 @@ function Call({ bot }: { bot: Bot }) {
         {phase === "listening" ? (
           heard || (
             <span className="text-ink-secondary">
-              {pushToTalk ? "Release Control + Option to send…" : "Say something…"}
+              {pushToTalk ? t("call.view.releaseToSend") : t("call.view.saySomething")}
             </span>
           )
         ) : (
@@ -812,7 +812,7 @@ function Call({ bot }: { bot: Bot }) {
             onClick={listen}
             className="rounded-full border border-warning/40 px-3 py-1.5 text-[12px] hover:bg-warning/10"
           >
-            Try microphone again
+            {t("call.view.retryMic")}
           </button>
         </div>
       )}
@@ -828,19 +828,19 @@ function Call({ bot }: { bot: Bot }) {
             }}
             className="rounded-full border border-hairline/50 px-4 py-2 text-[14px] text-ink hover:bg-raised"
           >
-            Interrupt
+            {t("call.view.interrupt")}
           </button>
         )}
         <button
           onClick={() => endCall(bot.id)}
           className="flex items-center gap-2 rounded-full bg-danger px-5 py-2.5 text-[14px] font-medium text-white hover:brightness-110"
         >
-          <PhoneOff size={16} /> Hang up
+          <PhoneOff size={16} /> {t("call.live.hangUp")}
         </button>
       </div>
 
       <div className="text-[12px] text-ink-tertiary">
-        Hold Control + Option to talk · Space interrupts · Esc hangs up
+        {t("call.view.shortcuts")}
       </div>
     </>
   );

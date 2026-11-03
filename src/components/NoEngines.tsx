@@ -28,7 +28,7 @@ export function NoEngines() {
       <main className="relative flex h-full min-w-0 flex-1 items-center justify-center bg-app px-6">
         <WindowDragStrip />
         <div className="max-w-[520px] rounded-2xl border border-hairline/40 bg-card p-6 text-center">
-          <h1 className="text-[20px] font-semibold text-ink">The host needs an AI</h1>
+          <h1 className="text-[20px] font-semibold text-ink">{t("noEngines.hostNeedsAi")}</h1>
           <p className="mt-2 text-[14px] leading-relaxed text-ink-secondary">
             Set up Claude or another supported AI in {productName()} on the host computer, then come back here.
           </p>

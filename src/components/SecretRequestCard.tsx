@@ -39,25 +39,25 @@ export function SecretRequestCard({
   const superseded = secret.superseded === true;
   const stopped = secret.stopped === true;
   const description = superseded
-    ? "This request was replaced by a newer one for the same key. Use the newest card to provide it."
+    ? t("secretCard.supersededDesc")
     : provided
     ? stopped
-      ? "Saved securely."
+      ? t("secretCard.savedOK")
       : secret.resumed
-      ? "Saved securely. Your bot is continuing the task."
-      : "Saved securely. Your bot will continue when its current turn settles."
+      ? t("secretCard.savedContinuing")
+      : t("secretCard.savedNextTurn")
     : declined
-      ? `You chose not to provide this credential. ${productName()} could not resume the bot yet.`
+      ? t("secretCard.declinedDesc", { app: productName() })
       : custom && secret.reason ? secret.reason : secret.description;
   const footerLabel = stopped
-    ? "Stopped"
+    ? t("secretCard.stopped")
     : declined
-    ? "Continuing without this credential failed"
+    ? t("secretCard.declinedFailed")
     : secret.resumed
-      ? custom && secret.delivery === "file" ? t("secretCard.resumed") : "Bot resumed without seeing the key"
+      ? custom && secret.delivery === "file" ? t("secretCard.resumed") : t("secretCard.resumedNoKey")
       : error
-        ? "The key is safe; resuming failed"
-        : "Waiting to resume safely";
+        ? t("secretCard.resumeFailed")
+        : t("secretCard.waiting");
 
   if (declined && (secret.resumed || !error)) return null;
 
@@ -147,7 +147,7 @@ export function SecretRequestCard({
     return (
       <AskSettledLine icon={<X size={13} />} ariaLabel={secret.label}>
         <span className="text-ink-secondary" title={description}>{secret.label}</span>
-        <span> · Superseded by a newer request</span>
+        <span>{t("secretCard.supersededTag")}</span>
       </AskSettledLine>
     );
   }
@@ -156,7 +156,7 @@ export function SecretRequestCard({
     return (
       <AskSettledLine icon={<X size={13} />} ariaLabel={secret.label}>
         <span className="text-ink-secondary" title={secret.description}>{secret.label}</span>
-        <span> · Stopped</span>
+        <span>{t("secretCard.stoppedTag")}</span>
       </AskSettledLine>
     );
   }
@@ -165,7 +165,7 @@ export function SecretRequestCard({
     const retry = !secret.resumed && !stopped && error ? (
       <button type="button" onClick={() => void retryResume()} disabled={saving} className={cn(ASK_QUIET_BUTTON, "text-accent-text")}>
         {saving ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-        Try again
+        {t("common.tryAgain")}
       </button>
     ) : undefined;
     return (
@@ -181,7 +181,7 @@ export function SecretRequestCard({
         action={retry}
         detail={error && <p role="alert" className="ms-[19px] mt-1 text-[12px] text-danger">{error}</p>}
       >
-        <span className="text-ink-secondary" title={description}>{provided ? `${secret.label} saved securely` : secret.label}</span>
+        <span className="text-ink-secondary" title={description}>{provided ? t("secretCard.savedLabel", { label: secret.label }) : secret.label}</span>
         <span className={declined ? "text-danger" : undefined}> · {footerLabel}</span>
       </AskSettledLine>
     );
@@ -194,11 +194,11 @@ export function SecretRequestCard({
       title={secret.label}
       explanation={description}
       onDismiss={dismiss}
-      dismissLabel="Not now"
+      dismissLabel={t("common.notNow")}
     >
       {remoteClient ? (
         <div className="text-[13px] leading-relaxed text-ink-secondary">
-          This key must be saved on the host computer. Open this conversation on the host to continue securely.
+          {t("secretCard.hostOnly")}
         </div>
       ) : (
         <form onSubmit={(event) => void save(event)}>
@@ -217,13 +217,13 @@ export function SecretRequestCard({
             />
             <button type="submit" disabled={saving || (!value.trim() && !savedLocally)} {...askPrimary(color)}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : <LockKeyhole size={14} />}
-              {savedLocally ? "Continue task" : "Save securely"}
+              {savedLocally ? t("secretCard.continueTask") : t("secretCard.saveSecurely")}
             </button>
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-ink-tertiary">
             <span className="flex items-center gap-1">
               <LockKeyhole size={11} />{" "}
-              {!custom ? `Stored securely by ${productName()} and never added to chat.` : secret.delivery === "file" ? t("secretCard.file") : t("secretCard.ref")}
+              {!custom ? t("secretCard.storedBy", { app: productName() }) : secret.delivery === "file" ? t("secretCard.file") : t("secretCard.ref")}
             </span>
             {secret.helpUrl && (
               <a
@@ -232,7 +232,7 @@ export function SecretRequestCard({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-accent-text hover:underline"
               >
-                Where to get this key <ExternalLink size={11} />
+                {t("secretCard.whereToGet")} <ExternalLink size={11} />
               </a>
             )}
           </div>

@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { Loader2, Plus, RotateCw, Trash2 } from "lucide-react";
 import { api, useStore, type InstanceInfo } from "@/state/store";
-import { t } from "@/lib/i18n";
+import { activeLocale, t } from "@/lib/i18n";
 import { keySaved } from "@/lib/product-events";
 import { addedServers } from "@/lib/openai-compat-endpoints";
+import { CN_PROVIDERS, cnProvider, type CnProvider } from "@/lib/cn-providers";
 import { cn } from "@/lib/cn";
 import { KEY_FIELD } from "./keys/KeyRow";
 import { Select } from "./Select";
@@ -13,6 +14,8 @@ export function modelIds(text: string): string[] {
 }
 
 const INPUT = cn(KEY_FIELD, "font-sans");
+const CHIP = "rounded-full border border-hairline/50 px-2.5 py-0.5 text-[11px] text-ink-secondary hover:bg-raised hover:text-ink disabled:opacity-40";
+const CHIP_ON = "border-accent/60 bg-accent/10 text-ink";
 /** A slow computer can take minutes before a local model's first words, so the wait is the person's call. */
 export const REPLY_WAIT_CHOICES = [5, 10, 20, 30, 60] as const;
 const ICON_BUTTON = "ui-icon-button shrink-0 hover:text-ink";
@@ -30,7 +33,16 @@ function AddedServers({ servers }: { servers: Array<InstanceInfo & { url?: strin
   const [models, setModels] = useState("");
   const [busy, setBusy] = useState<"add" | "other" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Declared last on purpose: settings tests drive this form's state by position.
+  const [picked, setPicked] = useState("");
   const ready = Boolean(name.trim() && url.trim() && key.trim());
+  const pickedProvider = picked ? cnProvider(picked) : undefined;
+  const pick = (provider: CnProvider) => {
+    setPicked(provider.id);
+    setName(provider.label);
+    setUrl(provider.api);
+    setModels(provider.model);
+  };
 
   const run = (kind: "add" | "other", request: () => Promise<{ instances?: unknown }>, onDone?: () => void) => {
     if (busy) return;
@@ -108,6 +120,23 @@ function AddedServers({ servers }: { servers: Array<InstanceInfo & { url?: strin
           </button>
         </div>
       ))}
+      <div className="mt-2" data-cn-providers>
+        <div className="mb-1 text-[12px] leading-4 text-ink-secondary">{t("apiInstances.cn.title")}</div>
+        <div className="flex flex-wrap gap-1.5">
+          {CN_PROVIDERS.map((provider) => (
+            <button key={provider.id} type="button" onClick={() => pick(provider)} disabled={busy !== null}
+              aria-pressed={picked === provider.id} className={cn(CHIP, picked === provider.id && CHIP_ON)}>
+              {activeLocale().startsWith("zh") ? provider.alias : provider.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-1 text-[12px] leading-4 text-ink-secondary">{t("apiInstances.cn.hint")}</p>
+        {pickedProvider && (
+          <a href={pickedProvider.keys} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[12px] leading-4 text-accent-text underline">
+            {t("apiInstances.cn.keys", { name: pickedProvider.label })}
+          </a>
+        )}
+      </div>
       <div className="mt-2 flex flex-col gap-1.5">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("apiInstances.name")} aria-label={t("apiInstances.name")}
           spellCheck={false} disabled={busy !== null} className={INPUT} />

@@ -30,7 +30,7 @@ export interface ChiefNoticeDeps {
   threadSettling?(threadId: string): boolean;
   /** The thread waits for a free slot and starts on its own. */
   threadQueued?(botId: string, threadId: string): boolean;
-  /** Runs OpenMausBot's automatic retry after the failed turn's own handling is done; the host's next tick by default. */
+  /** Runs Mark Bot's automatic retry after the failed turn's own handling is done; the host's next tick by default. */
   schedule?(run: () => void): void;
   /** Security invariant: a read-and-draft run's prompt and reply carry mail and invite text, so its failures and
    * questions never reach a Chief as a notice. */
@@ -66,16 +66,16 @@ export function createChiefNotices(deps: ChiefNoticeDeps) {
     return null;
   }
 
-  /** The one way a teammate's stopped thread runs again: a Chief's retry_thread and OpenMausBot's automatic retry both
+  /** The one way a teammate's stopped thread runs again: a Chief's retry_thread and Mark Bot's automatic retry both
    * start it here, after the same refusal checks. Throws the refusal, or why the start failed. */
   async function retryThread(input: { chief: BotRecord; bot: BotRecord; threadId: string; unattended: boolean; note?: string; automatic?: true }): Promise<void> {
     const refused = retryRefusal(input.bot.id, input.threadId);
     if (refused) throw new Error(refused);
     const chief = peerName(input.chief.name);
     const lead = input.automatic
-      ? `${AUTO_RETRY_LEAD}, once, before telling ${chief}, your Chief of Staff, that this thread's last run failed.`
-      : `${RETRY_LEAD}${chief}, your Chief of Staff, after this thread's last run stopped.${input.note ? ` Note from ${chief}: ${quoteInNote(input.note, 300)}` : ""}`;
-    await deps.startTurn(input.bot.id, `${lead} Continue the request above from where it stopped and finish it. If the same problem comes back, say exactly what is blocking and stop.]`,
+      ? `${AUTO_RETRY_LEAD}一次；在线程上次运行失败后、通知你的首席助手 ${chief} 之前执行。`
+      : `${RETRY_LEAD}${chief}（你的首席助手）；在线程上次运行停止后执行。${input.note ? ` ${chief} 的备注：${quoteInNote(input.note, 300)}` : ""}`;
+    await deps.startTurn(input.bot.id, `${lead}请从中断处继续完成上面的请求。如果同一问题再次出现，请准确说明阻碍并停止。]`,
       { threadId: input.threadId, unattended: input.unattended, peerAsk: { botId: input.chief.id, name: input.chief.name, ...(input.unattended ? { unattended: true } : {}) } });
   }
 
@@ -149,7 +149,7 @@ export function createChiefNotices(deps: ChiefNoticeDeps) {
     return "chief";
   }
 
-  /** A failed teammate run gets one retry from OpenMausBot before its Chief hears; the Chief then hears how that retry ended.
+  /** A failed teammate run gets one retry from Mark Bot before its Chief hears; the Chief then hears how that retry ended.
    * Never retried: a stall the turn watchdog stopped (kind "stalled"), a stop, a refusal or a cap (retriesTeammateThread,
    * from the failure's words and `facts`), a run that answered a retry, and a thread whose asks are not the Chief's person's. */
   /** `notified`: the person already heard of it another way (a usage limit's own notice), so only the Chief is told. */

@@ -1,5 +1,18 @@
 # Licensing
 
+Mark Bot OSS is distributed under the [Apache License 2.0](LICENSE). It is a
+derivative of OpenMausBot and keeps that project's NOTICE, third-party
+attributions and upstream authorship intact; see [NOTICE](NOTICE) and
+[MARKBOT-NOTICE.md](MARKBOT-NOTICE.md) for what changed and what did not.
+
+The enterprise carve-out described below belongs to upstream and is **not part
+of this distribution**: the `enterprise/` directory and its separate licence are
+excluded from the shipped bundle, and Mark Bot enables no paid enterprise
+entitlements. The section stays here because the upstream licence file is kept
+verbatim for anyone reading the source.
+
+---
+
 OpenMausBot is open source under the [Apache License 2.0](LICENSE), with one
 carve-out and a few notes.
 

@@ -53,7 +53,7 @@ beforeEach(() => {
   fetchMock.mockImplementation(async (input, init) => {
     const url = String(input);
     const local = `http://127.0.0.1:${options.port}`;
-    if (url === `${local}/api/health`) return Response.json({ app: "openmausbot", pid: 12345 });
+    if (url === `${local}/api/health`) return Response.json({ app: "markbot", pid: 12345 });
     if (url === `${local}/api/auth/pairing`) {
       if (init?.method === "POST") return Response.json({ code, expiresAt: Date.now() + 300_000, url: `${advertisedOrigin}/pair#code=${code}` });
       return Response.json({ pairings: [], publicUrl });
@@ -160,14 +160,14 @@ describe("guided phone pairing address discovery", () => {
   });
 });
 
-// `openmausbot pair` talks to 127.0.0.1, so the server answers as its owner and builds the phone-app invite from its own
+// `markbot pair` talks to 127.0.0.1, so the server answers as its owner and builds the phone-app invite from its own
 // public address; the CLI prints it as it is and builds its own only for --public-url.
-describe("the phone-app link `openmausbot pair` prints", () => {
+describe("the phone-app link `markbot pair` prints", () => {
   const credential = `omb_pair_${"b".repeat(43)}`;
   const serverName = "Miguel's computer";
   const pairingResponse = (fields: Record<string, unknown>) => {
     fetchMock.mockImplementation(async (input, init) => {
-      if (String(input) === `http://127.0.0.1:${options.port}/api/health`) return Response.json({ app: "openmausbot", pid: 12345 });
+      if (String(input) === `http://127.0.0.1:${options.port}/api/health`) return Response.json({ app: "markbot", pid: 12345 });
       if (String(input) === `http://127.0.0.1:${options.port}/api/auth/pairing` && init?.method === "POST") {
         return Response.json({ code, expiresAt: Date.now() + 300_000, credential, serverName, ...fields });
       }
@@ -177,7 +177,7 @@ describe("the phone-app link `openmausbot pair` prints", () => {
   const printed = () => vi.mocked(console.log).mock.calls.map(([line]) => String(line)).join("\n");
 
   it("prints the server's own invite unchanged", async () => {
-    const serverInvite = `openmausbot://pair?address=${encodeURIComponent(advertisedOrigin)}&token=${credential}&name=Miguel's%20computer`;
+    const serverInvite = `markbot://pair?address=${encodeURIComponent(advertisedOrigin)}&token=${credential}&name=Miguel's%20computer`;
     pairingResponse({ url: `${advertisedOrigin}/pair#code=${code}`, inviteUrl: serverInvite });
     expect(await runPair({ ...options, label: "Pixel" })).toBe(0);
     expect(printed()).toContain(`phone app:     ${serverInvite}\n`);
@@ -186,11 +186,11 @@ describe("the phone-app link `openmausbot pair` prints", () => {
   it("builds the invite for --public-url from the server's credential and name", async () => {
     pairingResponse({
       url: `${advertisedOrigin}/pair#code=${code}`,
-      inviteUrl: `openmausbot://pair?address=${encodeURIComponent(advertisedOrigin)}&token=${credential}&name=Miguel's%20computer`,
+      inviteUrl: `markbot://pair?address=${encodeURIComponent(advertisedOrigin)}&token=${credential}&name=Miguel's%20computer`,
     });
     expect(await runPair({ ...options, label: "Pixel", publicUrl: explicitOrigin })).toBe(0);
     expect(printed()).toContain(
-      `phone app:     openmausbot://pair?address=${encodeURIComponent(explicitOrigin)}&token=${credential}&name=Miguel's%20computer\n`,
+      `phone app:     markbot://pair?address=${encodeURIComponent(explicitOrigin)}&token=${credential}&name=Miguel's%20computer\n`,
     );
     expect(printed()).not.toContain(encodeURIComponent(advertisedOrigin));
   });

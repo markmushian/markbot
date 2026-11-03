@@ -60,7 +60,8 @@ describe("uploaded bot identity portraits", () => {
   it("keeps a deleted receipt sender readable with a mascot fallback", () => {
     const html = render(createElement(RoomToolChip, { message: { ...receipt, comm: { ...receipt.comm!, withBotId: "deleted" } } }));
     expect(html).toContain("<svg");
-    expect(html).not.toContain("<img");
+    // The default portrait is the MarkAvatar picture now, not an inline mascot drawing.
+    expect(html).toContain('class="mark-mascot"');
     expect(html).toContain("Message from @Juniper");
   });
   it("renders uploaded group header and sender portraits", () => {

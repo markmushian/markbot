@@ -22,20 +22,20 @@ function fixture({ open = async () => true } = {}) {
 const settle = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
 
 test("the Cloud protocol is a fixed action without URL routing or credentials", () => {
-  assert.equal(CLOUD_DEEP_LINK, "openmausbot://cloud");
-  assert.equal(isCloudDeepLink("openmausbot://cloud"), true);
-  for (const value of [null, undefined, {}, ["openmausbot://cloud"], "", "openmausbot://cloud/", "openmausbot://cloud?", "openmausbot://cloud#",
-    "openmausbot://cloud?code=ABCDE-FGHJK", "openmausbot://cloud#code=ABCD-EFGH-JKLM", "openmausbot://cloud?url=https://home.example",
-    "openmausbot://cloud/pair", "openmausbot://user@cloud", "openmausbot://cloud:443", "openmausbot://cloud.evil", "openmausbot://CLOUD",
-    "OPENMAUSBOT://cloud", "openmausbot:cloud", "openmausbot:///cloud", "https://cloud", " openmausbot://cloud", "openmausbot://cloud ",
-    "openmausbot://%63loud", "openmausbot://organization", "openmausbot://install?url=https://github.com/x/y"]) {
+  assert.equal(CLOUD_DEEP_LINK, "markbot://cloud");
+  assert.equal(isCloudDeepLink("markbot://cloud"), true);
+  for (const value of [null, undefined, {}, ["markbot://cloud"], "", "markbot://cloud/", "markbot://cloud?", "markbot://cloud#",
+    "markbot://cloud?code=ABCDE-FGHJK", "markbot://cloud#code=ABCD-EFGH-JKLM", "markbot://cloud?url=https://home.example",
+    "markbot://cloud/pair", "markbot://user@cloud", "markbot://cloud:443", "markbot://cloud.evil", "markbot://CLOUD",
+    "OPENMAUSBOT://cloud", "markbot:cloud", "markbot:///cloud", "https://cloud", " markbot://cloud", "markbot://cloud ",
+    "markbot://%63loud", "markbot://organization", "markbot://install?url=https://github.com/x/y"]) {
     assert.equal(isCloudDeepLink(value), false, String(value));
   }
 });
 
 test("consuming a launch action prevents it replaying on a later restart without changing other arguments", () => {
-  const original = ["/Applications/OpenMausBot", "--profile=fixture", "openmausbot://cloud?ignored", "openmausbot://organization", "openmausbot://install/example"];
-  const argv = [...original, "openmausbot://cloud", "openmausbot://cloud"];
+  const original = ["/Applications/Mark Bot", "--profile=fixture", "markbot://cloud?ignored", "markbot://organization", "markbot://install/example"];
+  const argv = [...original, "markbot://cloud", "markbot://cloud"];
   assert.equal(takeCloudDeepLink(argv), true);
   assert.deepEqual(argv, original);
   assert.equal(takeCloudDeepLink(argv), false, "the action is consumed exactly once");
@@ -44,9 +44,9 @@ test("consuming a launch action prevents it replaying on a later restart without
 
 test("a cold-start link waits until main can navigate, then opens exactly once", async () => {
   const h = fixture();
-  const argv = ["/Applications/OpenMausBot", "--fixture", "openmausbot://cloud"];
+  const argv = ["/Applications/Mark Bot", "--fixture", "markbot://cloud"];
   assert.equal(h.entry.fromLaunch(argv), true);
-  assert.deepEqual(argv, ["/Applications/OpenMausBot", "--fixture"]);
+  assert.deepEqual(argv, ["/Applications/Mark Bot", "--fixture"]);
   await settle();
   assert.deepEqual(h.calls, [], "no window exists to reveal or navigate yet");
   assert.equal(await h.entry.ready(), true);
@@ -57,15 +57,15 @@ test("a cold-start link waits until main can navigate, then opens exactly once",
 
 test("a launch without the link leaves nothing pending", async () => {
   const h = fixture();
-  assert.equal(h.entry.fromLaunch(["/Applications/OpenMausBot", "openmausbot://cloud/"]), false);
+  assert.equal(h.entry.fromLaunch(["/Applications/Mark Bot", "markbot://cloud/"]), false);
   assert.equal(await h.entry.ready(), false);
   assert.deepEqual(h.calls, []);
 });
 
 test("macOS open-url before ready is held, and several links open once", async () => {
   const h = fixture();
-  assert.equal(h.entry.fromUrl("openmausbot://cloud"), true);
-  assert.equal(h.entry.fromUrl("openmausbot://cloud"), true);
+  assert.equal(h.entry.fromUrl("markbot://cloud"), true);
+  assert.equal(h.entry.fromUrl("markbot://cloud"), true);
   await settle();
   assert.deepEqual(h.calls, ["reveal", "reveal"]);
   assert.equal(await h.entry.ready(), true);
@@ -75,20 +75,20 @@ test("macOS open-url before ready is held, and several links open once", async (
 test("once ready, open-url and a second instance open immediately and consume the argument", async () => {
   const h = fixture();
   await h.entry.ready();
-  assert.equal(h.entry.fromUrl("openmausbot://cloud"), true);
+  assert.equal(h.entry.fromUrl("markbot://cloud"), true);
   await settle();
   assert.deepEqual(h.calls, ["reveal", "open"]);
-  const commandLine = ["C:\\OpenMausBot.exe", "--flag", "openmausbot://cloud"];
+  const commandLine = ["C:\\Mark Bot.exe", "--flag", "markbot://cloud"];
   assert.equal(h.entry.fromArgs(commandLine), true);
   await settle();
   assert.deepEqual(h.calls, ["reveal", "open", "reveal", "open"]);
-  assert.deepEqual(commandLine, ["C:\\OpenMausBot.exe", "--flag"]);
+  assert.deepEqual(commandLine, ["C:\\Mark Bot.exe", "--flag"]);
 });
 
 test("anything else is left to the other link handlers without revealing or opening", async () => {
   const h = fixture();
   await h.entry.ready();
-  for (const url of ["openmausbot://organization", "openmausbot://install?url=https://github.com/x/y", "openmausbot://cloud?code=X", "openmausbot://cloud/"]) {
+  for (const url of ["markbot://organization", "markbot://install?url=https://github.com/x/y", "markbot://cloud?code=X", "markbot://cloud/"]) {
     assert.equal(h.entry.fromUrl(url), false);
     const argv = ["/app", url];
     assert.equal(h.entry.fromArgs(argv), false);
@@ -101,16 +101,16 @@ test("anything else is left to the other link handlers without revealing or open
 test("a failed open is contained and a later link still opens", async () => {
   let fail = true;
   const h = fixture({ open: async () => { if (fail) throw new Error("load failed"); return true; } });
-  h.entry.fromLaunch(["/app", "openmausbot://cloud"]);
+  h.entry.fromLaunch(["/app", "markbot://cloud"]);
   assert.equal(await h.entry.ready(), false);
   fail = false;
-  h.entry.fromUrl("openmausbot://cloud");
+  h.entry.fromUrl("markbot://cloud");
   await settle();
   assert.deepEqual(h.calls, ["open", "reveal", "open"]);
 });
 
 test("a consumed launch link is not replayed by the companion or updater relaunch", () => {
-  const argv = ["/fixture/OpenMausBot", "--fixture", "openmausbot://cloud", "openmausbot://cloud?ignored"];
+  const argv = ["/fixture/Mark Bot", "--fixture", "markbot://cloud", "markbot://cloud?ignored"];
   takeCloudDeepLink(argv);
   const calls = [];
   runInNewContext(`${between("function relaunchAfterDesktopRemoteChange()", 'ipcMain.handle("desktop-remote:state"')}\nrelaunchAfterDesktopRemoteChange();`, {
@@ -119,7 +119,7 @@ test("a consumed launch link is not replayed by the companion or updater relaunc
   });
   const patched = patchOrganizationUpdater("      relaunch() {\n        this.app.relaunch();\n      }");
   runInNewContext(`({ app, ${patched} }).relaunch();`, { process: { argv }, app: { relaunch: options => calls.push(options.args) } });
-  assert.deepEqual(calls, [["--fixture", "openmausbot://cloud?ignored"], ["--fixture", "openmausbot://cloud?ignored"]]);
+  assert.deepEqual(calls, [["--fixture", "markbot://cloud?ignored"], ["--fixture", "markbot://cloud?ignored"]]);
 });
 
 test("main takes the link from launch arguments, open-url and a second instance", () => {

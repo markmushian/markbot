@@ -23,13 +23,13 @@ async function fixture(test: (f: any) => Promise<void>, fakeEnv: NodeJS.ProcessE
   const desktopOwner = fakeEnv.OMB_TEST_DESKTOP_OWNER_TOKEN;
   const realFetch = globalThis.fetch;
   if (desktopOwner) globalThis.fetch = (input, init = {}) => realFetch(input, { ...init,
-    headers: { ...Object.fromEntries(new Headers(init.headers)), "x-openmausbot-desktop-owner": desktopOwner } });
+    headers: { ...Object.fromEntries(new Headers(init.headers)), "x-markbot-desktop-owner": desktopOwner } });
   try { await fixtureSession(test, fakeEnv); } finally { globalThis.fetch = realFetch; }
 }
 
 async function fixtureSession(test: (f: any) => Promise<void>, fakeEnv: NodeJS.ProcessEnv) {
   const session = await launchVerificationServer({ ...process.env, ...fakeEnv }, undefined, undefined, undefined, undefined, { scripted: true });
-  const cli = (...args: string[]) => runControlOmb(args, { env: { OPENMAUSBOT_URL: session.info.url } }) as Promise<any>;
+  const cli = (...args: string[]) => runControlOmb(args, { env: { MARKBOT_URL: session.info.url } }) as Promise<any>;
   const api = (path: string, body?: unknown, method = "POST") => request(path, body === undefined ? {} : { method, body: JSON.stringify(body) }, session.info.url) as Promise<any>;
   try {
     const chief = (await cli("new-bot", "--name", "Clive", "--section", "Leadership")).bot;
@@ -97,7 +97,7 @@ it("marks a failed one-way send so restart recovery cannot duplicate its notice"
   // The failed send reports an incident to Clive, the lead's Chief; answering it must not send the task again.
   f.plan[f.chief.id] = { steps: [{ arguments: {
     bot_ids: [f.lead.id], message: "Try the task", thread: "new", reply: "none",
-  } }], reply: "Sent", byPrompt: [{ promptIncludes: "[Incident report from OpenMausBot", plan: { reply: "Noted the failed send" } }] };
+  } }], reply: "Sent", byPrompt: [{ promptIncludes: "[Incident report from Mark Bot", plan: { reply: "Noted the failed send" } }] };
   f.plan[f.lead.id] = { fail: true };
   await f.start();
   expect((await f.wait()).status).toBe("settled");

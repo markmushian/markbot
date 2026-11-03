@@ -8,7 +8,7 @@ export interface CloudListEntry {
   color: CloudSwatch | null;
   role: "owner" | "admin" | "member";
   tier: string | null;
-  /** Where it runs: MausBot Cloud, or a server of the person's own. */
+  /** Where it runs: Mark Bot Cloud, or a server of the person's own. */
   runsOn: "cloud" | "server";
   status: CloudListStatus;
   origin: string | null;
@@ -16,7 +16,7 @@ export interface CloudListEntry {
   teamId: string | null;
   /** The account's oldest open Cloud of its own: My Cloud. */
   primary: boolean;
-  /** False for a server or computer of the person's own that signed in with their account (absent: MausBot runs or
+  /** False for a server or computer of the person's own that signed in with their account (absent: Mark Bot runs or
    * manages it). */
   managed: boolean;
   /** While it is set up: the step it is at and how far along it is (0 to 1), when the Admin says. */

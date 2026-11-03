@@ -170,7 +170,7 @@ export function AvatarImageGenerator({
               value={customModel}
               disabled={busy}
               onChange={(event) => setModelDraft(event.target.value)}
-              placeholder="Model ID from your image provider"
+              placeholder={t("botIdentity.modelIdPlaceholder")}
               autoComplete="off"
               className={`${INPUT_CLASS} mt-1`}
             />
@@ -199,10 +199,10 @@ export function AvatarImageGenerator({
         />
       </label>
       {provider === "xai" && (
-        <p className="text-[11px] leading-relaxed text-ink-secondary">Shares the Grok API key in Settings. Changing or removing it also affects other Grok features.</p>
+        <p className="text-[11px] leading-relaxed text-ink-secondary">{t("botIdentity.ai.grokShared")}</p>
       )}
       {provider === "custom" && keyConfigured && (
-        <p className="text-[11px] leading-relaxed text-ink-secondary">The saved custom key will be used. Remove it for a keyless connection.</p>
+        <p className="text-[11px] leading-relaxed text-ink-secondary">{t("botIdentity.ai.customKeySaved")}</p>
       )}
       <div className="flex items-center justify-end gap-2">
         {keyConfigured && (

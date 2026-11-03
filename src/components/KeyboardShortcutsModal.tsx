@@ -9,6 +9,7 @@ import {
   type ShortcutItem,
 } from "@/lib/keyboard-shortcuts";
 import { useSendKey } from "@/lib/send-key";
+import { activeLocale } from "@/lib/i18n";
 
 export interface KeyboardShortcutsModalProps {
   open: boolean;
@@ -20,7 +21,7 @@ function ShortcutRow({ item, isMac }: { item: ShortcutItem; isMac: boolean }) {
 
   return (
     <div className="flex items-center justify-between gap-4 py-1.5">
-      <span className="text-[13px] text-ink">{item.description}</span>
+      <span className="text-[13px] text-ink">{activeLocale() === "zh" ? (ZH_SHORTCUTS[item.id] ?? item.description) : item.description}</span>
       <div className="flex shrink-0 items-center gap-1">
         {keys.map((key, index) => (
           <kbd
@@ -34,6 +35,19 @@ function ShortcutRow({ item, isMac }: { item: ShortcutItem; isMac: boolean }) {
     </div>
   );
 }
+
+const ZH_CATEGORIES: Record<string, string> = {
+  Navigation: "导航", "Chat & Composer": "聊天与输入", Calls: "通话", "Management & Groups": "管理与群组",
+};
+const ZH_SHORTCUTS: Record<string, string> = {
+  "command-palette": "打开命令面板（切换助手和搜索聊天记录）", "new-bot": "创建新助手",
+  "jump-bot": "跳转到助手列表中的第 1–9 个助手", "toggle-sidebar": "收起或展开侧边栏",
+  "switch-bot": "切换到上一个或下一个助手", "find-conversation": "在当前聊天中查找",
+  "send-message": "发送消息", "new-line": "换行但不发送", "edit-last-message": "输入框为空时编辑上一条消息",
+  "close-panel": "关闭当前抽屉、弹窗或查找栏", "shortcuts-cheat-sheet": "显示键盘快捷键",
+  "live-call-mute": "通话静音或取消静音", "live-call-hang-up": "结束通话",
+  "save-bulletin": "保存群组说明的修改", "reorder-section": "调整侧边栏分组顺序（先聚焦分组标题）",
+};
 
 export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModalProps) {
   const [query, setQuery] = useState("");
@@ -75,17 +89,17 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
             </span>
             <div>
               <h2 id="shortcuts-dialog-title" className="text-[16px] font-semibold text-ink">
-                Keyboard Shortcuts
+                {activeLocale() === "zh" ? "键盘快捷键" : "Keyboard Shortcuts"}
               </h2>
               <p className="text-[12px] text-ink-secondary">
-                Quick commands and navigation
+                {activeLocale() === "zh" ? "常用命令与导航" : "Quick commands and navigation"}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close keyboard shortcuts"
+            aria-label={activeLocale() === "zh" ? "关闭键盘快捷键" : "Close keyboard shortcuts"}
             className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised hover:text-ink"
           >
             <X size={18} />
@@ -99,8 +113,8 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search shortcuts…"
-              aria-label="Search shortcuts"
+              placeholder={activeLocale() === "zh" ? "搜索快捷键…" : "Search shortcuts…"}
+              aria-label={activeLocale() === "zh" ? "搜索快捷键" : "Search shortcuts"}
               className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
             />
           </div>
@@ -109,13 +123,13 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
           {groups.length === 0 ? (
             <div className="py-8 text-center text-[13px] text-ink-secondary">
-              No shortcuts found for “{query}”
+              {activeLocale() === "zh" ? `没有找到与“${query}”匹配的快捷键` : `No shortcuts found for “${query}”`}
             </div>
           ) : (
             groups.map((group) => (
               <div key={group.category} className="space-y-1">
                 <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary">
-                  {group.category}
+                  {activeLocale() === "zh" ? (ZH_CATEGORIES[group.category] ?? group.category) : group.category}
                 </div>
                 <div className="divide-y divide-hairline/20 rounded-xl bg-card/40 px-3 py-1 border border-hairline/30">
                   {group.items.map((item) => (
@@ -129,14 +143,14 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
 
         <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-[12px] text-ink-secondary">
           <span>
-            Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[11px]">?</kbd> when not typing to open
+            {activeLocale() === "zh" ? <>未输入文字时按 <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[11px]">?</kbd> 打开</> : <>Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[11px]">?</kbd> when not typing to open</>}
           </span>
           <button
             type="button"
             onClick={onClose}
             className="ui-button ui-button-md"
           >
-            Done
+            {activeLocale() === "zh" ? "完成" : "Done"}
           </button>
         </div>
       </div>

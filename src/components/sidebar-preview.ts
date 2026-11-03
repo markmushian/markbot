@@ -10,6 +10,7 @@ import { citationPreviewText } from "@/lib/citations";
 import { plainPreviewText } from "@/lib/plain-preview";
 import { isClientCancellation, isStoppedTurnName } from "../../shared/client-cancel";
 import { roomWorkingPreview } from "@/lib/room-threads";
+import { localizedSeededGreeting } from "@/lib/localized-seed";
 
 /** The newest message a preview can show. A receipt or a screen frame says nothing about the conversation on its own. */
 export function lastPreviewable<T extends { kind: string }>(messages: readonly T[] | undefined): T | undefined {
@@ -45,7 +46,7 @@ export function lastLine(bot: Bot, visible: Message[], instances: InstanceInfo[]
   if (!newest) return "";
   const last = quotedLine(visible, newest, advanced);
   if (last.kind === "options" && last.card) {
-    // MausBot's intro by its first line, as each mode's intro says it.
+    // Mark Bot's intro by its first line, as each mode's intro says it.
     if (last.helperIntro) return t(advanced ? "helperIntro.title" : bot.chiefOfStaff ? "helperIntro.hello" : "helperIntro.hi.helper", { name: bot.name });
     return (last.card.requestId && last.card.tool && !last.card.questionRequest && approvalCardOutcome(last.card)) || last.card.title;
   }
@@ -55,7 +56,7 @@ export function lastLine(bot: Bot, visible: Message[], instances: InstanceInfo[]
   const peer = peerLine(last);
   if (peer) return `${peer.name}: ${plainPreviewText(peer.body)}`;
   if (last.role !== "user" && isClientCancellation(last.text ?? "")) return t("chat.turnStopped");
-  return plainPreviewText(citationPreviewText(last.text ?? ""));
+  return plainPreviewText(citationPreviewText(localizedSeededGreeting(last.text ?? "", last.role === "bot" && last.setupOffer)));
 }
 
 const RUN_PREVIEW = {

@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { Plus } from "lucide-react";
 import { MausAvatar } from "./Avatar";
 import { NewBotDialog } from "./lazy-screens";
-import { READY_BOT_CATEGORIES, READY_BOTS, matchesReadyBot, type ReadyBotCategory } from "@/lib/ready-bots";
+import { READY_BOT_CATEGORIES, READY_BOTS, localizedReadyBot, matchesReadyBot, type ReadyBotCategory } from "@/lib/ready-bots";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
@@ -33,7 +33,9 @@ export function ReadyBotGallery({ search, onDialog, onAdded }: {
     if (id !== null && window.ogb?.remoteClient?.active) { dispatch({ type: "newBot", onCreated: onAdded }); return; }
     setAdding(id); onDialog(id !== null);
   };
-  const visible = READY_BOTS.filter((bot) => (!category || bot.category === category) && matchesReadyBot(bot, search));
+  const visible = READY_BOTS.map((source) => ({ source, shown: localizedReadyBot(source) }))
+    .filter(({ source, shown }) => (!category || shown.category === category) && (matchesReadyBot(shown, search) || matchesReadyBot(source, search)))
+    .map(({ shown }) => shown);
   if (search.trim() && visible.length === 0) return null;
   return <section className="mb-8" aria-labelledby="ready-bots-title">
     <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">

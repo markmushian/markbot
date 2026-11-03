@@ -1,4 +1,5 @@
 import type { CalendarCall } from "./calendar-calls";
+import { activeLocale } from "@/lib/i18n";
 import type { Routine, RoutineRun, RoutineSchedule } from "./routines";
 import { nextCronRuns } from "../../shared/routine-schedule";
 
@@ -274,12 +275,12 @@ export function calendarRangeLabel(from: number, days: number): string {
   const start = new Date(from);
   const end = new Date(to);
   if (days === 1) {
-    return start.toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
+    return start.toLocaleDateString(activeLocale(), { month: "long", day: "numeric", year: "numeric" });
   }
   if (start.getMonth() === end.getMonth()) {
-    return `${start.toLocaleDateString([], { month: "long" })} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
+    return `${start.toLocaleDateString(activeLocale(), { month: "long" })} ${start.getDate()} – ${end.getDate()}, ${end.getFullYear()}`;
   }
-  return `${start.toLocaleDateString([], { month: "short", day: "numeric" })} – ${end.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
+  return `${start.toLocaleDateString(activeLocale(), { month: "short", day: "numeric" })} – ${end.toLocaleDateString(activeLocale(), { month: "short", day: "numeric", year: "numeric" })}`;
 }
 
 export type CallOccurrence = {

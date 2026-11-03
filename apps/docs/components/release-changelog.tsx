@@ -3,12 +3,12 @@ import ReactMarkdown from 'react-markdown';
 
 const RELEASE_REPOSITORIES = [
   'milind-soni/OpenMausBot',
-  'milind-soni/openmausbot-releases',
+  'milind-soni/markbot-releases',
 ] as const;
 const RELEASES_PER_PAGE = 100;
 const MAX_RELEASE_PAGES = 10;
 const LEGACY_DRAFT_NOTES =
-  /^Draft assembled by the release workflow from milind-soni\/OpenMausBot@([0-9a-f]{40})\. Edit these notes, then publish\.\s*$/i;
+  /^Draft assembled by the release workflow from milind-soni\/Mark Bot@([0-9a-f]{40})\. Edit these notes, then publish\.\s*$/i;
 
 interface GitHubRelease {
   body: string | null;
@@ -76,7 +76,7 @@ async function fetchPublishedReleases(repository: string): Promise<GitHubRelease
       const response = await fetch(endpoint, {
         headers: {
           Accept: 'application/vnd.github+json',
-          'User-Agent': 'OpenMausBot-docs',
+          'User-Agent': 'Mark Bot-docs',
           'X-GitHub-Api-Version': '2022-11-28',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },

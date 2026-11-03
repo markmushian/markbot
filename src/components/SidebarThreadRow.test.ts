@@ -225,9 +225,11 @@ describe("threads a bot closed", () => {
 });
 
 describe("formatUpdatedAt", () => {
-  it("uses the runtime locale and timezone, and skips a missing stamp", () => {
+  it("follows the interface language rather than the computer's, and skips a missing stamp", () => {
     const at = Date.UTC(2026, 0, 15, 0, 30);
-    expect(formatUpdatedAt(at)).toBe(new Date(at).toLocaleString([], { dateStyle: "short", timeStyle: "short" }));
+    expect(formatUpdatedAt(at)).toBe(new Date(at).toLocaleString("en", { dateStyle: "short", timeStyle: "short" }));
+    setLocale("zh");
+    expect(formatUpdatedAt(at)).toBe(new Date(at).toLocaleString("zh", { dateStyle: "short", timeStyle: "short" }));
     expect(formatUpdatedAt(0)).toBe("");
     expect(formatUpdatedAt(Number.NaN)).toBe("");
     const markup = renderToStaticMarkup(createElement(SidebarThreadRow, {
@@ -557,8 +559,8 @@ describe("Copy link", () => {
     vi.stubGlobal("window", { innerWidth: 1024, innerHeight: 768 });
     vi.stubGlobal("document", { body: { nodeType: 1 } });
     const rows = [
-      { task: { threadId: "qa-245", title: "QA PR 245" }, ownerId: "scout", link: "openmausbot://thread/qa-245?bot=scout" },
-      { task: { threadId: "monday-1", title: "Monday plan" }, ownerId: "standup", link: "openmausbot://thread/monday-1?bot=standup" },
+      { task: { threadId: "qa-245", title: "QA PR 245" }, ownerId: "scout", link: "markbot://thread/qa-245?bot=scout" },
+      { task: { threadId: "monday-1", title: "Monday plan" }, ownerId: "standup", link: "markbot://thread/monday-1?bot=standup" },
     ];
     for (const { task, ownerId, link } of rows) {
       const closed = renderRow(task, ownerId);

@@ -4,9 +4,9 @@ import { PACKAGE_V1_VERSION } from "../shared/package-format.ts";
 import { parseTeamManifest, type ParsedTeamManifest } from "./team-manifest.ts";
 import { grokMarketplaceSlugFrom, grokMarketplaceUrl, grokShareIdFrom, grokShareUrl, type GrokTemplateCard } from "../shared/grok-import.ts";
 
-export const TEAM_LIBRARY_REPOSITORY = "https://github.com/milind-soni/openmausbot-teams";
-export const TEAM_LIBRARY_RAW_ROOT = "https://raw.githubusercontent.com/milind-soni/openmausbot-teams/main";
-export const TEAM_LIBRARY_CATALOG_URL = `${TEAM_LIBRARY_RAW_ROOT}/catalog.json`;
+export const TEAM_LIBRARY_REPOSITORY = process.env.MARKBOT_TEAM_LIBRARY_REPOSITORY?.trim() || "https://markbot.app/teams";
+export const TEAM_LIBRARY_RAW_ROOT = process.env.MARKBOT_TEAM_LIBRARY_RAW_ROOT?.trim() || "https://markbot.app/teams/raw";
+export const TEAM_LIBRARY_CATALOG_URL = `${TEAM_LIBRARY_RAW_ROOT.replace(/\/$/, "")}/catalog.json`;
 
 const MAX_CATALOG_BYTES = 256_000;
 const MAX_MANIFEST_BYTES = 1_000_000;
@@ -30,7 +30,7 @@ export interface TeamCatalogEntry {
 export interface TeamCatalog {
   format: "openmaus.catalog";
   version: 1;
-  repositoryUrl: typeof TEAM_LIBRARY_REPOSITORY;
+  repositoryUrl: string;
   teams: TeamCatalogEntry[];
 }
 

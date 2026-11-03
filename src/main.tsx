@@ -11,14 +11,20 @@ import { applyFont, readFont } from "./lib/fonts";
 import { settleAdvancedModeDefault } from "./lib/interface-mode";
 import { BrowserSignInPage } from "./pair/BrowserSignInPage";
 import { PairPage } from "./pair/PairPage";
+import { setLocale } from "./lib/i18n";
+import { shownLanguage } from "./lib/presence-client";
 import { HomeScreen, SignedOutAtHome } from "./components/HomeScreen";
 import "./styles.css";
+import "./mark-brand.css";
 
 // Before first paint; settleAdvancedModeDefault must run before applySkin writes omb-skin.
 settleAdvancedModeDefault();
 applySkinChoice(readSkinChoice());
 applyFont(readFont());
 applyChatWidth(readChatWidth());
+
+// The pair and sign-in roots render outside App, so the pack is settled here as App would settle it.
+setLocale(shownLanguage(undefined));
 
 async function chooseRoot(): Promise<React.ReactNode> {
   const home = window.ogb?.home;

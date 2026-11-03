@@ -1,12 +1,10 @@
 <div align="center">
 
-# OpenMausBot
+# Mark Bot
 
-**The open-source Grok Bot alternative: your own team of AI bots, in a chat app.**
+**你的本地 AI 助手团队，就在一个聊天应用里。**
 
-[**openmausbot.com**](https://www.openmausbot.com) &nbsp;·&nbsp; [Download](https://www.openmausbot.com/download) &nbsp;·&nbsp; [Open source Grok Bot alternative, compared](https://www.openmausbot.com/blog/grok-bot-vs-openmausbot)
-
-<sub>OpenMausBot is an open-source Grok Bot alternative: an independent project inspired by **Grok Bot**, and the open-source alternative to **Meta Muse**, **OpenAI dots** and **Cue by Manus** — bring-your-own-agent, local-first, on the models you already have. Also known as **MausBot**; formerly **OpenGrokBot**. Not affiliated with xAI, Meta, OpenAI or Manus.</sub>
+<sub>Mark Bot 基于开源项目 **OpenMausBot**（Apache-2.0）构建，是其品牌独立的衍生版本，归属与改动说明见 [MARKBOT-NOTICE.md](MARKBOT-NOTICE.md)。它同样是一个开源的 Grok Bot 替代品：独立项目，受 **Grok Bot** 启发，也是 **Meta Muse**、**OpenAI dots**、**Cue by Manus** 的开源替代。与 xAI、Meta、OpenAI、Manus 均无隶属关系。</sub>
 
 Every bot in the sidebar is a real agent — Claude or Codex running locally under the hood — with its own
 personality, its own model, its own cloud computer, and its own connected apps.
@@ -79,7 +77,7 @@ already have:
   — your existing logins and subscriptions, no new accounts, no proxy in the middle. Point any engine at a
   custom CLI binary (a versioned build or wrapper) in **Settings → Engines**.
 - **Local first.** One small harness server on `127.0.0.1` owns every agent process. Transcripts, keys, and
-  events live in `~/.openmausbot`, not a cloud.
+  events live in `~/.markbot`, not a cloud.
 - **Agents with hands.** Each bot can use a cloud Linux desktop, an isolated Local VM, or—where the platform
   safety boundary is currently certified—your own computer, plus 500+ apps through Composio. Host control is
   available on macOS and Ubuntu Xorg after explicit opt-in. Ubuntu Wayland host control remains disabled while
@@ -95,14 +93,14 @@ apps, running on your machine under Apache 2.0. If you searched for an *open Mus
 
 | Looking for | What it is | How OpenMausBot differs | Read more |
 | --- | --- | --- | --- |
-| **Open source Grok Bot** | xAI's roster of bots on one shared cloud computer, Grok only, from a SuperGrok or Cursor plan | Same roster shape; any model per bot; your own machine; approval cards | [Grok Bot vs OpenMausBot](https://www.openmausbot.com/blog/grok-bot-vs-openmausbot) |
-| **Open Muse** | Meta's single personal agent in a Meta cloud VM, US and Canada only | A team instead of one agent; runs anywhere; data in `~/.openmausbot` | [Meta Muse alternative](https://www.openmausbot.com/blog/open-source-alternative-to-meta-muse) |
-| **Open dots** | OpenAI's always-on agent inside ChatGPT, GPT only, Pro and Business Premium plans | Several agents; your Claude, ChatGPT or Grok login; no plan required | [OpenAI dots alternative](https://www.openmausbot.com/blog/openai-dots-alternative) |
-| **Open Cue** | Manus's invite-only agents with their own phone, email and wallet | No invite; OAuth instead of passwords; open source | [Cue by Manus alternative](https://www.openmausbot.com/blog/open-source-alternative-to-cue-by-manus) |
-| **Open Instinct** | Spear Street's invite-only agent that holds your passwords on a cloud computer | Ask for approval when you want it; signs in over OAuth; your machine | [Instinct AI alternative](https://www.openmausbot.com/blog/instinct-ai-alternative) |
+| **Open source Grok Bot** | xAI's roster of bots on one shared cloud computer, Grok only, from a SuperGrok or Cursor plan | Same roster shape; any model per bot; your own machine; approval cards | [Grok Bot vs OpenMausBot](https://www.markbot.app/blog/grok-bot-vs-markbot) |
+| **Open Muse** | Meta's single personal agent in a Meta cloud VM, US and Canada only | A team instead of one agent; runs anywhere; data in `~/.markbot` | [Meta Muse alternative](https://www.markbot.app/blog/open-source-alternative-to-meta-muse) |
+| **Open dots** | OpenAI's always-on agent inside ChatGPT, GPT only, Pro and Business Premium plans | Several agents; your Claude, ChatGPT or Grok login; no plan required | [OpenAI dots alternative](https://www.markbot.app/blog/openai-dots-alternative) |
+| **Open Cue** | Manus's invite-only agents with their own phone, email and wallet | No invite; OAuth instead of passwords; open source | [Cue by Manus alternative](https://www.markbot.app/blog/open-source-alternative-to-cue-by-manus) |
+| **Open Instinct** | Spear Street's invite-only agent that holds your passwords on a cloud computer | Ask for approval when you want it; signs in over OAuth; your machine | [Instinct AI alternative](https://www.markbot.app/blog/instinct-ai-alternative) |
 
-All five side by side: [Muse vs Grok Bot vs Dots vs Cue](https://www.openmausbot.com/blog/muse-vs-grok-bot-vs-dots-vs-cue),
-and a decision guide in five questions: [Which AI agent should I use?](https://www.openmausbot.com/blog/which-ai-agent-should-i-use)
+All five side by side: [Muse vs Grok Bot vs Dots vs Cue](https://www.markbot.app/blog/muse-vs-grok-bot-vs-dots-vs-cue),
+and a decision guide in five questions: [Which AI agent should I use?](https://www.markbot.app/blog/which-ai-agent-should-i-use)
 
 ## Features
 
@@ -198,8 +196,8 @@ The format stays portable: OpenMausBot reads the structured YAML frontmatter for
 install, while Grok, Claude, ChatGPT, and people can follow the ordinary Markdown playbook. Connections
 remain off until you approve them, routines arrive paused, and packages never carry credentials,
 conversations, permissions, memory, or computer access. Browse the
-[open-source playbook repository](https://github.com/milind-soni/openmausbot-teams) or read its
-[portable format](https://github.com/milind-soni/openmausbot-teams/blob/main/FORMAT.md).
+[open-source playbook repository](https://github.com/milind-soni/markbot-teams) or read its
+[portable format](https://github.com/milind-soni/markbot-teams/blob/main/FORMAT.md).
 
 ### 🤝 Share a whole department
 
@@ -313,14 +311,14 @@ See [MCP server setup and tool reference](docs/mcp-server.md).
 
 ### Run it from scripts and CI
 
-The `openmausbot` command drives a running workspace without a screen: set a
+The `markbot` command drives a running workspace without a screen: set a
 team up from a file, give a bot one job, wait until it and every teammate it
 asked are done, and export what they made. One JSON document with `--json`,
 and exit codes a script can branch on.
 
 ```sh
-openmausbot team apply team.yaml
-openmausbot run "Room Lead" "Rehearse the launch of https://example.com" --export ./out
+markbot team apply team.yaml
+markbot run "Room Lead" "Rehearse the launch of https://example.com" --export ./out
 ```
 
 See [Run OpenMausBot from scripts and CI](docs/headless-cli.md).
@@ -478,11 +476,11 @@ and maintenance; OpenMausBot remains free and open source.
 With Node 24 or newer, install once and run:
 
 ```sh
-npm install -g openmausbot
-openmausbot
+npm install -g markbot
+markbot
 ```
 
-Or use `npx openmausbot` without a global install. First launch guides you with
+Or use `npx markbot` without a global install. First launch guides you with
 arrow-key choices: choose AI access, sign in or paste a hidden API key, choose
 a model, and optionally connect a phone. Next time, the same command reuses your
 saved setup and opens OpenMausBot on this computer. Keep the terminal open; Ctrl-C stops
@@ -501,7 +499,7 @@ The web UI can also be installed from Safari or Chrome as a standalone phone
 app. See [Install the phone web app](docs/phone-web-app.md) for Home Screen
 installation and pairing.
 
-Run `openmausbot setup` to reconfigure without resetting bots or conversations;
+Run `markbot setup` to reconfigure without resetting bots or conversations;
 the saved model default applies only to new bots. Native setup confirms provider
 sign-in; API setup asks before a potentially billable test message. API keys are
 saved as plaintext, not encrypted, in private `config.json` (`0600` on Unix).
@@ -509,8 +507,8 @@ See the [short setup guide](docs/cli-onboarding.md) for account differences,
 phone choices, credential storage, and cancellation.
 
 For a background service on a VPS or an always-on computer, use
-`npx openmausbot serve` with explicit remote options: `--tunnel` after
-`npx openmausbot login` for a managed public address, `--tailscale` for your
+`npx markbot serve` with explicit remote options: `--tunnel` after
+`npx markbot login` for a managed public address, `--tailscale` for your
 tailnet, or the Docker stack for your own domain. These are separate from
 AI-provider sign-in. Devices pair once with a short code. The deployment guide is
 [docs/deploy-vps.md](docs/deploy-vps.md); the reference is

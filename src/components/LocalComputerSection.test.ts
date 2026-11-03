@@ -93,7 +93,7 @@ describe("computer inventory request wiring", () => {
     const local = confirmComputerAction(perBotLocalVmDeletePlan(cloudVm), confirm);
     const cloudDelete = confirmComputerAction(cloudComputerActionPlan("delete", ownedCloudComputer), confirm);
     const cloudSleep = confirmComputerAction(cloudComputerActionPlan("sleep", ownedCloudComputer), confirm);
-    const vpsName = "openmausbot-vps-current-123456abcdef";
+    const vpsName = "markbot-vps-current-123456abcdef";
     const vps = confirmComputerAction(vpsComputerRemovePlan({
       name: vpsName,
       state: "running",
@@ -231,7 +231,7 @@ describe("Local VM inventory UI", () => {
     }));
 
     expect(markup).toContain("Not managed");
-    expect(markup).toContain("not managed by MausBot");
+    expect(markup).toContain("not managed by Mark Bot");
     expect(markup).toContain("remove it directly in Docker or Podman");
     expect(markup).not.toContain(">Delete</button>");
     expect(markup).not.toContain("Container labels do not match");
@@ -438,7 +438,7 @@ describe("cloud computer inventory UI", () => {
 
 describe("VPS computer inventory UI", () => {
   const ownedVps: VpsComputerInventoryInstance = {
-    name: "openmausbot-vps-current-123456abcdef",
+    name: "markbot-vps-current-123456abcdef",
     state: "running",
     vpsAlias: "production-vps",
     ownerBotId: "current-owner",
@@ -461,7 +461,7 @@ describe("VPS computer inventory UI", () => {
     }));
 
   it("shows the configured host, owners, orphans, and status without raw container details", () => {
-    const orphanName = "openmausbot-vps-deleted-abcdef123456";
+    const orphanName = "markbot-vps-deleted-abcdef123456";
     const markup = renderCard({
       instances: [
         ownedVps,
@@ -488,7 +488,7 @@ describe("VPS computer inventory UI", () => {
   });
 
   it("derives a stable identifier without exposing the bot-derived container name", () => {
-    expect(vpsComputerShortId("openmausbot-vps-deleted-abcdef123456")).toBe("ef123456");
+    expect(vpsComputerShortId("markbot-vps-deleted-abcdef123456")).toBe("ef123456");
     expect(vpsComputerShortId("unexpected-provider-name")).toBe("unknown");
   });
 
@@ -509,13 +509,13 @@ describe("VPS computer inventory UI", () => {
   it("keeps disconnected, unavailable, and empty states distinct", () => {
     expect(renderCard({ configured: false, aliases: [] })).toContain("No VPS is set up yet");
     expect(renderCard({ unavailableReason: "SSH host cannot be reached" })).toContain("SSH host cannot be reached");
-    expect(renderCard()).toContain("No MausBot desktops found on your VPS");
+    expect(renderCard()).toContain("No Mark Bot desktops found on your VPS");
   });
 
   it("tags computers on more than one server and keeps reachable rows beside the warning", () => {
     const second = {
       ...ownedVps,
-      name: "openmausbot-vps-second-123456abcdef",
+      name: "markbot-vps-second-123456abcdef",
       vpsAlias: "alpha-vps",
       ownerName: "Ops",
     };

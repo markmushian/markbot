@@ -11,7 +11,7 @@ export function createAuth(
   requestId: string,
 ) {
   return betterAuth({
-    appName: "OpenMausBot",
+    appName: "Mark Bot",
     baseURL: config.authBaseURL,
     basePath: "/api/auth",
     secret: env.BETTER_AUTH_SECRET,

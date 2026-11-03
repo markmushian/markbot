@@ -1,6 +1,7 @@
 import type { BotRoutineTemplate, NewBotDefaults } from "../../shared/new-bot-defaults";
 import type { MascotBodyId } from "../../shared/mascot-bodies";
 import type { MausColor } from "../../shared/wire";
+import { activeLocale } from "./i18n";
 
 export type ReadyBotCategory = "everyday" | "work" | "writing" | "design" | "sales" | "personal";
 
@@ -19,6 +20,59 @@ export interface ReadyBot {
   apps: string[];
   notes?: Record<string, string>;
   routines?: BotRoutineTemplate[];
+}
+
+type ReadyBotText = Pick<ReadyBot, "name" | "title" | "description" | "tryAsking">;
+
+/** Sample asks and blurbs name things this audience meets: 公众号, 五一/国庆, 中国近代史 — not LinkedIn or Lisbon. */
+const ZH_READY_BOTS: Record<string, ReadyBotText> = {
+  assistant: { name: "通用助手", title: "日常助理", description: "回答问题、起草文字，并处理你交给它的各种任务。", tryAsking: ["根据这份待办清单安排我的一周", "用通俗的话解释这条合同条款", "帮我礼貌地拒绝这次会议"] },
+  inbox: { name: "收件箱助手", title: "邮件整理", description: "读取收件箱、标出需要你处理的邮件，并起草回复供你确认。", tryAsking: ["今天有哪些邮件需要我处理？", "为最紧急的三封邮件起草回复", "哪些人已经超过一周没收到我的回复？"] },
+  research: { name: "调研助手", title: "资料研究", description: "搜索网络和你的文件，整理成带来源的简明报告。", tryAsking: ["今年国内新能源车补贴政策有哪些变化？请附来源", "对比三款适合小团队的国产笔记软件", "核查这段文字中的说法"] },
+  coder: { name: "开发助手", title: "编程搭档", description: "在项目文件夹中读取和修改代码、运行测试并解释变更。", tryAsking: ["找出测试失败的原因并修复", "解释这个项目的目录结构", "给注册表单增加输入验证"] },
+  community: { name: "社群观察", title: "社群监测", description: "定时查看社群、论坛或评论区，汇报真正重要的动态。", tryAsking: ["昨天以来社群和评论区提出了哪些问题？", "列出本周还没解决的故障反馈", "哪个问题最近反复出现？"] },
+  social: { name: "社媒助手", title: "社交媒体管理", description: "规划帖子并保存到 Postiz，作为草稿或定时内容供你审核。", tryAsking: ["规划下周要发的社媒内容，先排成草稿", "为新品发布写三条内容，存成草稿等我确认", "本周已经排期了哪些内容？"] },
+  ops: { name: "事务助手", title: "日程与执行", description: "推进日历、任务和跟进事项，在延误前提醒你。", tryAsking: ["今天有什么安排，哪些事情逾期了？", "本周找出一小时专注工作时间", "我有哪些跟进已经晚了？"] },
+  writer: { name: "写作助手", title: "文案写作", description: "用你的语气起草和修改帖子、邮件及文档，从零散笔记整理到最终稿。", tryAsking: ["把这些笔记整理成一篇公众号推文", "把这封邮件压缩到原来的一半", "为这期推文写三个标题"] },
+  analyst: { name: "数据助手", title: "数据分析", description: "分析表格和 CSV，用可核对的数字、表格与图表回答问题。", tryAsking: ["找出这个 CSV 中营收最高的十位客户", "显示月度趋势和异常情况", "查找这份导出数据中的重复行"] },
+  "meeting-notes": { name: "会议纪要", title: "会议整理", description: "把录音稿和零散笔记整理成决定、负责人和后续事项。", tryAsking: ["把这份录音稿整理成决定和待办", "根据这些笔记起草会后邮件", "会议中还有哪些问题没有解决？"] },
+  travel: { name: "旅行助手", title: "行程规划", description: "根据你的预算和节奏逐日规划行程，把所有细节集中整理。", tryAsking: ["规划五一去成都玩四天的轻松行程", "国庆去新疆，现在应该先订什么？", "为川西雨季一周旅行列一份打包清单"] },
+  study: { name: "学习助手", title: "学习伙伴", description: "循序解释知识、出题测验，并记录仍需复习的内容。", tryAsking: ["给编程新手解释递归", "测试我对中国近代史的掌握", "制定一周的期末复习计划"] },
+  humanizer: { name: "润色助手", title: "自然表达", description: "把生硬或机器味重的草稿改得像你本人写的，并说明修改内容。", tryAsking: ["让这段文字读起来更自然", "去掉这封邮件的机器味", "在保留语气的前提下润色这篇草稿"] },
+  "design-critic": { name: "设计评审", title: "界面点评", description: "按优先级点评截图或页面的层级、字体、色彩、文案和无障碍问题。", tryAsking: ["点评这个页面并列出最重要的修改", "检查这个界面的视觉层级", "找出这张截图中的无障碍问题"] },
+  "call-coach": { name: "销售教练", title: "通话复盘", description: "根据销售通话记录评分，并提出最有帮助的三项改进。", tryAsking: ["复盘这次销售通话", "我在哪些地方失去了客户兴趣？", "给出下次通话最该改的三件事"] },
+  "plant-care": { name: "植物管家", title: "养护记录", description: "为家中植物建立私人记录，并提醒浇水和养护。", tryAsking: ["记录一下：今天给绿萝浇了水", "本周哪些植物需要浇水？", "为我的室内植物建一份养护计划"] },
+};
+
+const ZH_TW_READY_BOTS: Record<string, ReadyBotText> = {
+  assistant: { name: "通用助手", title: "日常助理", description: "回答問題、起草文字，並處理你交給它的各種任務。", tryAsking: ["根據這份待辦清單安排我的一週", "用通俗的話解釋這條合同條款", "幫我禮貌地拒絕這次會議"] },
+  inbox: { name: "收件箱助手", title: "郵件整理", description: "讀取收件箱、標出需要你處理的郵件，並起草回覆供你確認。", tryAsking: ["今天有哪些郵件需要我處理？", "為最緊急的三封郵件起草回覆", "哪些人已經超過一週沒收到我的回覆？"] },
+  research: { name: "調研助手", title: "資料研究", description: "搜尋網路和你的檔案，整理成帶來源的簡明報告。", tryAsking: ["今年國內新能源車補貼政策有哪些變化？請附來源", "對比三款適合小團隊的國產筆記軟體", "核查這段文字中的說法"] },
+  coder: { name: "開發助手", title: "程式設計搭檔", description: "在專案資料夾中讀取和修改程式碼、執行測試並解釋變更。", tryAsking: ["找出測試失敗的原因並修復", "解釋這個專案的目錄結構", "給註冊表單增加輸入驗證"] },
+  community: { name: "社群觀察", title: "社群監測", description: "定時檢視社群、論壇或評論區，彙報真正重要的動態。", tryAsking: ["昨天以來社群和評論區提出了哪些問題？", "列出本週還沒解決的故障反饋", "哪個問題最近反覆出現？"] },
+  social: { name: "社媒助手", title: "社交媒體管理", description: "規劃帖子並儲存到 Postiz，作為草稿或定時內容供你審核。", tryAsking: ["規劃下週要發的社媒內容，先排成草稿", "為新品釋出寫三條內容，存成草稿等我確認", "本週已經排期了哪些內容？"] },
+  ops: { name: "事務助手", title: "日程與執行", description: "推進日曆、任務和跟進事項，在延誤前提醒你。", tryAsking: ["今天有什麼安排，哪些事情逾期了？", "本週找出一小時專注工作時間", "我有哪些跟進已經晚了？"] },
+  writer: { name: "寫作助手", title: "文案寫作", description: "用你的語氣起草和修改帖子、郵件及文件，從零散筆記整理到最終稿。", tryAsking: ["把這些筆記整理成一篇公眾號推文", "把這封郵件壓縮到原來的一半", "為這期推文寫三個標題"] },
+  analyst: { name: "資料助手", title: "資料分析", description: "分析表格和 CSV，用可核對的數字、表格與圖表回答問題。", tryAsking: ["找出這個 CSV 中營收最高的十位客戶", "顯示月度趨勢和異常情況", "查詢這份匯出資料中的重複行"] },
+  "meeting-notes": { name: "會議紀要", title: "會議整理", description: "把錄音稿和零散筆記整理成決定、負責人和後續事項。", tryAsking: ["把這份錄音稿整理成決定和待辦", "根據這些筆記起草會後郵件", "會議中還有哪些問題沒有解決？"] },
+  travel: { name: "旅行助手", title: "行程規劃", description: "根據你的預算和節奏逐日規劃行程，把所有細節集中整理。", tryAsking: ["規劃五一去成都玩四天的輕鬆行程", "國慶去新疆，現在應該先訂什麼？", "為川西雨季一週旅行列一份打包清單"] },
+  study: { name: "學習助手", title: "學習夥伴", description: "循序解釋知識、出題測驗，並記錄仍需複習的內容。", tryAsking: ["給程式設計新手解釋遞迴", "測試我對中國近代史的掌握", "制定一週的期末複習計劃"] },
+  humanizer: { name: "潤色助手", title: "自然表達", description: "把生硬或機器味重的草稿改得像你本人寫的，並說明修改內容。", tryAsking: ["讓這段文字讀起來更自然", "去掉這封郵件的機器味", "在保留語氣的前提下潤色這篇草稿"] },
+  "design-critic": { name: "設計評審", title: "介面點評", description: "按優先順序點評截圖或頁面的層級、字型、色彩、文案和無障礙問題。", tryAsking: ["點評這個頁面並列出最重要的修改", "檢查這個介面的視覺層級", "找出這張截圖中的無障礙問題"] },
+  "call-coach": { name: "銷售教練", title: "通話復盤", description: "根據銷售通話記錄評分，並提出最有幫助的三項改進。", tryAsking: ["復盤這次銷售通話", "我在哪些地方失去了客戶興趣？", "給出下次通話最該改的三件事"] },
+  "plant-care": { name: "植物管家", title: "養護記錄", description: "為家中植物建立私人記錄，並提醒澆水和養護。", tryAsking: ["記錄一下：今天給綠蘿澆了水", "本週哪些植物需要澆水？", "為我的室內植物建一份養護計劃"] },
+};
+
+/** zh-hant, zh-hk and zh-mo all load the same pack, so the tag alone does not say which wording to use. */
+function readyBotText(locale: string): Record<string, ReadyBotText> | undefined {
+  if (locale === "zh") return ZH_READY_BOTS;
+  if (/^zh-(?:tw|hant|hk|mo)$/.test(locale)) return ZH_TW_READY_BOTS;
+  return undefined;
+}
+
+export function localizedReadyBot(bot: ReadyBot): ReadyBot {
+  const text = readyBotText(activeLocale())?.[bot.id];
+  return text ? { ...bot, ...text } : bot;
 }
 
 const WEEKDAYS = [1, 2, 3, 4, 5];
@@ -324,11 +378,12 @@ export const READY_BOTS: ReadyBot[] = [
 export const CLASSIC_ROLE_IDS = ["assistant", "inbox", "research", "coder", "community", "ops"] as const;
 
 export function readyBot(id: string): ReadyBot | undefined {
-  return READY_BOTS.find((bot) => bot.id === id);
+  return READY_BOTS.find((entry) => entry.id === id);
 }
 
 /** Only who the bot is changes: model, approval level, computer, folder, apps and permissions stay the person's own. */
 export function readyBotTemplate(defaults: NewBotDefaults, bot: ReadyBot): NewBotDefaults {
+  bot = localizedReadyBot(bot);
   const template = structuredClone(defaults);
   template.profile = {
     ...template.profile,

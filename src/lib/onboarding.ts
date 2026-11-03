@@ -76,7 +76,7 @@ export function firstRunPatch(
   return { onboarding: { ...completionPatch(now).onboarding, ...(added.length ? { hintsSeen: [...have, ...added] } : {}) } };
 }
 
-/** Where a first run could offer MausBot Cloud: this computer's own page with the Cloud bridge, not a branded build,
+/** Where a first run could offer Mark Bot Cloud: this computer's own page with the Cloud bridge, not a branded build,
  * a hosted or a remote viewer. A first run there settles the Cloud Pro popup, so it never follows on the next launch. */
 export function cloudBeatPossible(input: { bridge: boolean; branded: boolean; hosted: boolean; remote: boolean }): boolean {
   return input.bridge && !input.branded && !input.hosted && !input.remote;
@@ -146,7 +146,9 @@ export function welcomeFinishedThisLaunch(): boolean {
   }
 }
 
-export const DEFAULT_ADMIN_ORIGIN = "https://admin.openmausbot.com";
+/** Where an organisation's admin console lives. A company that hosts its own types its own address instead; this is
+ * the one Mark Bot runs, so the sign-in button works on a fresh install. */
+export const DEFAULT_ADMIN_ORIGIN = "https://admin.markbot.app";
 
 export function organisationSignIn<Bridge>(
   ogb: { organization?: Bridge; remoteClient?: { active?: boolean } } | undefined,

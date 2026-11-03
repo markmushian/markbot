@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-import { ANDROID_APK_URL, IOS_APP_STORE_URL, openExternalLink } from "@/lib/app-links";
+import { ANDROID_APK_URL, hasPhoneApp, IOS_APP_STORE_URL, openExternalLink } from "@/lib/app-links";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 
@@ -9,6 +9,10 @@ export const PHONE_APPS: ReadonlyArray<{ id: "ios" | "android"; nameKey: LocaleK
   { id: "ios", nameKey: "phoneApp.ios", actionKey: "phoneApp.iosAction", url: IOS_APP_STORE_URL },
   { id: "android", nameKey: "phoneApp.android", actionKey: "phoneApp.androidAction", url: ANDROID_APK_URL },
 ];
+
+/** The stores that answer: none until Mark Bot ships a phone app of its own. Showing a row without one would put a
+ * link to another product in the person's hands. */
+export const LISTED_PHONE_APPS = PHONE_APPS.filter((app) => hasPhoneApp(app.url));
 
 export interface PhoneAppConnect {
   key: string;
@@ -50,7 +54,7 @@ export function PhoneAppDialog({ open, onClose, connect = [] }: { open: boolean;
         </h2>
         <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("phoneApp.subtitle")}</p>
         <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {PHONE_APPS.map((app) => (
+          {LISTED_PHONE_APPS.map((app) => (
             <li key={app.id} data-phone-app={app.id} className="flex flex-col items-center gap-3 rounded-xl bg-card p-4 text-center">
               <div className="text-[14px] font-medium text-ink">{t(app.nameKey)}</div>
               <div className="rounded-md bg-white p-2">
@@ -62,6 +66,9 @@ export function PhoneAppDialog({ open, onClose, connect = [] }: { open: boolean;
             </li>
           ))}
         </ul>
+        {LISTED_PHONE_APPS.length ? null : (
+          <p className="mt-4 text-[13px] leading-relaxed text-ink-secondary">{t("phoneApp.none")}</p>
+        )}
         {connect.length ? (
           <div className="mt-4 flex flex-col gap-2">
             <p className="text-[13px] leading-relaxed text-ink-secondary">{t("phoneApp.next")}</p>

@@ -8,12 +8,16 @@ vi.mock("../lib/session", async original => ({ ...await original<typeof import("
 vi.mock("../components/DesktopWorkspaceSwitcher", () => ({ DesktopWorkspaceSwitcher: () => null }));
 import { PairPage, pairIntro, pairsAutomatically } from "./PairPage";
 import en from "../locales/en.json";
+import { setLocale } from "../lib/i18n";
+import { productName } from "../lib/brand";
 
 const code = "ABCD-EFGH-JK23";
 const render = (initialCode: string | null) => { f.effects = []; return renderToStaticMarkup(createElement(PairPage, { initialCode })); };
 const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
 let replaced: string[];
 beforeEach(() => {
+  // These assertions quote the English copy; main.tsx settles the pack from the device's own language.
+  setLocale("en");
   f.pair.mockReset(); replaced = [];
   vi.stubGlobal("location", { replace: (url: string) => replaced.push(url) });
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
@@ -30,7 +34,7 @@ it("opening My Cloud from the app needs no click and no code to type", async () 
   vi.stubGlobal("window", { ogb: { workspaces: {} } });
   f.pair.mockResolvedValue({ ok: true });
   const html = render(code);
-  expect(html).toContain("Connecting to this MausBot…");
+  expect(html).toContain(`Connecting to this ${productName()}…`);
   expect(html).not.toContain("Pairing code"); expect(html).not.toContain("<form");
   f.effects[0](); await flush();
   expect(f.pair).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ code }));
@@ -53,7 +57,7 @@ it("a browser keeps the code in the form for the person to confirm", () => {
 
 it("My Cloud says where its connection starts, never 'the code shown on the server'", () => {
   const cloud = pairIntro({ mode: "code", sent: false, email: "", cloudHome: true });
-  expect(cloud).toContain(`choose ${en["cloudHome.connect"]} in the MausBot app`);
+  expect(cloud).toContain(`choose ${en["cloudHome.connect"]} in the ${productName()} app`);
   expect(cloud).toContain(`Settings → ${en["settings.section.cloudAccount"]}`);
   expect(cloud).toContain("on your Plan page");
   expect(cloud).not.toContain("shown on the server");

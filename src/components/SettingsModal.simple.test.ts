@@ -130,15 +130,15 @@ const open = (section: AppSettingsSection) => { fixture.section = section; retur
 describe("Settings in Simple mode", () => {
   it("draws five pages on the desktop, General, AI, Computer, Usage & billing and Updates, and none of the Advanced-only ones", () => {
     const html = render();
-    expect(pages(html)).toEqual(["general", "ai", "computer", "billing", "updates"]);
-    expect(SIMPLE_PAGES.map((page) => page.id)).toEqual(["general", "ai", "computer", "billing", "updates"]);
-    expect(html).toMatch(/General<\/span>[\s\S]*AI<\/span>[\s\S]*Computer<\/span>[\s\S]*Usage &amp; billing<\/span>[\s\S]*Updates<\/span>/);
+    expect(pages(html)).toEqual(["general", "ai", "computer", "usage", "updates"]);
+    expect(SIMPLE_PAGES.map((page) => page.id)).toEqual(["general", "ai", "computer", "usage", "updates"]);
+    expect(html).toMatch(/General<\/span>[\s\S]*AI<\/span>[\s\S]*Computer<\/span>[\s\S]*Usage<\/span>[\s\S]*Updates<\/span>/);
     expect(html).not.toContain("data-settings-group=");
     expect(html).not.toContain("data-settings-section=");
     expect(html).not.toMatch(/class="(?:[^"]*\s)?uppercase(?:\s[^"]*)?"/);
     for (const hidden of ["backups", "experimental", "workspaces", "skills"]) expect(html).not.toContain(`value="${hidden}"`);
     const picker = html.match(/<select aria-label="Settings"[\s\S]*?<\/select>/)![0];
-    expect([...picker.matchAll(/<option value="([^"]+)"/g)].map((match) => match[1])).toEqual(["general", "ai", "computer", "billing", "updates"]);
+    expect([...picker.matchAll(/<option value="([^"]+)"/g)].map((match) => match[1])).toEqual(["general", "ai", "computer", "usage", "updates"]);
     expect(html).toContain('data-settings-look="simple"');
   });
 
@@ -210,7 +210,7 @@ describe("Settings in Simple mode", () => {
     vi.stubGlobal("window", { ogb: { ...desktop.ogb, updater: { check: vi.fn(), install: vi.fn(), onState: vi.fn() } } });
     fixture.updater = { status: "idle" };
     const html = open("updates");
-    expect(html).toMatch(/>MausBot [^<]+<\/div>/);
+    expect(html).toMatch(/>Mark Bot [^<]+<\/div>/);
     for (const shown of ["Check for updates", "MARKER:updatesConsent;", "Replay welcome tour", "Diagnostics"]) expect(placement(html, shown), shown).toBe("shown");
   });
 
@@ -219,7 +219,7 @@ describe("Settings in Simple mode", () => {
     const onSelect = vi.fn();
     fixture.serverUpdate = { phase: "up-to-date", pending: false, label: "Up to date", item: { key: "update", label: "Up to date", subtitle: "v1.2.3", icon: null, disabled: false, onSelect } };
     const html = open("updates");
-    expect(html).toMatch(/>MausBot [^<]+<\/div>/);
+    expect(html).toMatch(/>Mark Bot [^<]+<\/div>/);
     expect(html).toContain("Up to date v1.2.3");
     expect(placement(html, "Check for updates")).toBe("shown");
   });
@@ -251,10 +251,10 @@ describe("Settings in Simple mode", () => {
     expect(html).toContain('aria-label="Enable the built-in browser"');
   });
 
-  it("leads Usage & billing with one usage block, folds the limits, then shows the plan", () => {
+  it("leads Usage with one usage block, folds the limits, then shows the plan", () => {
     fixture.section = "cloudAccount";
     const html = render();
-    expect(currentPage(html)).toBe("billing");
+    expect(currentPage(html)).toBe("usage");
     expect(blocks(html)).toEqual(["usage", "cloudAccount"]);
     expect(html.indexOf("See all limits")).toBeLessThan(html.indexOf("MARKER:cloudAccount;"));
     expect(placement(html, "MARKER:usage;")).toBe("folded");
@@ -266,7 +266,7 @@ describe("Settings in Simple mode", () => {
     fixture.ownerOrAdmin = true;
     fixture.section = "people";
     const html = render();
-    expect(pages(html)).toEqual(["general", "ai", "computer", "billing", "updates"]);
+    expect(pages(html)).toEqual(["general", "ai", "computer", "usage", "updates"]);
     expect(currentPage(html)).toBe("general");
     expect(placement(html, "MARKER:people;")).toBe("shown");
     expect(placement(html, "MARKER:activity;")).toBe("shown");
@@ -301,8 +301,8 @@ describe("Settings in Simple mode", () => {
     ["desktopWorkspaces", "computer"],
     ["computer", "computer"],
     ["logins", "computer"],
-    ["usage", "billing"],
-    ["cloudAccount", "billing"],
+    ["usage", "usage"],
+    ["cloudAccount", "usage"],
     ["updates", "updates"],
   ])("lands a deep link to %s on %s", (section, page) => {
     fixture.section = section;
@@ -319,7 +319,7 @@ describe("Settings in Simple mode", () => {
   ])("opens a hidden page (%s) for as long as it is the open one", (section, content) => {
     fixture.section = section;
     const html = render();
-    expect(pages(html)).toEqual(["general", "ai", "computer", "billing", "updates", section]);
+    expect(pages(html)).toEqual(["general", "ai", "computer", "usage", "updates", section]);
     expect(currentPage(html)).toBe(section);
     if (content === "skillAuthoring") expect(html).toContain("Bots may write their own skills");
     else expect(markers(html)).toContain(content);

@@ -11,7 +11,7 @@ import {
   platformLabel,
 } from "@/lib/app-links";
 import { productName } from "@/lib/brand";
-import { t } from "@/lib/i18n";
+import { activeLocale, t } from "@/lib/i18n";
 import { useOtherServerName } from "@/lib/other-server";
 
 /** The app's own version first; `server` (useOtherServerName: set only when the app's window shows another server) adds a
@@ -66,13 +66,13 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
         <p className="mt-1 text-[13px] text-ink-secondary">{version}</p>
         {connected && <p className="mt-0.5 text-[13px] text-ink-secondary">{connected}</p>}
         <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
-          A desktop home for your agents, built on {APP_NAME}: open source, Apache 2.0 licensed.
+          {activeLocale() === "zh" ? `你的桌面智能助手中心，基于 ${APP_NAME} 构建，采用 Apache 2.0 开源许可。` : `A desktop home for your agents, built on ${APP_NAME}: open source, Apache 2.0 licensed.`}
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[13px]">
           <AboutLink href={APP_REPOSITORY} label="GitHub" />
-          <AboutLink href={DOCS_URL} label="Docs" />
-          <AboutLink href={RELEASES_URL} label="Releases" />
-          <AboutLink href={LICENSE_URL} label="License" />
+          <AboutLink href={DOCS_URL} label={activeLocale() === "zh" ? "使用说明" : "Docs"} />
+          <AboutLink href={RELEASES_URL} label={activeLocale() === "zh" ? "版本发布" : "Releases"} />
+          <AboutLink href={LICENSE_URL} label={activeLocale() === "zh" ? "开源许可" : "License"} />
         </div>
         <button
           ref={closeRef}
@@ -80,7 +80,7 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
           onClick={onClose}
           className="mt-5 w-full rounded-xl bg-raised px-4 py-2 text-[13px] font-medium text-ink hover:brightness-110"
         >
-          Close
+          {activeLocale() === "zh" ? "关闭" : "Close"}
         </button>
       </div>
     </div>

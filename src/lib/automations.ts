@@ -33,6 +33,10 @@ export interface Automation {
   readsAndDrafts?: boolean;
 }
 
+const localizedRoutineName = (name: string) => activeLocale() === "zh" && name === "Keep an eye on my day" ? "关注我的一天" : name;
+const localizedRoutinePrompt = (prompt: string) => activeLocale() === "zh" && prompt === "Keep an eye on my day for me."
+  ? "留意我今天的日历、邮件和待办事项，并整理需要我处理的内容。" : prompt;
+
 const runTime = (run: RoutineRun) => run.startedAt ?? run.scheduledFor ?? run.createdAt;
 const newestFirst = (left: RoutineRun, right: RoutineRun) => runTime(right) - runTime(left);
 
@@ -42,7 +46,7 @@ export function automationsFrom(sources: { routines: readonly Routine[]; webhook
   const botIds = sources.bots && new Set(sources.bots.map((bot) => bot.id));
   return [
     ...sources.routines.map((routine): Automation => ({
-      kind: "schedule", id: routine.id, name: routine.name, botId: routine.botId, instructions: routine.prompt, enabled: routine.enabled,
+      kind: "schedule", id: routine.id, name: localizedRoutineName(routine.name), botId: routine.botId, instructions: localizedRoutinePrompt(routine.prompt), enabled: routine.enabled,
       schedule: routine.schedule, nextRunAt: routine.enabled ? routine.nextRunAt : null, runs: runsOf(routine.id),
       ...(routine.checkedAt !== undefined ? { checkedAt: routine.checkedAt } : {}), ...(routine.checkTrouble ? { checkTrouble: routine.checkTrouble } : {}),
       ...(routine.access === "read-and-draft" ? { readsAndDrafts: true } : {}),
