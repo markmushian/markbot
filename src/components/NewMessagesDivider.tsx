@@ -9,7 +9,7 @@ export function NewMessagesDivider({ fading }: { fading: boolean }) {
       aria-label={t("chat.newMessagesAria")}
       data-unread-divider
       className={cn(
-        "grid ease-out transition-[grid-template-rows,opacity,margin-bottom] motion-reduce:transition-none",
+        "grid ease-standard transition-[grid-template-rows,opacity,margin-bottom] motion-reduce:transition-none",
         fading ? "-mb-3 grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100",
       )}
       style={{ transitionDuration: `${UNREAD_DIVIDER_FADE_MS}ms` }}
@@ -17,7 +17,7 @@ export function NewMessagesDivider({ fading }: { fading: boolean }) {
       <div className="min-h-0 overflow-hidden">
         <div aria-hidden="true" className="animate-msg-in flex items-center gap-3 py-0.5">
           <span className="h-px flex-1 bg-linear-to-r from-transparent to-accent/60 rtl:bg-linear-to-l" />
-          <span className="text-[11px] font-semibold uppercase leading-4 tracking-[0.08em] text-accent-text">
+          <span className="text-meta font-semibold uppercase leading-4 tracking-[0.08em] text-accent-text">
             {t("chat.newMessages")}
           </span>
           <span className="h-px flex-1 bg-linear-to-l from-transparent to-accent/60 rtl:bg-linear-to-r" />

@@ -21,7 +21,10 @@ import { OrgLibraryTab } from "./TeamLibraryPanelOrg";
 import { MAX_TEAM_BACKUP_BYTES } from "../../shared/team-backup";
 import { takeImportName } from "../../shared/import-name";
 import { isGrokLink } from "../../shared/grok-import";
-const COMMUNITY_TEAMS_REPOSITORY = "https://markbot.app/teams";
+/** The person's own GitHub community repo. Sign in on github.com as
+ * the markmushian account to publish or edit community templates. */
+const COMMUNITY_TEAMS_REPOSITORY = "https://github.com/markmushian/markbot";
+const COMMUNITY_ACCOUNT_HINT = "用 GitHub 账号 markmushian 打开社区仓库";
 
 export { TeamImportDetails };
 
@@ -476,11 +479,11 @@ export function TeamLibraryPanel({
                   <ArrowLeft size={18} />
                 </button>
               )}
-              <h2 id="team-library-title" className="truncate text-[22px] font-semibold tracking-[-0.01em] text-ink">
+              <h2 id="team-library-title" className="truncate text-h3 font-semibold tracking-[-0.01em] text-ink">
                 {pending ? pending.name : t("templates.title")}
               </h2>
             </div>
-            <p className={cn("mt-1 text-[13px] text-ink-secondary", pending && "ml-9")}>
+            <p className={cn("mt-1 text-ui text-ink-secondary", pending && "ml-9")}>
                 {pending
                   ? pending.kind === "backup"
                     ? t("templates.backupSummary", { bots: pending.members.length, conversations: pending.conversations ?? 0 })
@@ -498,11 +501,11 @@ export function TeamLibraryPanel({
             {!pending && (
               <button
                 onClick={() => void openExternal(catalog?.repositoryUrl ?? COMMUNITY_TEAMS_REPOSITORY)}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[13px] text-ink-secondary hover:bg-raised hover:text-ink"
-                title={t("templates.openRepository")}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-ui text-ink-secondary hover:bg-raised hover:text-ink"
+                title={COMMUNITY_ACCOUNT_HINT}
               >
                 <Github size={16} />
-                <span className="max-sm:hidden">{t("templates.communityRepo")}</span>
+                <span className="max-sm:hidden">{t("templates.communityRepo")} · @markmushian</span>
                 <ExternalLink size={12} />
               </button>
             )}
@@ -521,11 +524,11 @@ export function TeamLibraryPanel({
           <>
             <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-6 sm:px-8">
               <TeamImportDetails pending={pending} importedNames={importedNames} org={pendingOrg !== null} />
-              {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-[13px] text-danger">{error}</div>}
+              {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-ui text-danger">{error}</div>}
             </div>
 
             <footer className="flex flex-col gap-3 border-t border-hairline/35 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-              <div className="text-[13px] text-ink-secondary">
+              <div className="text-ui text-ink-secondary">
                 {t(currentBotCount === 0 ? "templates.existingNone" : currentBotCount === 1 ? "templates.existingOne" : "templates.existingMany", { count: currentBotCount })}
                 {" "}{pending.kind === "backup"
                   ? t("teamImport.backupCopies")
@@ -541,20 +544,20 @@ export function TeamLibraryPanel({
                     onClick={() => void addOrgPackage(pendingOrg)}
                     disabled={importing}
                     aria-label={t("orgLibrary.addAria", { name: pendingOrg.name })}
-                    className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white hover:bg-accent/90 disabled:opacity-60"
+                    className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-body font-medium text-white hover:bg-accent/90 disabled:opacity-60"
                   >
                     {importing && <Loader2 size={15} className="animate-spin" />}
                     {importing ? t("orgLibrary.adding") : t("orgLibrary.add")}
                   </button>
                 ) : (
-                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-raised px-4 py-2 text-[13px] text-ink-secondary">
+                  <span className="flex shrink-0 items-center gap-1 rounded-full bg-raised px-4 py-2 text-ui text-ink-secondary">
                     <Check size={14} className="text-success" />{t("orgLibrary.added")}
                   </span>
                 )
               ) : <button
                 onClick={() => void importTeam()}
                 disabled={importing}
-                className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white hover:bg-accent/90 disabled:opacity-60"
+                className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-body font-medium text-white hover:bg-accent/90 disabled:opacity-60"
               >
                 {importing && <Loader2 size={15} className="animate-spin" />}
                 {importing
@@ -577,7 +580,7 @@ export function TeamLibraryPanel({
                       setError("");
                     }}
                     className={cn(
-                      "max-w-[220px] truncate rounded-lg px-4 py-2 text-[14px] transition-colors",
+                      "max-w-[220px] truncate rounded-lg px-4 py-2 text-body transition-colors",
                       tab === "org" ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
                     )}
                   >
@@ -593,7 +596,7 @@ export function TeamLibraryPanel({
                     setError("");
                   }}
                   className={cn(
-                    "rounded-lg px-4 py-2 text-[14px] transition-colors",
+                    "rounded-lg px-4 py-2 text-body transition-colors",
                     tab === "explore" ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
                   )}
                 >
@@ -608,7 +611,7 @@ export function TeamLibraryPanel({
                     setError("");
                   }}
                   className={cn(
-                    "rounded-lg px-4 py-2 text-[14px] transition-colors",
+                    "rounded-lg px-4 py-2 text-body transition-colors",
                     tab === "import" ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
                   )}
                 >
@@ -623,7 +626,7 @@ export function TeamLibraryPanel({
                     setError("");
                   }}
                   className={cn(
-                    "rounded-lg px-4 py-2 text-[14px] transition-colors",
+                    "rounded-lg px-4 py-2 text-body transition-colors",
                     tab === "scout" ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
                   )}
                 >
@@ -638,7 +641,7 @@ export function TeamLibraryPanel({
                     setError("");
                   }}
                   className={cn(
-                    "rounded-lg px-4 py-2 text-[14px] transition-colors",
+                    "rounded-lg px-4 py-2 text-body transition-colors",
                     tab === "share" ? "bg-card text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
                   )}
                 >
@@ -653,7 +656,7 @@ export function TeamLibraryPanel({
                     onChange={(event) => setSearch(event.target.value)}
                     placeholder={t("templates.search")}
                     aria-label={t("templates.search")}
-                    className="min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-ink-secondary focus:outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-body text-ink placeholder:text-ink-secondary focus:outline-none"
                   />
                 </label>
               )}
@@ -673,18 +676,30 @@ export function TeamLibraryPanel({
               {tab === "explore" && (
                 <div>
                   <ReadyBotGallery search={search} onDialog={setNestedDialog} onAdded={onClose} />
-                  <div className="mb-3 text-[12px] font-medium text-ink-secondary">
-                    {search ? t("templates.searchResults") : t("templates.communityTemplates")}
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+                    <div className="text-note font-medium text-ink-secondary">
+                      {search ? t("templates.searchResults") : t("templates.communityTemplates")}
+                    </div>
+                    <div className="flex items-center gap-2 text-meta text-ink-tertiary">
+                      <span>GitHub @markmushian · 连不上时自动显示内置模板</span>
+                      <button type="button" onClick={() => void openExternal(catalog?.repositoryUrl ?? COMMUNITY_TEAMS_REPOSITORY)}
+                        title={COMMUNITY_ACCOUNT_HINT} className="shrink-0 text-accent-text hover:underline">打开社区仓库</button>
+                    </div>
                   </div>
                   {catalogLoading && (
-                    <div className="flex items-center justify-center gap-2 py-24 text-[13px] text-ink-secondary">
+                    <div className="flex items-center justify-center gap-2 py-24 text-ui text-ink-secondary">
                       <Loader2 size={16} className="animate-spin" /> {t("templates.loading")}
                     </div>
                   )}
-                  {!catalogLoading && catalogError && (
-                    <div className="rounded-xl bg-danger/10 p-4 text-[13px] text-danger">
-                      <p>{catalogError}</p>
+                  {!catalogLoading && catalogError && !catalog && (
+                    <div className="rounded-xl bg-control/60 p-4 text-ui text-ink-secondary">
+                      <p>社区仓库暂时无法访问，点下方按钮重试；本地的「现成助手」仍可照常添加。{catalogError}</p>
                       <button onClick={() => void loadCatalog()} className="mt-3 rounded-full bg-raised px-3.5 py-2 text-ink hover:bg-raised-hover">{t("common.tryAgain")}</button>
+                    </div>
+                  )}
+                  {!catalogLoading && catalogError && catalog && (
+                    <div className="mb-3 rounded-lg bg-control/60 px-3 py-2 text-note text-ink-secondary">
+                      社区仓库暂时无法访问，下面显示的是内置模板与本机可用内容。
                     </div>
                   )}
                   {!catalogLoading && catalog && (
@@ -695,9 +710,9 @@ export function TeamLibraryPanel({
                         <article key={entry.slug} className="flex min-h-[104px] items-center gap-3 border-b border-hairline/35 px-1 py-4">
                           <TeamGlyph index={index} />
                           <div className="min-w-0 flex-1">
-                            <h3 className="truncate text-[14px] font-medium text-ink">{copy.name}</h3>
-                            <p className="mt-0.5 truncate text-[13px] text-ink-secondary">{copy.outcome ?? copy.summary}</p>
-                            <p className="mt-1 truncate text-[12px] text-ink-tertiary">
+                            <h3 className="truncate text-body font-medium text-ink">{copy.name}</h3>
+                            <p className="mt-0.5 truncate text-ui text-ink-secondary">{copy.outcome ?? copy.summary}</p>
+                            <p className="mt-1 truncate text-note text-ink-tertiary">
                               {t("templates.botCount", { count: entry.members })} · {t("templates.playbookCount", { count: entry.skills.length })}
                               {entry.requires.apps.length > 0 && ` · ${entry.requires.apps.join(", ")}`}
                               {entry.setupMinutes && ` · ${t("templates.minutes", { count: entry.setupMinutes })}`}
@@ -706,7 +721,7 @@ export function TeamLibraryPanel({
                           <button
                             onClick={() => void loadLibraryTeam(entry)}
                             disabled={busySlug !== null}
-                            className="flex min-w-[72px] items-center justify-center gap-1.5 rounded-full bg-raised px-3.5 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-40"
+                            className="flex min-w-[72px] items-center justify-center gap-1.5 rounded-full bg-raised px-3.5 py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-40"
                           >
                             {busySlug === entry.slug && <Loader2 size={13} className="animate-spin" />}
                             {busySlug === entry.slug ? t("templates.loadingShort") : t("templates.load")}
@@ -718,8 +733,8 @@ export function TeamLibraryPanel({
                   )}
                   {!catalogLoading && catalog && visibleTeams.length === 0 && (
                     <div className="flex min-h-56 flex-col items-center justify-center text-center">
-                      <div className="text-[14px] font-medium text-ink">{t("templates.noneFound")}</div>
-                      <div className="mt-1 text-[13px] text-ink-secondary">{t("templates.tryDifferentSearch")}</div>
+                      <div className="text-body font-medium text-ink">{t("templates.noneFound")}</div>
+                      <div className="mt-1 text-ui text-ink-secondary">{t("templates.tryDifferentSearch")}</div>
                     </div>
                   )}
                 </div>
@@ -739,7 +754,7 @@ export function TeamLibraryPanel({
                       void readFile(file).catch((cause) => setError(cause instanceof Error ? cause.message : String(cause)));
                     }}
                   />
-                  <div className="mb-3 text-[12px] font-medium text-ink-secondary">{t("templates.bringYourOwn")}</div>
+                  <div className="mb-3 text-note font-medium text-ink-secondary">{t("templates.bringYourOwn")}</div>
                   <div className="grid gap-5 md:grid-cols-2">
                     <button
                       onClick={() => fileInputRef.current?.click()}
@@ -761,14 +776,14 @@ export function TeamLibraryPanel({
                       )}
                     >
                       <UploadCloud size={27} className="text-accent" />
-                      <span className="mt-3 text-[14px] font-medium text-ink">{t("templates.chooseFile")}</span>
-                      <span className="mt-1 text-[13px] text-ink-secondary">{t("templates.dropFile")}</span>
+                      <span className="mt-3 text-body font-medium text-ink">{t("templates.chooseFile")}</span>
+                      <span className="mt-1 text-ui text-ink-secondary">{t("templates.dropFile")}</span>
                     </button>
 
                     <div className="flex min-h-56 flex-col justify-center rounded-2xl bg-raised/25 px-6">
                       <Github size={25} className="text-ink-secondary" />
-                      <h3 className="mt-3 text-[14px] font-medium text-ink">{t("templates.loadGithub")}</h3>
-                      <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{t("templates.githubHint")}</p>
+                      <h3 className="mt-3 text-body font-medium text-ink">{t("templates.loadGithub")}</h3>
+                      <p className="mt-1 text-ui leading-relaxed text-ink-secondary">{t("templates.githubHint")}</p>
                       <div className="mt-4 flex gap-2">
                         <input
                           value={githubUrl}
@@ -776,12 +791,12 @@ export function TeamLibraryPanel({
                           onKeyDown={(event) => event.key === "Enter" && void loadGithubTeam()}
                           placeholder={t("templates.githubPlaceholder")}
                           aria-label={t("templates.githubUrl")}
-                          className="min-w-0 flex-1 rounded-xl bg-raised/80 px-3 py-2.5 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+                          className="min-w-0 flex-1 rounded-xl bg-raised/80 px-3 py-2.5 text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
                         />
                         <button
                           onClick={() => void loadGithubTeam()}
                           disabled={!githubUrl.trim() || githubLoading}
-                          className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-[13px] font-medium text-white hover:bg-accent/90 disabled:opacity-40"
+                          className="flex items-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-ui font-medium text-white hover:bg-accent/90 disabled:opacity-40"
                         >
                           {githubLoading && <Loader2 size={13} className="animate-spin" />}
                           {t("templates.load")}
@@ -790,28 +805,28 @@ export function TeamLibraryPanel({
                     </div>
                   </div>
                   <GrokImportFlow link={grokLink} onPreview={(preview) => { setGrokLink(null); previewManifest(preview, "grok"); }} />
-                  {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-[13px] text-danger">{error}</div>}
+                  {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-ui text-danger">{error}</div>}
                 </div>
               )}
 
               {tab === "share" && (
                 <div>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-ink-secondary">{t("teamLibrary.shareIntro")}</p>
+                  <p className="max-w-2xl text-ui leading-relaxed text-ink-secondary">{t("teamLibrary.shareIntro")}</p>
                   {shareableTeams.length === 0 ? (
-                    <p className="mt-6 text-[13px] text-ink-secondary">{t("teamLibrary.shareEmpty")}</p>
+                    <p className="mt-6 text-ui text-ink-secondary">{t("teamLibrary.shareEmpty")}</p>
                   ) : (
                     <div className="mt-4 grid grid-cols-1 gap-x-10 md:grid-cols-2">
                       {shareableTeams.map((team, index) => (
                         <article key={team.name || "general"} className="flex min-h-[84px] items-center gap-3 border-b border-hairline/35 px-1 py-4">
                           <TeamGlyph index={index} />
                           <div className="min-w-0 flex-1">
-                            <h3 className="truncate text-[14px] font-medium text-ink">{team.name || t("teamLibrary.general")}</h3>
-                            <p className="mt-0.5 text-[13px] text-ink-secondary">{t("teamLibrary.shareBots", { count: team.bots })}</p>
+                            <h3 className="truncate text-body font-medium text-ink">{team.name || t("teamLibrary.general")}</h3>
+                            <p className="mt-0.5 text-ui text-ink-secondary">{t("teamLibrary.shareBots", { count: team.bots })}</p>
                           </div>
                           <button
                             onClick={() => setSharing(team.name)}
                             aria-label={t("teamLibrary.shareTeamAria", { name: team.name || t("teamLibrary.general") })}
-                            className="flex items-center gap-1.5 rounded-full bg-raised px-3.5 py-2 text-[13px] text-ink hover:bg-raised-hover"
+                            className="flex items-center gap-1.5 rounded-full bg-raised px-3.5 py-2 text-ui text-ink hover:bg-raised-hover"
                           >
                             <Share2 size={13} />
                             {t("teamLibrary.shareTeam")}
@@ -825,8 +840,8 @@ export function TeamLibraryPanel({
 
               {tab === "scout" && (
                 <div>
-                  <div className="mb-3 text-[12px] font-medium text-ink-secondary">{t("templates.startFolder")}</div>
-                  <p className="max-w-2xl text-[13px] leading-relaxed text-ink-secondary">
+                  <div className="mb-3 text-note font-medium text-ink-secondary">{t("templates.startFolder")}</div>
+                  <p className="max-w-2xl text-ui leading-relaxed text-ink-secondary">
                     {t("templates.scoutHint")}
                   </p>
                   <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -836,13 +851,13 @@ export function TeamLibraryPanel({
                       onKeyDown={(event) => event.key === "Enter" && scoutTarget && void runScout(scoutTarget)}
                       placeholder="/path/to/your/project"
                       aria-label={t("templates.projectFolder")}
-                      className="min-w-0 flex-1 rounded-xl bg-raised/80 px-3 py-2.5 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+                      className="min-w-0 flex-1 rounded-xl bg-raised/80 px-3 py-2.5 text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
                     />
                     {Boolean(window.ogb?.pickFolder) && (
                       <button
                         onClick={() => void pickScoutFolder()}
                         disabled={scouting}
-                        className="flex items-center justify-center gap-1.5 rounded-full bg-raised px-4 py-2.5 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-40"
+                        className="flex items-center justify-center gap-1.5 rounded-full bg-raised px-4 py-2.5 text-ui text-ink hover:bg-raised-hover disabled:opacity-40"
                       >
                         <FolderOpen size={14} />
                         {t("templates.browse")}
@@ -851,7 +866,7 @@ export function TeamLibraryPanel({
                     <button
                       onClick={() => void runScout(scoutTarget)}
                       disabled={!scoutTarget || scouting}
-                      className="flex items-center justify-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-[13px] font-medium text-white hover:bg-accent/90 disabled:opacity-40"
+                      className="flex items-center justify-center gap-1.5 rounded-full bg-accent px-4 py-2.5 text-ui font-medium text-white hover:bg-accent/90 disabled:opacity-40"
                     >
                       {scouting ? <Loader2 size={14} className="animate-spin" /> : <Compass size={14} />}
                       {scouting ? t("templates.scouting") : t("templates.scout")}
@@ -861,14 +876,14 @@ export function TeamLibraryPanel({
                   {scouted && (
                     <div className="mt-6">
                       <div className="rounded-2xl bg-raised/25 px-5 py-4">
-                        <div className="text-[15px] font-semibold text-ink">{scouted.profile.name}</div>
+                        <div className="text-lead font-semibold text-ink">{scouted.profile.name}</div>
                         {scouted.profile.summary && (
-                          <p className="mt-1 text-[13px] leading-relaxed text-ink-secondary">{scouted.profile.summary}</p>
+                          <p className="mt-1 text-ui leading-relaxed text-ink-secondary">{scouted.profile.summary}</p>
                         )}
                         {scouted.profile.stacks.length > 0 && (
                           <div className="mt-2.5 flex flex-wrap gap-1.5">
                             {scouted.profile.stacks.map((stack) => (
-                              <span key={stack} className="rounded-full bg-raised px-2.5 py-1 text-[12px] text-ink-secondary">
+                              <span key={stack} className="rounded-full bg-raised px-2.5 py-1 text-note text-ink-secondary">
                                 {stack}
                               </span>
                             ))}
@@ -876,18 +891,18 @@ export function TeamLibraryPanel({
                         )}
                       </div>
 
-                      <div className="mt-5 text-[12px] font-medium text-ink-secondary">{t("templates.suggestedTeam")}</div>
+                      <div className="mt-5 text-note font-medium text-ink-secondary">{t("templates.suggestedTeam")}</div>
                       <div className="mt-1 grid grid-cols-1 gap-x-10 md:grid-cols-2">
                         {scouted.suggestion.manifest.team.members.map((member, index) => (
                           <div key={member.key} className="flex min-h-[64px] items-center gap-3 border-b border-hairline/35 px-1 py-3">
-                            <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg text-[13px] font-semibold", TEAM_GLYPHS[index % TEAM_GLYPHS.length])}>
+                            <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-lg text-ui font-semibold", TEAM_GLYPHS[index % TEAM_GLYPHS.length])}>
                               {member.name.slice(0, 1).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <div className="truncate text-[14px] font-medium text-ink">
+                              <div className="truncate text-body font-medium text-ink">
                                 {member.name} <span className="font-normal text-ink-secondary">· {member.title}</span>
                               </div>
-                              <div className="mt-0.5 truncate text-[12px] text-ink-secondary">
+                              <div className="mt-0.5 truncate text-note text-ink-secondary">
                                 {scouted.suggestion.reasons[member.key] ?? ""}
                               </div>
                             </div>
@@ -897,7 +912,7 @@ export function TeamLibraryPanel({
 
                       {directory && directory.length > 0 && (
                         <>
-                          <div className="mt-5 text-[12px] font-medium text-ink-secondary">{t("templates.communityDirectory")}</div>
+                          <div className="mt-5 text-note font-medium text-ink-secondary">{t("templates.communityDirectory")}</div>
                           <div className="mt-1 flex flex-col">
                             {directory.map((candidate) => (
                               <div key={candidate.slug} className="flex items-center gap-3 border-b border-hairline/35 px-1 py-3">
@@ -916,11 +931,11 @@ export function TeamLibraryPanel({
                                     className="size-4 accent-accent"
                                   />
                                   <div className="min-w-0 flex-1">
-                                    <div className="truncate text-[14px] font-medium text-ink">
+                                    <div className="truncate text-body font-medium text-ink">
                                       {candidate.name}
                                       {candidate.category && <span className="font-normal text-ink-secondary"> · {candidate.category}</span>}
                                     </div>
-                                    <div className="mt-0.5 truncate text-[12px] text-ink-secondary">
+                                    <div className="mt-0.5 truncate text-note text-ink-secondary">
                                       {t("templates.matches", { values: candidate.matched.join(", ") })}
                                     </div>
                                   </div>
@@ -944,23 +959,23 @@ export function TeamLibraryPanel({
                           value={roomName}
                           onChange={(event) => setRoomName(event.target.value)}
                           aria-label={t("templates.groupChatName")}
-                          className="min-w-0 flex-1 rounded-xl bg-raised/80 px-3 py-2.5 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+                          className="min-w-0 flex-1 rounded-xl bg-raised/80 px-3 py-2.5 text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
                         />
                         <button
                           onClick={() => void createProject()}
                           disabled={creating}
-                          className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-white hover:bg-accent/90 disabled:opacity-60"
+                          className="flex shrink-0 items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-body font-medium text-white hover:bg-accent/90 disabled:opacity-60"
                         >
                           {creating && <Loader2 size={15} className="animate-spin" />}
                           {creating ? t("templates.creating") : t("templates.createGroupChat")}
                         </button>
                       </div>
-                      <p className="mt-2 text-[12px] text-ink-secondary">
+                      <p className="mt-2 text-note text-ink-secondary">
                         {t("templates.createGroupHint")}
                       </p>
                     </div>
                   )}
-                  {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-[13px] text-danger">{error}</div>}
+                  {error && <div role="alert" className="mt-4 rounded-lg bg-danger/10 px-3 py-2 text-ui text-danger">{error}</div>}
                 </div>
               )}
             </div>

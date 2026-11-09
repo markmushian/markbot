@@ -37,7 +37,9 @@ export interface McpProbeOptions {
 
 const MAX_STDOUT_BYTES = MAX_REMOTE_MCP_BYTES;
 const MAX_TOOLS = 100;
-export const STDIO_PROBE_TIMEOUT_MS = 8_000;
+// A first `npx -y …` downloads the package before it can answer; 8s turned every
+// new local preset into "the server did not answer in time".
+export const STDIO_PROBE_TIMEOUT_MS = 40_000;
 export const REMOTE_PROBE_TIMEOUT_MS = REMOTE_MCP_STARTUP_MS;
 
 export function probeEnvironment(server: Pick<StoredStdioMcpServer, "env">): NodeJS.ProcessEnv {

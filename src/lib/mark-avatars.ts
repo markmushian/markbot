@@ -11,6 +11,20 @@ export const MARK_AVATARS = [
   { id: "reviewer", name: "质量审核员", image: "/mark-avatars/reviewer.png" },
 ] as const;
 
+export const MARK_AVATAR_IDS = MARK_AVATARS.map((icon) => icon.id);
+
+export type MarkAvatarId = (typeof MARK_AVATARS)[number]["id"];
+
+export function isMarkAvatarId(value: unknown): value is MarkAvatarId {
+  return typeof value === "string" && (MARK_AVATAR_IDS as readonly string[]).includes(value);
+}
+
+/** The bundled portrait URL for an id, or null for anything else (never a free-form path). */
+export function markAvatarUrl(id: string): string | null {
+  const icon = MARK_AVATARS.find((candidate) => candidate.id === id);
+  return icon ? icon.image : null;
+}
+
 export async function markAvatarFile(image: string, id: string): Promise<File> {
   const response = await fetch(image);
   if (!response.ok) throw new Error(`头像素材加载失败 (${response.status})`);

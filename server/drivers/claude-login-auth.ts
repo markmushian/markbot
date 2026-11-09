@@ -75,6 +75,47 @@ interface ClaudeLoginOptions {
 
 const NOT_AVAILABLE = "This sign-in is no longer available. Start sign-in again.";
 
+/**
+ * Read-only probe of the CLI's own credentials. "Check status" must ask Claude Code whether it is
+ * signed in -- the app-owned flow only says whether a code was pasted into this window, so a login
+ * finished in a terminal (or through the browser callback) would otherwise look like "waiting" forever.
+ */
+export function probeClaudeAuthStatus(cli: string, env: NodeJS.ProcessEnv): Promise<"in" | "out" | "unknown"> {
+  return new Promise((resolveStatus) => {
+    let child: ReturnType<typeof spawnCli>;
+    try {
+      child = spawnCli(cli, ["auth", "status", "--json"], { env: { ...env, NO_COLOR: "1" }, stdio: ["ignore", "pipe", "pipe"] });
+    } catch {
+      resolveStatus("unknown");
+      return;
+    }
+    let stdout = "";
+    child.stdout.on("data", (chunk: Buffer) => {
+      if (stdout.length < MAX_OUTPUT) stdout += chunk.toString("utf8");
+    });
+    child.stderr.on("data", () => {});
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolveStatus("unknown");
+    }, 8_000);
+    timer.unref();
+    child.once("error", () => {
+      clearTimeout(timer);
+      resolveStatus("unknown");
+    });
+    child.once("close", (code) => {
+      clearTimeout(timer);
+      try {
+        const status: unknown = JSON.parse(stdout);
+        const loggedIn = typeof status === "object" && status !== null ? Reflect.get(status, "loggedIn") : undefined;
+        resolveStatus(code === 0 && loggedIn === true ? "in" : code === 1 && loggedIn === false ? "out" : "unknown");
+      } catch {
+        resolveStatus("unknown");
+      }
+    });
+  });
+}
+
 export class ClaudeLoginController {
   private flow: Flow | null = null;
   private logoutChild: ChildProcess | null = null;
@@ -272,39 +313,7 @@ export class ClaudeLoginController {
   }
 
   private authStatus(env: NodeJS.ProcessEnv): Promise<"in" | "out" | "unknown"> {
-    return new Promise((resolveStatus) => {
-      let child: ReturnType<typeof spawnCli>;
-      try {
-        child = spawnCli(this.options.cli, ["auth", "status", "--json"], { env: { ...env, NO_COLOR: "1" }, stdio: ["ignore", "pipe", "pipe"] });
-      } catch {
-        resolveStatus("unknown");
-        return;
-      }
-      let stdout = "";
-      child.stdout.on("data", (chunk: Buffer) => {
-        if (stdout.length < MAX_OUTPUT) stdout += chunk.toString("utf8");
-      });
-      child.stderr.on("data", () => {});
-      const timer = setTimeout(() => {
-        child.kill("SIGKILL");
-        resolveStatus("unknown");
-      }, 8_000);
-      timer.unref();
-      child.once("error", () => {
-        clearTimeout(timer);
-        resolveStatus("unknown");
-      });
-      child.once("close", (code) => {
-        clearTimeout(timer);
-        try {
-          const status: unknown = JSON.parse(stdout);
-          const loggedIn = typeof status === "object" && status !== null ? Reflect.get(status, "loggedIn") : undefined;
-          resolveStatus(code === 0 && loggedIn === true ? "in" : code === 1 && loggedIn === false ? "out" : "unknown");
-        } catch {
-          resolveStatus("unknown");
-        }
-      });
-    });
+    return probeClaudeAuthStatus(this.options.cli, env);
   }
 
   private login(flow: Flow): void {

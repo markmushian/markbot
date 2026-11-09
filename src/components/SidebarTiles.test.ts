@@ -13,6 +13,7 @@ vi.mock("./DesktopCapabilities", () => ({ useDesktopCapabilities: () => ({}) }))
 
 import { botRowProps } from "./Sidebar";
 import { SidebarBotTile, SidebarTileGrid } from "./SidebarTiles";
+import { MASCOT_BODIES } from "../../shared/mascot-bodies";
 
 const bot = (extra: Partial<Bot> = {}): Bot => ({
   id: "mausbot", threadId: "t", name: "Mark Bot", title: "", description: "", notifications: true, color: "chrome",
@@ -45,9 +46,11 @@ describe("the sidebar tiles", () => {
   it.each([true, false])("draws the main tile and a pinned tile the same: 78 by 92, radius 10, a 56px avatar over a one-line 13px medium name (main %s)", (primary) => {
     const html = renderToStaticMarkup(createElement(SidebarBotTile, { ...props(bot({ chiefOfStaff: primary })), primary }));
     expect(html).toMatch(new RegExp(`data-sidebar-tile="${primary ? "primary" : "pinned"}"[^>]*class="[^"]*\\bh-\\[92px\\] w-\\[78px\\][^"]*\\brounded-\\[10px\\]`));
-    expect(html).toContain('class="mark-mascot"');
-    expect(html).toContain('style="width:56px;height:56px"');
-    expect(html).toMatch(/truncate text-center text-\[13px\] font-medium leading-4 text-ink"[^>]*>Mark Bot</);
+    // The mascot is drawn from the body catalogue, not a flat portrait: the body's own
+    // fit transform only appears when the silhouette is really rendered.
+    expect(html).toContain(MASCOT_BODIES.cursor.fit);
+    expect(html).not.toContain("/mark-avatars/");
+    expect(html).toMatch(/truncate text-center text-ui font-medium leading-4 text-ink"[^>]*>Mark Bot</);
     expect(html).not.toContain("data-provider-mark");
   });
 
@@ -105,7 +108,7 @@ describe("the tile grid", () => {
     expect(tiles(html)).toEqual(["primary:mausbot", ...pins(count).map((pin) => `pinned:${pin.id}${drag}`)]);
     expect(html).toMatch(/<div data-sidebar-tiles="" class="flex max-h-\[40vh\] flex-wrap justify-center gap-1 overflow-y-auto /);
     expect(html.match(/\bh-\[92px\] w-\[78px\]/g)).toHaveLength(count + 1);
-    expect(html.match(/class="mark-mascot"[^>]*style="width:56px;height:56px"/g)).toHaveLength(count + 1);
+    expect(html.split(MASCOT_BODIES.cursor.fit).length - 1).toBe(count + 1);
     expect(html.match(/data-testid="chief-badge"/g)).toHaveLength(1);
   });
 

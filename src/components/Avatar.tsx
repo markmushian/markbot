@@ -17,7 +17,6 @@ import { isHalloweenBody, type BotBodyId } from "../../shared/bot-body";
 import { useHalloweenDressed, wornBody } from "@/lib/halloween-dress";
 import { CarvedAvatar } from "./CarvedAvatar";
 import { steelBodyImage } from "@/lib/steel-body";
-import { MarkAvatar } from "./MarkAvatar";
 
 export const EYE_SCALE = 1.12;
 export const MOUTH_WEIGHT = 11;
@@ -101,7 +100,6 @@ export type MausAvatarProps = {
 
 function MausAvatarComponent(props: MausAvatarProps, ref: React.Ref<MausAvatarHandle>) {
   const { bodyId, color, size, state, motion, motionKey, gaze, trackPointer, animated, label } = props;
-  if (!bodyId || bodyId === "cursor") return <MarkAvatar ref={ref} {...props} />;
   if (isHalloweenBody(bodyId)) {
     return (
       <CarvedAvatar
@@ -218,12 +216,14 @@ export const MausAvatar = memo(forwardRef(MausAvatarComponent));
 
 export type BotAvatarProps = Omit<MausAvatarProps, "color" | "gradient"> & {
   readable?: boolean;
+  previewUrl?: string;
   bot: {
     name?: string;
     color: MausColor;
     avatarUrl?: string | null;
     avatarCrop?: BotAvatarCrop;
     avatarZoom?: number;
+    avatarHue?: number;
     avatarFocusX?: number;
     avatarFocusY?: number;
     mascotBody?: BotBodyId | null;
@@ -246,8 +246,9 @@ export function resolveBotAvatarOutcome(params: {
   return "flatImage";
 }
 
-export function BotAvatar({ bot, size = 44, label, readable = false, ...mascotProps }: BotAvatarProps) {
+export function BotAvatar({ bot, size = 44, label, readable = false, previewUrl, ...mascotProps }: BotAvatarProps) {
   const profile = botAvatarProfile(bot);
+  if (previewUrl?.startsWith("blob:")) profile.avatarUrl = previewUrl;
   const dressed = useHalloweenDressed();
   const [imageFailed, setImageFailed] = useState(false);
 
@@ -297,6 +298,7 @@ export function BotAvatar({ bot, size = 44, label, readable = false, ...mascotPr
           objectPosition: origin,
           transform: zoom === 1 ? undefined : `scale(${zoom})`,
           transformOrigin: origin,
+          filter: bot.avatarHue ? `hue-rotate(${Math.min(360, Math.max(0, bot.avatarHue))}deg)` : undefined,
         }}
       />
     </span>

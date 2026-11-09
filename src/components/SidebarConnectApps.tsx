@@ -12,10 +12,11 @@ import { SIMPLE_TOP_BUTTON } from "./SidebarSimpleTop";
 
 export type AppFace = Pick<ToolkitCard, "slug" | "label" | "logo" | "domain">;
 
+/** The faces that fan out of the button: the tools this build actually ships, with local marks. */
 export const POPULAR_APPS: readonly AppFace[] = [
-  { slug: "gmail", label: "Gmail", logo: null, domain: "gmail.com" },
-  { slug: "slack", label: "Slack", logo: null, domain: "slack.com" },
-  { slug: "notion", label: "Notion", logo: null, domain: "notion.so" },
+  { slug: "qqmail", label: "QQ 邮箱", logo: "/app-icons/qqmail.ico", domain: null },
+  { slug: "tencent-docs", label: "腾讯文档", logo: "/app-icons/tencent-docs.ico", domain: null },
+  { slug: "feishu", label: "飞书", logo: "/app-icons/feishu.ico", domain: null },
 ];
 
 export const APP_FACES = 3;
@@ -56,7 +57,7 @@ function AppFaceIcon({ face, className }: { face: AppFace; className?: string })
     <span data-app-face={face.slug} className={cn("flex size-[18px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-white p-px ring-[1.5px] ring-composer", className)}>
       {src
         ? <img src={src} alt="" draggable={false} className="size-4 object-contain" onError={() => setFailed((count) => count + 1)} />
-        : <span className="text-[10px] font-semibold leading-none text-neutral-700">{face.label.slice(0, 1).toUpperCase()}</span>}
+        : <span className="text-tiny font-semibold leading-none text-neutral-700">{face.label.slice(0, 1).toUpperCase()}</span>}
     </span>
   );
 }
@@ -78,7 +79,7 @@ export function SidebarConnectApps({ circle = false }: { circle?: boolean }) {
       aria-label={circle ? label : undefined}
       title={circle ? label : undefined}
       onClick={() => dispatch({ type: "togglePlugins", open: true })}
-      className={circle ? SIMPLE_TOP_BUTTON : cn("group/apps flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full pl-4 pr-3 text-[14px] font-medium leading-5 text-ink", ELEVATED_CONTROL, ELEVATED_HOVER)}
+      className={circle ? SIMPLE_TOP_BUTTON : cn("group/apps flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-full pl-4 pr-3 text-body font-medium leading-5 text-ink", ELEVATED_CONTROL, ELEVATED_HOVER)}
     >
       {circle ? <Puzzle size={18} strokeWidth={1.5} aria-hidden="true" /> : <>
         <span className="min-w-0 truncate">{label}</span>

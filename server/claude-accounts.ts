@@ -14,6 +14,8 @@ const configDir = z.string().trim().max(4096).refine((value) => !/\p{Cc}/u.test(
 export const createClaudeAccountSchema = z.object({ displayName, configDir: configDir.optional() }).strict();
 export const instanceSettingsSchema = z.object({
   cli: z.string().max(4096).refine((value) => !/\p{Cc}/u.test(value), "CLI cannot contain control characters").optional(),
+  /** Switch the built-in "Claude (API key)" engine to a local Claude Code CLI + subscription sign-in (and back). */
+  linkCli: z.boolean().optional(),
   displayName: displayName.optional(),
   configDir: configDir.optional(),
   tools: z.boolean().optional(),

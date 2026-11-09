@@ -6,6 +6,10 @@ import authModule from "./desktop-server-auth.cjs";
 const { DESKTOP_MUTATION_HEADER, desktopServerHeaders } = authModule;
 const TOKEN = "a".repeat(43);
 
+test("desktop header matches the server's owner capability name", () => {
+  assert.equal(DESKTOP_MUTATION_HEADER.toLowerCase(), "x-markbot-desktop-owner");
+});
+
 test("adds the owner capability to packaged main-process mutations", () => {
   assert.deepEqual(desktopServerHeaders(
     { "content-type": "application/json" },

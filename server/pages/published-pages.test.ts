@@ -73,7 +73,7 @@ describe("publishing a page", () => {
     const outcome = await f.publish({ path: "site" });
     expect(outcome.status).toBe(200);
     const [page] = [...f.service.pages.keys()];
-    const url = `https://${page}.mausbot.page/`;
+    const url = `https://${page}.markbot.page/`;
     expect(outcome.text).toContain(`Published “Bake sale” at ${url}`);
     expect(outcome.text).toContain("This account now has 1 of 5 pages.");
     expect(outcome.text).toContain("Free pages carry a small “Made with Mark Bot” badge.");
@@ -92,7 +92,7 @@ describe("publishing a page", () => {
     writeFileSync(join(site, "index.html"), "<h1>Tomorrow's menu</h1>");
     const again = await f.publish({ path: join(site), threadId: "routine-run-2" });
     const [page] = [...f.service.pages.keys()];
-    expect(again.text).toContain(`Updated “Bake sale” at the same link: https://${page}.mausbot.page/`);
+    expect(again.text).toContain(`Updated “Bake sale” at the same link: https://${page}.markbot.page/`);
     expect(f.service.minted.map((call) => call.action)).toEqual(["create", "update"]);
     expect(f.service.pages.size).toBe(1);
     expect(f.service.pages.get(page!)!.files.get("index.html")).toBe("<h1>Tomorrow's menu</h1>");
@@ -102,7 +102,7 @@ describe("publishing a page", () => {
     await f.publish({ path: "other", pageId: page });
     expect(f.service.minted.at(-1)).toEqual({ action: "update", pageId: page, caller: "desktop" });
     expect(f.service.pages.get(page!)!.files.get("index.html")).toBe("<p>Other</p>");
-    expect(f.cards.map((card) => card.card.url)).toEqual(Array(3).fill(`https://${page}.mausbot.page/`));
+    expect(f.cards.map((card) => card.card.url)).toEqual(Array(3).fill(`https://${page}.markbot.page/`));
   });
 
   it("gives a folder whose page was unpublished elsewhere a new link instead of failing", async () => {

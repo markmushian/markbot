@@ -1,10 +1,9 @@
 import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 
-const RELEASE_REPOSITORIES = [
-  'milind-soni/OpenMausBot',
-  'milind-soni/markbot-releases',
-] as const;
+/** Where release notes are published. One repository: this build has no history before it, so there is nothing older
+ * to fall back to. */
+const RELEASE_REPOSITORIES = ['markmushian/markbot'] as const;
 const RELEASES_PER_PAGE = 100;
 const MAX_RELEASE_PAGES = 10;
 const LEGACY_DRAFT_NOTES =
@@ -64,7 +63,7 @@ function releaseNotes(release: GitHubRelease) {
   if (!legacyDraft) return body;
 
   const commit = legacyDraft[1];
-  return `This build predates curated release notes. [View its source commit (${commit.slice(0, 7)})](https://github.com/milind-soni/OpenMausBot/commit/${commit}).`;
+  return `This build predates curated release notes. [View its source commit (${commit.slice(0, 7)})](https://github.com/markmushian/markbot/commit/${commit}).`;
 }
 
 async function fetchPublishedReleases(repository: string): Promise<GitHubRelease[]> {
@@ -129,7 +128,7 @@ export async function ReleaseChangelog() {
     return (
       <p>
         The live release history is temporarily unavailable.{' '}
-        <a href="https://github.com/milind-soni/OpenMausBot/releases">Browse releases on GitHub</a>.
+        <a href="https://github.com/markmushian/markbot/releases">Browse releases on GitHub</a>.
       </p>
     );
   }

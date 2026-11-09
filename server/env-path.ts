@@ -60,6 +60,12 @@ function windowsKnownDirs(): string[] {
     join(localAppData, "cursor-agent"),
     join(home, ".local", "bin"), // claude native installer
     join(home, ".claude", "local"),
+    // Hermes (nousresearch) installs next to its install.ps1 as `bin\hermes.exe`, and the
+    // gateway service lands under LocalAppData. Both are worth a look: the installer lets the
+    // person pick any folder, so PATH alone is not enough after a GUI launch.
+    join(home, ".hermes", "bin"),
+    join(localAppData, "hermes", "bin"),
+    join(localAppData, "hermes", "hermes-agent", "bin"),
     join(home, "bin"), // Factory droid installer (%USERPROFILE%\bin)
     join(home, ".bun", "bin"),
     join(home, ".deno", "bin"),

@@ -58,7 +58,7 @@ describe("the server's facts and checks", () => {
     const dir = mkdtempSync(join(tmpdir(), "omb-connector-probe-"));
     dirs.push(dir);
     const docker = new FakeDocker(dir);
-    const image = `ghcr.io/milind-soni/mausbot-connector@sha256:${"1".repeat(64)}`;
+    const image = `ghcr.io/milind-soni/markbot-connector@sha256:${"1".repeat(64)}`;
     docker.publish(image, null);
     await docker.pull(image);
     expect(await probeBox(docker, image, "{}")).toEqual({ ok: true });

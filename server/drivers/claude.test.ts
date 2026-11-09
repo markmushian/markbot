@@ -20,6 +20,7 @@ import {
   createPermissionBroker,
   hookTokenFile,
   parseClaudeCliVersion,
+  parseWorkBuddyModelIds,
   permissionSocketPath,
   readClaudeAuthSettings,
   claudeCostSnapshot,
@@ -1485,6 +1486,30 @@ describe("ClaudeDriver turns (fake CLI)", () => {
     const seen = JSON.parse(readFileSync(dump, "utf8"));
     expect(seen.argv).not.toContain("--system-prompt-snapshot");
     expect(seen.prompt.message.content).toContain("Add the new header row.");
+  });
+
+  it("uses WorkBuddy's Auto model and keeps its account available for turns and background checks", async () => {
+    const dump = join(scratch, "workbuddy-no-snapshot.json");
+    const checkDump = join(scratch, "workbuddy-background.json");
+    await create(undefined, { FAKE_CLAUDE_DUMP: dump, FAKE_CLAUDE_TEXT_DUMP: checkDump, FAKE_CLAUDE_VERSION: "2.165.0", CODEBUDDY_FORCE_LITE_WB_BUNDLE: "1" });
+    expect(instance.models).toEqual({ default: "auto", options: [{ id: "auto", label: "Auto" }] });
+    await instance.snapshot();
+    expect(instance.models).toEqual({ default: "auto", options: [{ id: "auto", label: "Auto" }] });
+    expect(instance.adapter.capabilities.strictResume).toBe(false);
+    await instance.adapter.sendTurn({ threadId: "t-workbuddy", text: "Check the task", model: "agent-default", system: "Coordinate this team in Chinese." });
+    await recorder.until((event) => event.type === "turn.completed");
+    const seen = JSON.parse(readFileSync(dump, "utf8"));
+    expect(seen.argv).not.toContain("--system-prompt-snapshot");
+    expect(seen.argv).not.toContain("--setting-sources");
+    expect(seen.argv).not.toContain("--model");
+    expect(seen.argv).not.toContain("--append-system-prompt-file");
+    expect(seen.argv).not.toContain("--replay-user-messages");
+    expect(seen.prompt.message.content).toContain("Coordinate this team in Chinese.");
+    process.env.FAKE_CLAUDE_TEXT_DUMP = checkDump;
+    await expect(instance.generateText!("summarize")).resolves.toBe("fake generated text");
+    const check = JSON.parse(readFileSync(checkDump, "utf8"));
+    expect(check.argv[check.argv.indexOf("--model") + 1]).toBe("auto");
+    expect(check.argv).not.toContain("--setting-sources");
   });
 
   it("replaces the previous computer prompt when a normal conversation changes its place", async () => {
@@ -4223,5 +4248,24 @@ describe("ClaudeDriver billing (fake CLI)", () => {
   it("never bills on a key the server inherited, which turns strip", async () => {
     vi.stubEnv("ANTHROPIC_API_KEY", "sk-ant-inherited");
     expect(await billed("claude", {})).toEqual(LOGIN);
+  });
+});
+
+
+describe("WorkBuddy model catalog", () => {
+  const helpLine = "  --model <model>                                  Model for the current session. Please provide the model ID. Currently supported: (fast-model, balanced-model, deep-model, hy4free, hy4std, hy3, hy3-x, deepseek-v4.1-flash, glm-5.3, glm-5.3-flash, glm-5.2, space-bunny, minimax-m3.1-flash, kimi-k3.1-pro, kimi-k3-1, kimi-k2.8-preview, deepseek-v4-pro, step-5-preview, mimo-v2.6-pro)";
+
+  it("reads all 19 real model ids straight from codebuddy --help", () => {
+    const ids = parseWorkBuddyModelIds(["Usage:", helpLine, "  --version  Print version"].join(String.fromCharCode(10)));
+    expect(ids).toHaveLength(19);
+    expect(ids).toContain("hy4free");
+    expect(ids).toContain("deepseek-v4-pro");
+    expect(ids).toContain("mimo-v2.6-pro");
+    expect(new Set(ids).size).toBe(19);
+  });
+
+  it("ignores junk and returns nothing when the CLI prints no supported list", () => {
+    expect(parseWorkBuddyModelIds("--model <model>  no ids here")).toEqual([]);
+    expect(parseWorkBuddyModelIds("--model <model> Currently supported: (ok-id, <script>, also-ok)")).toEqual(["ok-id", "also-ok"]);
   });
 });

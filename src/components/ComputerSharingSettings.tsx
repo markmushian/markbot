@@ -46,7 +46,7 @@ export function ComputerSharingSettings({ workspace, onClose }: { workspace: { i
   };
   if (!bridge) return null;
   return <div ref={panel}><Card title={t("sharing.title", { name: workspace.name })} subtitle={workspace.origin}>
-    <div className="flex flex-col gap-4 text-[13px]">
+    <div className="flex flex-col gap-4 text-ui">
       <div className="flex items-center justify-between gap-2">
         <p role="status" className="text-ink-secondary">{!state
             ? t("sharing.loading")
@@ -60,24 +60,24 @@ export function ComputerSharingSettings({ workspace, onClose }: { workspace: { i
       <p className="text-ink-secondary">{t("sharing.intro")}</p>
       <fieldset disabled={busy || !state} className="flex flex-col gap-3 disabled:opacity-50">
         <legend className="mb-2 font-medium text-ink">{t("sharing.folders")}</legend>
-        {folders.length === 0 && <p className="text-[12px] text-ink-secondary">{t("sharing.noFolders")}</p>}
+        {folders.length === 0 && <p className="text-note text-ink-secondary">{t("sharing.noFolders")}</p>}
         {folders.map(folder => <div key={folder.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-hairline/40 p-3">
-          <div className="min-w-0 flex-1"><p className="font-medium text-ink">{folder.name}</p><p className="break-all text-[12px] text-ink-secondary">{folder.path}</p></div>
-          <label className="flex items-center gap-2 text-[12px] text-ink-secondary"><input type="checkbox" checked={folder.write} onChange={event => setFolders(current => current.map(entry => entry.id === folder.id ? { ...entry, write: event.target.checked } : entry))} />{t("sharing.allowEdits")}</label>
+          <div className="min-w-0 flex-1"><p className="font-medium text-ink">{folder.name}</p><p className="break-all text-note text-ink-secondary">{folder.path}</p></div>
+          <label className="flex items-center gap-2 text-note text-ink-secondary"><input type="checkbox" checked={folder.write} onChange={event => setFolders(current => current.map(entry => entry.id === folder.id ? { ...entry, write: event.target.checked } : entry))} />{t("sharing.allowEdits")}</label>
           <button type="button" aria-label={t("sharing.remove", { name: folder.name })} onClick={() => setFolders(current => current.filter(entry => entry.id !== folder.id))} className="rounded p-1 text-ink-secondary hover:bg-control"><X size={14} /></button>
         </div>)}
         <button type="button" disabled={folders.length >= 20} onClick={() => void perform(async () => {
           const folder = await bridge.chooseFolder();
           if (mounted.current && folder) setFolders(current => current.some(entry => entry.path === folder.path) ? current : [...current, folder]);
         })} className="flex w-fit items-center gap-2 rounded-lg border border-hairline/40 px-3 py-2 text-ink hover:bg-control"><FolderPlus size={14} />{t("sharing.chooseFolder")}</button>
-        <p className="text-[12px] text-ink-secondary">{t("sharing.smallFiles")}</p>
+        <p className="text-note text-ink-secondary">{t("sharing.smallFiles")}</p>
       </fieldset>
       <fieldset disabled={busy || !state} className="flex flex-col gap-3 border-t border-hairline/40 pt-3 disabled:opacity-50">
         <legend className="font-medium text-ink">{t("sharing.broader")}</legend>
-        <label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={terminal} onChange={event => setTerminal(event.target.checked)} /><span className="text-ink">{t("sharing.terminal")}<span className="mt-1 block text-[12px] text-ink-secondary">{t("sharing.terminalHint")}</span></span></label>
-        <label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={computer} onChange={event => setComputer(event.target.checked)} /><span className="text-ink">{t("sharing.computer")}<span className="mt-1 block text-[12px] text-ink-secondary">{t("sharing.computerHint")}</span></span></label>
+        <label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={terminal} onChange={event => setTerminal(event.target.checked)} /><span className="text-ink">{t("sharing.terminal")}<span className="mt-1 block text-note text-ink-secondary">{t("sharing.terminalHint")}</span></span></label>
+        <label className="flex items-start gap-2"><input className="mt-1" type="checkbox" checked={computer} onChange={event => setComputer(event.target.checked)} /><span className="text-ink">{t("sharing.computer")}<span className="mt-1 block text-note text-ink-secondary">{t("sharing.computerHint")}</span></span></label>
       </fieldset>
-      {(error || state?.error) && <p role="alert" className="text-[12px] text-danger">{error || state?.error}</p>}
+      {(error || state?.error) && <p role="alert" className="text-note text-danger">{error || state?.error}</p>}
       <div className="flex flex-wrap gap-2">
         <button type="button" disabled={busy || !state || (!folders.length && !terminal && !computer)} onClick={() => void perform(async () => {
           const next = await bridge.save(workspace.id, { folders, terminal, computer });
@@ -87,7 +87,7 @@ export function ComputerSharingSettings({ workspace, onClose }: { workspace: { i
           const next = await bridge.revoke(workspace.id); if (mounted.current) apply(next);
         })} className="rounded-lg border border-hairline/40 px-3 py-2 text-danger disabled:opacity-50">{t("files.stop")}</button>}
       </div>
-      {state?.enabled && <p className="text-[12px] text-ink-secondary">{t("sharing.stopNote")}</p>}
+      {state?.enabled && <p className="text-note text-ink-secondary">{t("sharing.stopNote")}</p>}
       <div className="border-t border-hairline/40 pt-3"><LendingActivityList entries={activity} /></div>
     </div>
   </Card></div>;

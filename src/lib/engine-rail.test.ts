@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import type { InstanceInfo } from "@/state/store";
-import { configuredModelInstances, splitEngineRail } from "./engine-rail";
+import { configuredModelInstances, isCustomOnly, signInFamily, splitEngineRail } from "./engine-rail";
+
+it("keeps a custom WorkBuddy transport under its own provider name", () => {
+  expect(signInFamily({ driverKind: "claudeAgent", access: "custom" })).toBeUndefined();
+  expect(signInFamily({ driverKind: "claudeAgent", access: "subscription" })).toBe("claude");
+});
 
 describe("splitEngineRail", () => {
   it("groups sign-in plans, pasted provider keys and Local engines", () => {
@@ -149,5 +154,14 @@ describe("Claude in the picker when Claude Code is signed out or not found", () 
     expect(configuredModelInstances([missing], "claude")).toEqual([missing]);
     expect(configuredModelInstances([missing])).toEqual([]);
     expect(configuredModelInstances([missing], "codex")).toEqual([]);
+  });
+});
+
+describe("isCustomOnly", () => {
+  it("only treats an engine as custom-only when every model it has came from the user", () => {
+    expect(isCustomOnly({ access: "custom", models: { options: [{ id: "hy3", label: "hy3" }] } })).toBe(false);
+    expect(isCustomOnly({ access: "custom", models: { options: [{ id: "llama", label: "Llama 4", custom: true }] } })).toBe(true);
+    expect(isCustomOnly({ access: "custom", models: { options: [] } })).toBe(true);
+    expect(isCustomOnly({ access: "subscription", models: { options: [{ id: "sonnet", label: "Sonnet", custom: true }] } })).toBe(false);
   });
 });

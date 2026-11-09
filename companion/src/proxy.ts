@@ -15,9 +15,12 @@ import {
   isBrowserControlAccess,
   isCloudDesktopAccess,
   isMessageFileDownload,
+  isTerminalAccess,
 } from "./routes.ts";
+import { PHONE_APP_HTML, PHONE_APP_PATH } from "./phone-app.ts";
 import { sendTunnelJson } from "./tunnel-gzip.ts";
 import { CompanionViewerRelay, requestTarget } from "./viewer-relay.ts";
+import { sameOriginPageRequest } from "./web-origin.ts";
 import { createSseScrubber, isJson, scrub } from "./wire.ts";
 
 export interface ProxyOptions {
@@ -121,6 +124,15 @@ const sendJson = (res: ServerResponse, status: number, body: unknown): void => {
   if (sendTunnelJson(res, status, headers, text)) return;
   res.writeHead(status, { ...headers, "content-length": Buffer.byteLength(text) });
   res.end(text);
+};
+
+/** The one document the sidecar serves itself. It carries no token, no key and
+ * no third-party script; the device pastes its own credential into it. */
+const sendHtml = (res: ServerResponse, status: number, html: string): void => {
+  const headers = { "content-type": "text/html; charset=utf-8", ...PRIVATE_RESPONSE_HEADERS };
+  if (sendTunnelJson(res, status, headers, html)) return;
+  res.writeHead(status, { ...headers, "content-length": Buffer.byteLength(html) });
+  res.end(html);
 };
 
 /** Validated and capped at the network boundary so no producer can publish an
@@ -270,24 +282,39 @@ export function createProxyHandler(options: ProxyOptions) {
     const path = (req.url ?? "/").split("?")[0];
     const method = req.method ?? "GET";
 
-    // A native app sends no Origin: anything with one is a browser, refused
-    // before the token is looked at.
-    if (req.headers.origin) {
+    // A native app sends no Origin. The one page this sidecar serves (/app) is
+    // a browser, so its own writes carry one; only an exact same-authority
+    // origin on a local or advertised host passes. Everything else stays
+    // refused before the token is looked at.
+    if (req.headers.origin && !sameOriginPageRequest(req.headers, options.endpoints?.().map((entry) => entry.url) ?? [])) {
       return sendJson(res, 403, { error: "forbidden: cross-origin request" });
+    }
+
+    // Static, public and secret-free: the device enters its own token here.
+    if (method === "GET" && path === PHONE_APP_PATH) {
+      return sendHtml(res, 200, PHONE_APP_HTML);
     }
 
     const token = bearerToken(req.headers.authorization);
     const device = options.authenticate(token);
-    const browserRequest = isBrowserControlAccess(method, path);
-    const browserRefusal = () => {
-      if (!browserRequest) return null;
+    const capabilityRequest = isBrowserControlAccess(method, path) || isTerminalAccess(method, path);
+    /** Re-checked when upstream headers arrive: a grant can be revoked while a
+     * stream is being opened. */
+    const capabilityRefusal = () => {
+      if (!capabilityRequest) return null;
       const current = options.authenticate(token);
       if (!current || current.id !== device?.id) {
         return { status: 401, error: "pair this device from Remote access settings on the host computer" };
       }
+      if (isTerminalAccess(method, path)) {
+        return current.cloudDesktopAccess ? null : {
+          status: 403,
+          error: "computer access is off for this device — enable it in Mark Bot → Settings → Remote access",
+        };
+      }
       return current.browserControlAccess ? null : {
         status: 403,
-        error: "browser control is off for this device — enable it in Remote access settings on the host computer",
+        error: "browser control is off for this device — open Remote access on the computer and turn on \"Allow browser control\" for it",
       };
     };
     if (viewers.isViewerPath(req.url)) {
@@ -313,6 +340,14 @@ export function createProxyHandler(options: ProxyOptions) {
     if (isBrowserControlAccess(method, path) && !device?.browserControlAccess) {
       return sendJson(res, 403, {
         error: "browser control is off for this device — open Remote access on the computer and turn on \"Allow browser control\" for it",
+      });
+    }
+
+    // A shell on this computer is at least as broad as the cloud desktop, so it
+    // rides the same per-device grant rather than inventing a weaker one.
+    if (isTerminalAccess(method, path) && !device?.cloudDesktopAccess) {
+      return sendJson(res, 403, {
+        error: "computer access is off for this device — enable it in Mark Bot → Settings → Remote access",
       });
     }
 
@@ -375,7 +410,7 @@ export function createProxyHandler(options: ProxyOptions) {
       (harness) => {
         clearTimeout(headersDeadline);
         // A grant revoked while the native browser opens must not expose frames.
-        const refusal = browserRefusal();
+        const refusal = capabilityRefusal();
         if (refusal) {
           harness.destroy();
           return sendJson(res, refusal.status, { error: refusal.error });
@@ -453,7 +488,7 @@ export function createProxyHandler(options: ProxyOptions) {
               : null;
           // Capability-only streams must close when the capability is revoked;
           // `connected` covers only /api/events.
-          const capabilityOwner = isBrowserControlAccess(method, path) ? device?.id : undefined;
+          const capabilityOwner = capabilityRequest ? device?.id : undefined;
           if (capabilityOwner) {
             const open = capabilityStreams.get(capabilityOwner) ?? new Set<() => void>();
             open.add(disconnect);
@@ -550,7 +585,7 @@ export function createProxyHandler(options: ProxyOptions) {
         });
         harness.on("error", () => res.destroy());
         harness.on("end", () => {
-          const refusal = browserRefusal();
+          const refusal = capabilityRefusal();
           if (refusal) return sendJson(res, refusal.status, { error: refusal.error });
           const body = Buffer.concat(chunks).toString("utf8");
 

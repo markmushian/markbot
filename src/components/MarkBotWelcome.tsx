@@ -18,7 +18,7 @@ import { useAvatarImage } from "./avatar-editing";
 import { MarkBotCustomize } from "./MarkBotCustomize";
 import { usePrefersReducedMotion } from "./mascot-clock";
 
-const LOOK = ["name", "color", "mascotBody", "avatarUrl", "avatarCrop", "avatarZoom", "avatarFocusX", "avatarFocusY"] as const;
+const LOOK = ["name", "color", "mascotBody", "avatarUrl", "avatarCrop", "avatarZoom", "avatarHue", "avatarFocusX", "avatarFocusY"] as const;
 export type WelcomeDraft = Pick<Bot, (typeof LOOK)[number]>;
 const RECEDE_MS = 240;
 const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
@@ -27,7 +27,7 @@ export const welcomeName = (name: string): string => name.trim().slice(0, BOT_PR
 
 export function draftOf(bot: Bot): WelcomeDraft {
   return { name: bot.name, color: bot.color, mascotBody: bot.mascotBody ?? "cursor", avatarUrl: bot.avatarUrl ?? null,
-    avatarCrop: bot.avatarCrop ?? "mascot", avatarZoom: bot.avatarZoom, avatarFocusX: bot.avatarFocusX, avatarFocusY: bot.avatarFocusY };
+    avatarCrop: bot.avatarCrop ?? "mascot", avatarZoom: bot.avatarZoom, avatarHue: bot.avatarHue, avatarFocusX: bot.avatarFocusX, avatarFocusY: bot.avatarFocusY };
 }
 
 /** What either choice saves, as the bot's own edit screen would: what the person changed, and that they chose. Add puts
@@ -163,7 +163,7 @@ export function MarkBotWelcomeCard({ bot, onClose }: { bot: Bot; onClose: () => 
             onClick={() => setEditing(!editing)}
             onDragOver={(event) => { if (event.dataTransfer.types.includes("Files")) event.preventDefault(); }}
             onDrop={drop}
-            className="group relative rounded-full p-1 transition-transform duration-200 ease-out hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            className="group relative rounded-full p-1 transition-transform duration-200 ease-standard hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
           >
             <span className="pointer-events-none absolute inset-1 rounded-full ring-0 ring-accent/35 transition-[box-shadow] duration-200 group-hover:ring-2 group-focus-visible:ring-2" aria-hidden="true" />
             <span ref={avatarRef} data-mausbot-welcome-avatar="" className="block drop-shadow-[0_10px_24px_rgba(0,0,0,0.22)]">
@@ -173,8 +173,8 @@ export function MarkBotWelcomeCard({ bot, onClose }: { bot: Bot; onClose: () => 
               <Pencil size={13} />
             </span>
           </button>
-          <h2 id="mausbot-welcome-title" className={cn("mt-3 text-ink", advanced ? "text-[20px] font-semibold" : "text-[17px] font-medium leading-6 tracking-[-0.008em]")}>{t("mausbotWelcome.title", { name })}</h2>
-          <ul className="mt-3 space-y-1.5 text-left text-[14px] leading-snug text-ink-secondary">
+          <h2 id="mausbot-welcome-title" className={cn("mt-3 text-ink", advanced ? "text-page font-semibold" : "text-title font-medium leading-6 tracking-[-0.008em]")}>{t("mausbotWelcome.title", { name })}</h2>
+          <ul className="mt-3 space-y-1.5 text-left text-body leading-snug text-ink-secondary">
             {([[Sparkles, "mausbotWelcome.line.helper"], [BookOpen, "mausbotWelcome.line.knows"], [Wand2, "mausbotWelcome.line.setup"], [Crown, "mausbotWelcome.line.powers"]] as const).map(([Icon, key]) => (
               <li key={key} className="flex items-start gap-2.5"><Icon size={15} className="mt-0.5 shrink-0 text-ink-tertiary" aria-hidden="true" />{t(key)}</li>
             ))}
@@ -187,7 +187,7 @@ export function MarkBotWelcomeCard({ bot, onClose }: { bot: Bot; onClose: () => 
           inert={!editing}
           aria-hidden={!editing}
           data-mausbot-welcome-panel={editing ? "open" : "closed"}
-          className={cn("grid transition-[grid-template-rows,opacity] duration-[250ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+          className={cn("grid transition-[grid-template-rows,opacity] duration-[250ms] ease-standard motion-reduce:transition-none",
             editing ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}
         >
           <div className="min-h-0 overflow-hidden">
@@ -199,11 +199,11 @@ export function MarkBotWelcomeCard({ bot, onClose }: { bot: Bot; onClose: () => 
 
         <div className={cn("mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center", advanced ? "sm:justify-between" : "sm:justify-end")}>
           <button type="button" data-mausbot-welcome-later="" onClick={() => choose(false)} title={t("mausbotWelcome.notNowHint", { name })}
-            className={advanced ? "rounded-full px-3 py-2 text-[13px] text-ink-secondary hover:bg-raised-hover hover:text-ink" : "ui-button ui-button-pill"}>
+            className={advanced ? "rounded-full px-3 py-2 text-ui text-ink-secondary hover:bg-raised-hover hover:text-ink" : "ui-button ui-button-pill"}>
             {t("mausbotWelcome.notNow")}
           </button>
           <button type="button" data-mausbot-welcome-add="" onClick={() => choose(true)}
-            className={advanced ? "rounded-full bg-accent px-5 py-2.5 text-[14px] font-medium text-accent-ink hover:brightness-110" : "ui-button ui-button-pill ui-button-primary"}>
+            className={advanced ? "rounded-full bg-accent px-5 py-2.5 text-body font-medium text-accent-ink hover:brightness-110" : "ui-button ui-button-pill ui-button-primary"}>
             {t("mausbotWelcome.add", { name })}
           </button>
         </div>

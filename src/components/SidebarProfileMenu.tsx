@@ -381,8 +381,10 @@ export function placeMenuItems(place: Pick<WorkspacePlace, "bridge" | "current" 
   const current = place.current;
   const icon = cloudColor(current?.color) ? <CloudTile color={current?.color} size={16} />
     : current?.local === false || (place.cloudHome && !current) ? <Cloud size={16} /> : <Laptop size={16} />;
+  // "This computer" is a place name, not a product name: it follows the UI language.
+  const currentName = current && current.local !== false ? t("rail.thisComputer") : current?.name;
   return [
-    ...(current ? [{ key: "place", label: current.name, ...(place.cloudHome && place.onLine ? { subtitle: place.onLine } : {}), icon, trailing: here, onSelect: place.openMenu }] : []),
+    ...(current ? [{ key: "place", label: currentName ?? "", ...(place.cloudHome && place.onLine ? { subtitle: place.onLine } : {}), icon, trailing: here, onSelect: place.openMenu }] : []),
     ...(besideRail ? [] : [{ key: "switch-place", label: t("sidebar.menu.switchTo"), icon: <ArrowLeftRight size={16} />, onSelect: place.openMenu }]),
   ];
 }
@@ -513,7 +515,7 @@ export function profileMenuItems({
     label: updateTop.label,
     subtitle: undefined,
     attention: false,
-    trailing: <span className="flex h-6 shrink-0 items-center rounded-full bg-ink px-2.5 text-[12px] font-medium text-app">{updateTop.action}</span>,
+    trailing: <span className="flex h-6 shrink-0 items-center rounded-full bg-ink px-2.5 text-note font-medium text-app">{updateTop.action}</span>,
   } : null;
   const groups = [
     move,
@@ -589,7 +591,8 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
         onConnect: connectTo,
         onGetApp: () => setPhoneAppOpen(true),
       }),
-    usage: !remote,
+    // Parked for a later, different purpose: the weekly-usage row is not wanted in the menu yet.
+    usage: false,
     usageSummary: cloudUsage ?? engineUsage,
     update: update?.item ?? null,
     updateTop: simple ? simpleUpdateTop(update) : null,
@@ -671,7 +674,7 @@ export function SidebarProfileMenu({ iconOnly = false, rail = false, circle = fa
               {moveDot && <span aria-hidden data-account-dot={moveDot} className={cn("absolute -right-0.5 -top-0.5 size-2 rounded-full ring-2 ring-app", DOT_COLOR[moveDot])} />}
             </span>
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-[14px] font-medium leading-5 text-ink">{name}</span>
+              <span className="truncate text-body font-medium leading-5 text-ink">{name}</span>
               <AccountMoveStatus kind={move.kind} />
             </span>
             {noteworthy && (

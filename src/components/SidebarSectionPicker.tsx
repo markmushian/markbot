@@ -101,7 +101,7 @@ export function SectionPicker({
           onChange={(e) => setName(e.target.value)}
           placeholder={t("sidebar.section.newContext")}
           aria-label={t("sidebar.section.newContextAria")}
-          className="w-full rounded-md bg-ink/[0.05] px-2 py-1.5 text-[13px] text-ink placeholder:text-ink-tertiary focus:outline-none"
+          className="w-full rounded-md bg-ink/[0.05] px-2 py-1.5 text-ui text-ink placeholder:text-ink-tertiary focus:outline-none"
         />
         <button
           type="submit"

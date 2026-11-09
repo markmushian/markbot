@@ -21,12 +21,12 @@ function ShortcutRow({ item, isMac }: { item: ShortcutItem; isMac: boolean }) {
 
   return (
     <div className="flex items-center justify-between gap-4 py-1.5">
-      <span className="text-[13px] text-ink">{activeLocale() === "zh" ? (ZH_SHORTCUTS[item.id] ?? item.description) : item.description}</span>
+      <span className="text-ui text-ink">{activeLocale() === "zh" ? (ZH_SHORTCUTS[item.id] ?? item.description) : item.description}</span>
       <div className="flex shrink-0 items-center gap-1">
         {keys.map((key, index) => (
           <kbd
             key={index}
-            className="inline-flex min-w-[22px] items-center justify-center rounded-md border border-hairline/60 bg-control px-1.5 py-0.5 font-mono text-[12px] font-semibold text-ink shadow-xs"
+            className="inline-flex min-w-[22px] items-center justify-center rounded-md border border-hairline/60 bg-control px-1.5 py-0.5 font-mono text-note font-semibold text-ink shadow-xs"
           >
             {key}
           </kbd>
@@ -88,10 +88,10 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               <Keyboard size={18} />
             </span>
             <div>
-              <h2 id="shortcuts-dialog-title" className="text-[16px] font-semibold text-ink">
+              <h2 id="shortcuts-dialog-title" className="text-16 font-semibold text-ink">
                 {activeLocale() === "zh" ? "键盘快捷键" : "Keyboard Shortcuts"}
               </h2>
-              <p className="text-[12px] text-ink-secondary">
+              <p className="text-note text-ink-secondary">
                 {activeLocale() === "zh" ? "常用命令与导航" : "Quick commands and navigation"}
               </p>
             </div>
@@ -115,20 +115,20 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
               onChange={(e) => setQuery(e.target.value)}
               placeholder={activeLocale() === "zh" ? "搜索快捷键…" : "Search shortcuts…"}
               aria-label={activeLocale() === "zh" ? "搜索快捷键" : "Search shortcuts"}
-              className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+              className="w-full bg-transparent text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
             />
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
           {groups.length === 0 ? (
-            <div className="py-8 text-center text-[13px] text-ink-secondary">
+            <div className="py-8 text-center text-ui text-ink-secondary">
               {activeLocale() === "zh" ? `没有找到与“${query}”匹配的快捷键` : `No shortcuts found for “${query}”`}
             </div>
           ) : (
             groups.map((group) => (
               <div key={group.category} className="space-y-1">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary">
+                <div className="text-meta font-semiboldr text-ink-tertiary">
                   {activeLocale() === "zh" ? (ZH_CATEGORIES[group.category] ?? group.category) : group.category}
                 </div>
                 <div className="divide-y divide-hairline/20 rounded-xl bg-card/40 px-3 py-1 border border-hairline/30">
@@ -141,9 +141,9 @@ export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModal
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-[12px] text-ink-secondary">
+        <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-note text-ink-secondary">
           <span>
-            {activeLocale() === "zh" ? <>未输入文字时按 <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[11px]">?</kbd> 打开</> : <>Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-[11px]">?</kbd> when not typing to open</>}
+            {activeLocale() === "zh" ? <>未输入文字时按 <kbd className="rounded bg-control px-1 py-0.5 font-mono text-meta">?</kbd> 打开</> : <>Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-meta">?</kbd> when not typing to open</>}
           </span>
           <button
             type="button"

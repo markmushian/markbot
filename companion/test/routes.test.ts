@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { denyReason, isBrowserControlAccess, isCloudDesktopAccess, isCompanionNotice } from "../src/routes.ts";
+import { denyReason, isBrowserControlAccess, isCloudDesktopAccess, isCompanionNotice, isTerminalAccess } from "../src/routes.ts";
 
 const ask = (method: string, path: string, authenticated = true) =>
   denyReason({ method, path, authenticated });
@@ -336,6 +336,52 @@ describe("what it may not", () => {
       expect(allowed("GET", path), path).toBe(false);
       expect(allowed("POST", path), path).toBe(false);
       expect(allowed("DELETE", path), path).toBe(false);
+    }
+  });
+});
+
+describe("interactive terminal (phone)", () => {
+  const id = "0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0";
+
+  it("opens only the four narrow session verbs", () => {
+    expect(allowed("POST", "/api/terminal/sessions")).toBe(true);
+    expect(allowed("POST", `/api/terminal/sessions/${id}/input`)).toBe(true);
+    expect(allowed("GET", `/api/terminal/sessions/${id}/stream`)).toBe(true);
+    expect(allowed("DELETE", `/api/terminal/sessions/${id}`)).toBe(true);
+  });
+
+  it("stays closed to an unpaired device", () => {
+    for (const [method, path] of [
+      ["POST", "/api/terminal/sessions"],
+      ["GET", `/api/terminal/sessions/${id}/stream`],
+      ["DELETE", `/api/terminal/sessions/${id}`],
+    ] as Array<[string, string]>) {
+      expect(ask(method, path, false)?.status, `${method} ${path}`).toBe(401);
+    }
+  });
+
+  it("classifies exactly those four as computer-access routes", () => {
+    expect(isTerminalAccess("POST", "/api/terminal/sessions")).toBe(true);
+    expect(isTerminalAccess("GET", `/api/terminal/sessions/${id}/stream`)).toBe(true);
+    expect(isTerminalAccess("GET", "/api/bots")).toBe(false);
+    expect(isCloudDesktopAccess("GET", `/api/terminal/sessions/${id}/stream`)).toBe(false);
+  });
+
+  it("has no run-this-command verb and no traversal-shaped session id", () => {
+    for (const [method, path] of [
+      ["POST", `/api/terminal/sessions/${id}/exec`],
+      ["POST", `/api/terminal/sessions/${id}/run`],
+      ["GET", "/api/terminal/sessions"],
+      ["PATCH", `/api/terminal/sessions/${id}`],
+      ["POST", "/api/terminal/sessions/not-a-uuid/input"],
+      ["GET", "/api/terminal/sessions/not-a-uuid/stream"],
+      ["DELETE", "/api/terminal/sessions/../config"],
+      ["POST", "/api/terminal/sessions/" + id + "/input/extra"],
+      ["GET", "/api/terminal"],
+      ["GET", `/api/terminal/sessions/${id}/stream?x=1`],
+    ] as Array<[string, string]>) {
+      expect(allowed(method, path), `${method} ${path}`).toBe(false);
+      expect(isTerminalAccess(method, path), `${method} ${path}`).toBe(false);
     }
   });
 });

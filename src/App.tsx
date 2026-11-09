@@ -4,6 +4,7 @@ import { CLOUD_LINK_SETTINGS, openBot, StoreProvider, useStore } from "@/state/s
 import { useShowThreads } from "@/lib/thread-preferences";
 import { useWelcomeViewer, WelcomeGate } from "@/components/onboarding/WelcomeGate";
 import { MarkBotWelcome } from "@/components/MarkBotWelcome";
+import { TodayView } from "@/components/TodayView";
 import { CloudTimeZoneSync } from "@/components/CloudTimeZone";
 import { cloudSignInDue, spotlightsQuiet, type WelcomeViewer } from "@/lib/onboarding";
 import { FirstConversationTour } from "@/components/onboarding/FirstConversationTour";
@@ -343,6 +344,8 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
         <FilesView />
       ) : state.activeView === "web-panel" ? (
         <WebPanelPage />
+      ) : state.activeView === "today" ? (
+        <TodayView />
       ) : state.activeView === "routines" ? (
         <TriggersPage onBack={closeCalendar} onOpenRoom={openCalendarRoom} />
       ) : !remoteClient && localVmWorkspaceBotId ? (
@@ -371,9 +374,9 @@ function Shell({ viewer }: { viewer: WelcomeViewer | null }) {
           <WindowDragStrip />
           <div className="w-full max-w-md"><ChatNotice notice={state.notice} /></div>
           {loading.busy && <Loader2 size={20} className="animate-spin" />}
-          <div className="text-[14px]">{t(loading.text)}</div>
+          <div className="text-body">{t(loading.text)}</div>
           {loading.command && (
-            <div className="text-[12px]">
+            <div className="text-note">
             {t("app.loading.startServer")} <code className="rounded bg-raised px-1.5 py-0.5">pnpm dev:server</code>
             </div>
           )}

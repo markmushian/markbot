@@ -1605,8 +1605,11 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
       const snapshot = async (): Promise<ProviderSnapshot> => {
         const env = childEnv();
         if (support.snapshot) return support.snapshot(env, config, instanceId);
+        // A cold `npx -y <package>` has to download the package before it can print a version; 8s
+        // made every first-run ACP engine look broken. Keep the check shorter for local binaries.
+        const versionTimeoutMs = /^\s*npx\b/i.test(config.cli) ? 60_000 : 30_000;
         const probe = await new Promise<{ version?: string; reason?: string }>((resolve) => {
-          execCli(config.cli, ["--version"], { timeout: 8000, env }, (err, stdout, stderr) => {
+          execCli(config.cli, ["--version"], { timeout: versionTimeoutMs, env }, (err, stdout, stderr) => {
             if (err) {
               const failure = err as NodeJS.ErrnoException & { killed?: boolean };
               const reason = failure.code === "ENOENT"
@@ -1614,7 +1617,7 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
                 : failure.code === "EACCES" || failure.code === "EPERM"
                   ? `\`${config.cli}\` isn't executable. Check its file permissions, then check again.`
                   : failure.killed && failure.code == null
-                    ? `\`${config.cli}\` version check timed out after 8 seconds. Check it in a terminal on the server, then try again.`
+                    ? `\`${config.cli}\` version check timed out after ${versionTimeoutMs / 1000} seconds. On a first run npx may still be downloading the package; check it in a terminal, then try again.`
                     : `\`${config.cli}\` version check failed. Run it with --version on the server to diagnose the installation, then check again.`;
               // Do not echo arbitrary CLI output or its environment into Settings.
               resolve({ reason });

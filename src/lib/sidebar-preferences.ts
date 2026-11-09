@@ -445,3 +445,33 @@ export function saveSectionOrder(
 ): void {
   saveStringList(SIDEBAR_SECTION_ORDER_KEY, ids, storage);
 }
+
+/** Rooms a person pinned to the top of the sidebar. Ids, in the order they were pinned. */
+const PINNED_ROOMS_KEY = "markbot.pinnedRooms.v1";
+let sessionPinnedRooms: string[] | undefined;
+const pinnedRoomListeners = new Set<() => void>();
+
+function subscribePinnedRooms(listener: () => void): () => void {
+  pinnedRoomListeners.add(listener);
+  return () => { pinnedRoomListeners.delete(listener); };
+}
+
+export function loadPinnedRooms(storage?: Pick<Storage, "getItem"> | null): string[] {
+  return loadStringList(PINNED_ROOMS_KEY, storage);
+}
+
+export function setPinnedRooms(ids: string[], storage?: Pick<Storage, "setItem"> | null): void {
+  sessionPinnedRooms = saveStringList(PINNED_ROOMS_KEY, ids, storage);
+  for (const listener of pinnedRoomListeners) listener();
+}
+
+const currentPinnedRooms = (): string[] => (sessionPinnedRooms ??= loadPinnedRooms());
+
+export function usePinnedRooms(): string[] {
+  return useSyncExternalStore(subscribePinnedRooms, currentPinnedRooms, currentPinnedRooms);
+}
+
+/** Pinning appends, so the newest pin sits last; unpinning leaves the rest in their order. */
+export function togglePinnedRoom(ids: string[], id: string): string[] {
+  return ids.includes(id) ? ids.filter((candidate) => candidate !== id) : [...ids, id];
+}

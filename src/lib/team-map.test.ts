@@ -56,6 +56,7 @@ describe("team map projection", () => {
   });
 
   it("filters archived endpoints and explains live states", () => {
+    setLocale("en");
     const snapshot: TeamMapSnapshot = {
       collaborations: [{ groupId: "old", botIds: ["chief", "archived"], lastAt: 10 }],
       queued: [],
@@ -67,6 +68,13 @@ describe("team map projection", () => {
       label: "Waiting for you",
       tone: "warning",
     });
+  });
+
+  it("shows team activity in the selected interface language", () => {
+    setLocale("zh");
+    expect(teamMapStatus(bots[0]).label).toBe("工作中");
+    expect(teamMapStatus({ id: "x", name: "X", activity: "no-signal" }).label).toBe("无响应");
+    setLocale("en");
   });
 });
 

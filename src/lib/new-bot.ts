@@ -47,13 +47,17 @@ export function announceNewBot(dispatch: (action: Action) => void, bot: Bot, war
 
 /** A paired device may not read the host's New bot defaults: the host applies them to an empty request. Auto on this
  * computer needs the person's own OK, so a bot whose defaults ask for it starts on Ask. */
-async function createNewBot(section: string | undefined, bots: readonly Bot[], team: TeamPeople | null, request: typeof api) {
+async function createNewBot(section: string | undefined, bots: readonly Bot[], team: TeamPeople | null, request: typeof api,
+  chosen: { name?: string; avatarUrl?: string } = {}) {
   if (typeof window !== "undefined" && window.ogb?.remoteClient?.active) {
     const { bot } = await request<{ bot: Bot }>("/api/bots", { method: "POST", body: JSON.stringify(section === undefined ? {} : { section }) });
     return { bot, warnings: [] as string[], startsOnAsk: false };
   }
   const template = startingTemplate(await request<BotDefaultsAnswer>("/api/bot-defaults"), true);
-  template.profile.name = freeName(template.profile.name!, bots);
+  // The dialog's answer wins over the random suggestion; either way the name stays free of collisions.
+  const wanted = chosen.name?.trim();
+  template.profile.name = freeName(wanted || template.profile.name!, bots);
+  if (chosen.avatarUrl) template.profile.avatarUrl = chosen.avatarUrl;
   if (section !== undefined) template.profile.section = section;
   const draft = new BotCreationDraft(template, () => {}, request);
   const startsOnAsk = draft.bot.approvalMode === "auto" && draft.bot.computer === "local";
@@ -71,7 +75,7 @@ export async function makeNewBot(action: Extract<Action, { type: "newBot" }>, bo
   showThreads: boolean, request: typeof api = api): Promise<void> {
   let made: Awaited<ReturnType<typeof createNewBot>>;
   try {
-    made = await createNewBot(action.section, bots, currentTeamPeople(), request);
+    made = await createNewBot(action.section, bots, currentTeamPeople(), request, { name: action.name, avatarUrl: action.avatarUrl });
   } catch (cause) {
     const message = t("newBot.failed", { error: cause instanceof Error ? cause.message : String(cause) });
     if (action.onError) action.onError(message);

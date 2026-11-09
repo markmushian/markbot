@@ -22,14 +22,16 @@ Object.defineProperty(globalThis.navigator, "language", { value: "en", configura
 // i18n starts on its own default pack and only App settles it from the person's choice, so the pinned language has to
 // be applied here too: English assertions otherwise compare against the default pack. Files that test other languages
 // call setLocale themselves.
-const { setLocale } = await import("../../src/lib/i18n");
+const { setLocale } = (await import(/* @vite-ignore */ new URL("../../src/lib/i18n.ts", import.meta.url).href)) as {
+  setLocale: (locale: string) => void;
+};
 setLocale("en");
 
 // Windows will not remove a directory holding an open SQLite database: close it before the reset.
 // happy-dom files never open that database, and the browser-side bundler cannot resolve node:sqlite at all, so the
 // specifier stays non-literal and the module is only loaded where no window exists.
 const closeMessageDb: () => void =
-  typeof window === "undefined"
+  !("window" in globalThis)
     ? (
         (await import(/* @vite-ignore */ new URL("../message-db.ts", import.meta.url).href)) as {
           closeMessageDb: () => void;

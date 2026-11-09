@@ -4,9 +4,9 @@ import { StoreContext, type Bot } from "@/state/store";
 import { openExternalLink } from "./app-links";
 import { browserAvailable, builtInBrowserEnabled, type FeatureFlagConfig } from "./feature-flags";
 
-export const PAGES_DOMAIN = "mausbot.page";
+export const PAGES_DOMAIN = "markbot.page";
 
-/** A link to a page a bot published: https://<page id>.mausbot.page/… Never an app, chat or prompt link. */
+/** A link to a page a bot published: https://<page id>.markbot.page/… Never an app, chat or prompt link. */
 export function isPublishedPageUrl(value: string | null | undefined): value is string {
   if (typeof value !== "string") return false;
   let url: URL;

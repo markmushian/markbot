@@ -3,7 +3,7 @@ import { BOOT_CLOUD_SECRETS } from "./cloud-secrets-boot.ts";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { existsSync, realpathSync, rmSync } from "node:fs";
-import { homedir } from "node:os";
+import { homedir, networkInterfaces } from "node:os";
 import { rm as removeDirectory } from "node:fs/promises";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { ToolResults, TOOL_RESULT_MAX_CHARS } from "./tool-results.ts";
@@ -187,6 +187,7 @@ import { resetPathCache } from "./env-path.ts";
 import { registerEnginesBinDir } from "./engine-install.ts";
 import { appendUsage, flushUsageLedger, queuedTurnTrigger, usageTriggerFor, type UsageRow, type UsageTrigger } from "./usage-ledger.ts";
 import { createTraceRecorder } from "./usage-trace/recorder.ts";
+import { groupMemoryBlock } from "./group-memory.ts";
 import { GroupUsageReader } from "./group-thread-usage.ts";
 import { ledgerCost } from "./model-prices.ts";
 import type { PriceList } from "./prices.ts";
@@ -608,6 +609,8 @@ import { createAntigravityAccountRoutes } from "./routes/antigravity-accounts.ts
 import { createConfigRoutes } from "./routes/config.ts";
 import { createInstanceRoutes } from "./routes/instances.ts";
 import { createMcpServerRoutes } from "./routes/mcp-servers.ts";
+import { createTerminalRoutes } from "./routes/terminal.ts";
+import { TerminalManager } from "./remote-terminal.ts";
 import { teamAdminSummary } from "./cloud-team-admin.ts";
 import { createSetupImportRoutes } from "./routes/setup-import.ts";
 import { createComputerRoutes } from "./routes/computers.ts";
@@ -787,6 +790,23 @@ function savedCustomDomain(): string | null {
   catch { return null; }
 }
 function publicUrl(): string | null { return savedCustomDomain() ?? FALLBACK_PUBLIC_URL; }
+
+/** Real LAN addresses a phone on the same Wi-Fi can dial. VPN/TUN ranges such as
+ * 198.18.0.0/15 (Clash's virtual adapter) look routable to the desktop but are
+ * unreachable from the phone, so they must never lead the QR code. */
+function lanPairingOrigins(port: string): string[] {
+  const rank = (address: string) =>
+    address.startsWith("192.168.") ? 0
+      : address.startsWith("10.") ? 1
+        : /^172\.(?:1[6-9]|2\d|3[01])\./.test(address) ? 2 : 3;
+  const addresses = [...new Set(Object.values(networkInterfaces()).flatMap((list) => list ?? [])
+    .filter((entry) => !entry.internal && entry.family === "IPv4")
+    .map((entry) => entry.address)
+    .filter((address) => rank(address) < 3))]
+    .sort((left, right) => rank(left) - rank(right));
+  const suffix = port ? `:${port}` : "";
+  return addresses.map((address) => `http://${address}${suffix}`);
+}
 function customDomainStatus() {
   return {
     customDomain: savedCustomDomain(), publicUrl: publicUrl(), fallbackUrl: FALLBACK_PUBLIC_URL,
@@ -10298,7 +10318,9 @@ async function runClaimedGroupMemberTurn(
     const drift = checkSoulDrift(bot.id, bot.soul ?? "", bot.soulHash ?? "");
     if (drift.drift !== Boolean(bot.soulDrift)) store.patchBot(bot.id, { soulDrift: drift.drift });
   }
-  const roomMemory = memorySystemPrompt(teamHost.layer(bot.id, threadId), { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false }) + teamHost.sharedNotesPrompt(bot.id, threadId);
+  const roomMemory = memorySystemPrompt(teamHost.layer(bot.id, threadId), { managedWrites: Boolean(integrations.agents), fileTools: worksInWorkspace, enabled: bot.memoryEnabled !== false }) + teamHost.sharedNotesPrompt(bot.id, threadId)
+    // The room's own notes: shared by everyone who speaks here, and never carried into a private chat.
+    + groupMemoryBlock(readyGroup.id);
   const recentLines = recentWork(recentWorkSources(bot), bot, { userName: typeof userName === "string" ? userName : "the team", currentThreadId: threadId, ...recentWorkFilter(threadId) });
   recordTurnPlace(bot.id, threadId, (roomTeamComputer ? "cloud" : roomVmTarget ? "vm" : surfaceOfComputerKind(roomComputerKind)) ?? (integrations.browser ? "browser" : null));
   const roomComputerPromptKind = resolveComputerPromptKind({
@@ -11880,6 +11902,7 @@ function configStatus() {
     mistral: keyStatus(cfg.mistral?.key),
     cerebras: keyStatus(cfg.cerebras?.key),
     groq: keyStatus(cfg.groq?.key),
+    doubao: keyStatus(cfg.doubao?.key),
     meta: keyStatus(cfg.meta?.key), deepseek: keyStatus(cfg.deepseek?.key),
     xResearch: xResearchStatus(), treg: keyStatus(cfg.treg?.key), postiz: { ...keyStatus(cfg.postiz?.key), ...(cfg.postiz?.url ? { url: cfg.postiz.url } : {}) },
     anthropic: { ...keyStatus(cfg.anthropic?.key), everyClaudeBot: cfg.anthropic?.everyClaudeBot !== false },
@@ -12038,6 +12061,11 @@ async function describeInstances() {
     if (instance.driverKind === "antigravityAgent" && process.platform === "win32") return { ...described, ...policy, freeUpSpace: true };
     if (entry?.driver !== "claudeAgent") return { ...described, ...policy };
     if (instance.instanceId === CLAUDE_API_INSTANCE) {
+      // Linked to a local Claude Code CLI: keep the driver's subscription sign-in instead of
+      // hiding it the way the API-key variant does.
+      if ((entry?.config as { requireApiKey?: unknown } | undefined)?.requireApiKey === false) {
+        return { ...described, ...policy };
+      }
       return { ...described, ...policy, authentication: undefined, install: { ...instance.install, signInCommand: undefined } };
     }
     try {
@@ -12542,6 +12570,10 @@ ROUTES.push(createMcpServerRoutes({
   mcpConfigBusy: { get: () => mcpConfigBusy, set: (busy) => { mcpConfigBusy = busy; } },
   mcpServerResponse, mcpPolicyRefusal, persistMcpServers, savedCustomDomain, appCatalog: chatAppsMcp, forgetPeople: (name) => teamConnections.forgetServer(name), health: mcpServersHost.health,
 }));
+/** Interactive shell sessions: loopback-only here, exposed to a paired phone by the companion's allowlist. */
+const terminalManager = new TerminalManager();
+ROUTES.push(createTerminalRoutes(terminalManager));
+process.once("exit", () => terminalManager.closeAll());
 ROUTES.push(createSetupImportRoutes({ local: DESKTOP_MANAGED && !CLOUD_HOME && !HOSTED_WORKSPACE, cfg, mcpPolicyRefusal, persistMcpServers,
   mcpConfigBusy: { get: () => mcpConfigBusy, set: (busy) => { mcpConfigBusy = busy; } } }));
 ROUTES.push(createComputerRoutes({
@@ -12958,12 +12990,22 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
       // `inviteUrl` is the custom scheme the native companion scanners accept; they cannot take a typed code.
       const serverName = environmentDescriptor({ environmentId: ENVIRONMENT_ID, ...TEAM_LABEL, desktopManaged: DESKTOP_MANAGED }).label;
       const invite = base ? phonePairingLink({ address: base, token: opened.credential, name: serverName }) : null;
+      // A phone browser needs a plain http page on the LAN; the QR must not carry
+      // markbot:// (nothing opens it without the native app) or a VPN address.
+      let lanUrls: string[] = [];
+      if (base) {
+        try {
+          const port = new URL(base).port;
+          lanUrls = lanPairingOrigins(port).map((item) => `${item}/pair#code=${code}`);
+        } catch {}
+      }
       return json(res, 200, {
         id: opened.id,
         code,
         credential: opened.credential,
         expiresAt: opened.expiresAt,
         url: base ? `${base}/pair#code=${code}` : null,
+        lanUrls,
         inviteUrl: invite,
         serverName,
         hint: base
@@ -13882,6 +13924,9 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
         const groupId = call.groupId ?? source?.id;
         const destination = groupId ? store.group(groupId) : undefined;
         if (groupId && !destination) return refuse(404, "No such room; use list_room_targets.");
+        if (source && call.thread === "new" && call.groupId && call.groupId !== source.id) {
+          return refuse(400, "A new private teammate thread cannot target another room. Omit group_id to assign from this room.");
+        }
         const botIds: string[] = [];
         for (const raw of call.botIds) {
           const resolved = resolveTeammate(store.bots, internalSender, raw);
@@ -13889,9 +13934,11 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           botIds.push(resolved.id);
         }
         if (new Set(botIds).size !== botIds.length) return refuse(400, "bot_ids name the same teammate twice — send each teammate once");
-        const addressedRoom = destination && { id: destination.id, name: destination.name, here: destination.id === source?.id };
+        const privateRoomTasks = Boolean(source && call.thread === "new");
+        const addressedRoom = destination && !privateRoomTasks ? { id: destination.id, name: destination.name, here: destination.id === source?.id } : undefined;
         const roomThreadId = destination && (addressedRoom?.here ? address.threadId : destination.threadId);
-        const targets = botIds.map(botId => roomHandoffTarget({ groupId: destination?.id, threadId: roomThreadId ?? store.bot(botId)?.threadId ?? "", botId }, address));
+        const targets = botIds.map(botId => roomHandoffTarget({ groupId: privateRoomTasks ? undefined : destination?.id,
+          threadId: privateRoomTasks ? store.bot(botId)?.threadId ?? "" : roomThreadId ?? store.bot(botId)?.threadId ?? "", botId }, address));
         const direct = targets.some(target => !target.groupId), fresh = direct && call.thread === "new";
         const folder = inMyFolderCwd(call.inMyFolder, direct, store.taskByThread(internalSender.id, address.threadId)?.cwd, DATA_DIR);
         if (folder.error) return refuse(400, folder.error);
@@ -13922,7 +13969,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
             { approvals: blocked });
           approvalGranted = true;
         }
-        const requestBatchKey = destination ? randomUUID() : undefined;
+        const requestBatchKey = destination && !privateRoomTasks ? randomUUID() : undefined;
         const generation = EXTERNAL ? randomUUID() : internalCapability.generation;
         if (EXTERNAL) {
           const opener = handoffOpener(internalCapability, address.threadId);
@@ -14005,7 +14052,7 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
           }
         }
         const sent = refused.length < receipts.length;
-        const lead = destination && sent ? roomJobs.describeRoomJobs(destination, roomThreadId!, receipts,
+        const lead = destination && !privateRoomTasks && sent ? roomJobs.describeRoomJobs(destination, roomThreadId!, receipts,
           { senderId: internalSender.id, returns, lanes, awaited: reply !== "none" }) : "";
         if (EXTERNAL) coordinator.endTurn(generation, { ok: sent, text: sent ? "" : refused.join("; ") });
         const message = reply === "none"
@@ -15258,13 +15305,17 @@ const handleRequest = async (req: IncomingMessage, res: ServerResponse) => {
 
     if (method === "GET" && path === "/api/connectors/catalog") {
       const { cards, source, pagination } = await composio.listToolkits(cfg);
+      // No usable overseas upstream: serve the bundled directory instead of an
+      // empty grid and a "temporarily unavailable" banner. Local MCP presets are
+      // unaffected; the remaining overseas cards ask for the connection service.
+      const offline = source !== "api" || cards.length === 0;
       return json(res, 200, {
         configured: composio.configured(cfg),
         mode: composio.connectionMode(cfg),
         setup: composio.connectorSetup(cfg, DESKTOP_MANAGED || CLOUD_HOME !== null),
-        source,
-        cards,
-        ...(pagination ? { pagination } : {}),
+        source: offline ? "local" : source,
+        cards: offline ? composio.offlineCatalog() : cards,
+        ...(!offline && pagination ? { pagination } : {}),
       });
     }
     if (method === "GET" && path === "/api/connectors/connected") {

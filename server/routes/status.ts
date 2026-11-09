@@ -1,5 +1,6 @@
 import { DEFAULT_OUTBOUND_POLICY } from "../../shared/outbound.ts";
 import { readBotActivity } from "../activity.ts";
+import { fetchRegistry } from "../acp-registry.ts";
 import { activityCsv, activityEntries, parseActivityWhat, readAdminActivityRange } from "../admin-activity.ts";
 import { loadBrand } from "../brand.ts";
 import { browserEngineStatus, ensureChrome, installAgentBrowserBinary, resolveAgentBrowserBinary } from "../browser-engine.ts";
@@ -9,6 +10,7 @@ import { editionForMembers, editionStatus, entitled } from "../enterprise.ts";
 import { fleetAvailable, fleetRequest, fleetSocketPath } from "../fleet-client.ts";
 import { noteKeyAccepted, noteKeyRejected } from "../key-rejections.ts";
 import type { OutboundCounts } from "../outbound-counts.ts";
+import { loadClaudeCodeUsage } from "../claude-code-usage.ts";
 import { loadPlanUsage, planAccountsFromInstances } from "../plan-usage.ts";
 import { tregProviderApi } from "../included-services.ts";
 import { checkProviderKey, PROVIDER_KEY_KINDS, providerBaseUrl, type ProviderKeyKind } from "../provider-key-check.ts";
@@ -136,6 +138,29 @@ export function createStatusRoutes(deps: StatusRouteDeps): RouteHandler {
         refresh: url.searchParams.get("refresh") === "1",
       });
       return json(res, 200, report);
+    }
+
+    // Claude Code's own real numbers for the engine rail: signed-in subscription windows plus the tokens this
+    // computer actually spent. Kept separate from /api/plan-usage so it never borrows a ChatGPT account's quota.
+    if (method === "GET" && path === "/api/claude-code-usage") {
+      res.setHeader("cache-control", "no-store");
+      const report = await loadClaudeCodeUsage({
+        dataDir: DATA_DIR,
+        instances: instanceConfigs(cfg),
+        refresh: url.searchParams.get("refresh") === "1",
+      });
+      return json(res, 200, report);
+    }
+
+    // Every agent that speaks ACP today, per the public registry. Read-only; the settings page turns a pick into a
+    // custom ACP instance whose command is the registry's own launch line.
+    if (method === "GET" && path === "/api/acp-registry") {
+      res.setHeader("cache-control", "no-store");
+      try {
+        return json(res, 200, { agents: await fetchRegistry() });
+      } catch (cause) {
+        return json(res, 502, { error: cause instanceof Error ? cause.message : String(cause) });
+      }
     }
 
     // One read-only request from this server; the verdict never carries the key.

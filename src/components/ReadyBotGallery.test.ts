@@ -4,14 +4,14 @@ import { flushSync } from "react-dom";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const opened = vi.hoisted(() => ({ props: null as null | { readyBotId?: string; onClose?: () => void; onCreated?: (bot: { id: string }) => void }, dispatch: vi.fn() }));
+const opened = vi.hoisted(() => ({ props: null as null | { readyBotId?: string; avatarPreset?: string; onClose?: () => void; onCreated?: (bot: { id: string }) => void }, dispatch: vi.fn() }));
 vi.mock("./lazy-screens", () => ({
   NewBotDialog: (props: NonNullable<typeof opened.props>) => { opened.props = props; return null; },
 }));
 vi.mock("@/state/store", () => ({ useStore: () => ({ dispatch: opened.dispatch }) }));
 
-const { ReadyBotGallery } = await import("./ReadyBotGallery");
-const { READY_BOTS } = await import("@/lib/ready-bots");
+import { ReadyBotGallery } from "./ReadyBotGallery";
+import { READY_BOTS } from "@/lib/ready-bots";
 
 let root: Root;
 let host: HTMLElement;
@@ -77,7 +77,19 @@ describe("ready-made bots gallery", () => {
     render();
     flushSync(() => button("Add Fern, Plant care log").click());
     expect(opened.props).toBeNull();
-    expect(opened.dispatch).toHaveBeenCalledWith({ type: "newBot", onCreated: onAdded });
+    expect(opened.dispatch).toHaveBeenCalledWith(expect.objectContaining({
+      type: "newBot", onCreated: onAdded,
+    }));
+  });
+
+  it("draws every template with its own mascot body, and never stamps a portrait on the new bot", () => {
+    render();
+    // Each template keeps the app's own mascot look; a created bot starts the same way and
+    // the person picks a picture afterwards if they want one.
+    expect(host.querySelectorAll("[data-ready-bot-avatar]").length).toBe(READY_BOTS.length);
+    flushSync(() => button("Add Fern, Plant care log").click());
+    expect(opened.props?.readyBotId).toBe("plant-care");
+    expect(JSON.stringify(opened.props)).not.toContain("avatarUrl");
   });
 
   it("gives Templates its keys back when New bot is closed without creating", () => {

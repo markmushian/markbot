@@ -7,6 +7,7 @@ import { InstanceProviderMark } from "./ProviderIcons";
 import { hasSavedApiKey, needsCli, needsSignIn } from "./EngineSetup";
 import { MENU_META, MENU_ROW, MENU_STROKE } from "./menu-recipe";
 import { Select } from "./Select";
+import { favoriteKey, modelMeta } from "@/lib/model-metadata";
 
 type ModelOption = InstanceInfo["models"]["options"][number];
 
@@ -20,35 +21,84 @@ export function apiKeysLabel(instances: InstanceInfo[]): string {
   return t(instances.some(hasSavedApiKey) ? "model.addOrChangeApiKeys" : "model.addApiKeys");
 }
 
-export function ModelRow({ option, current, defaultId, botModel = false, onPick }: {
+export function ModelRow({ option, current, defaultId, botModel = false, onPick, disabled = false, reason }: {
   option: ModelOption;
   current: boolean;
   defaultId: string;
   botModel?: boolean;
   onPick: () => void;
+  /** Visible but not selectable: Timon keeps broken entries on screen and says why. */
+  disabled?: boolean;
+  reason?: string | null;
 }) {
   const meta = [option.provider, option.id === defaultId ? t("model.effort.default") : undefined].filter(Boolean).join(" · ");
+  const info = modelMeta(option.id);
   return (
     <button
       type="button"
       data-menu-row
       data-current-model={current || undefined}
+      data-model-unavailable={disabled || undefined}
       aria-pressed={current}
-      title={option.provider ? t("model.provider", { name: option.provider }) : undefined}
+      disabled={disabled}
+      title={disabled ? (reason ?? undefined) : option.provider ? t("model.provider", { name: option.provider }) : undefined}
       onClick={onPick}
-      className={MENU_ROW}
+      className={cn(MENU_ROW, disabled && "cursor-not-allowed opacity-55")}
     >
       <span className="min-w-0 flex-1 truncate">{option.label}</span>
-      {botModel && <span data-bot-model className="shrink-0 text-[12px] leading-4 text-ink-tertiary">{t("model.botModelTag")}</span>}
+      {info.isNew && <span data-model-new className="shrink-0 rounded bg-accent/12 px-1.5 py-px text-tiny font-semibold text-accent-text">New</span>}
+      {info.windowLabel && <span data-model-context className="shrink-0 rounded bg-control px-1.5 py-px text-tiny tabular-nums text-ink-tertiary" title={`上下文窗口 ${info.windowLabel}`}>{info.windowLabel}</span>}
+      {disabled && reason && <span data-model-reason className="max-w-[40%] shrink-0 truncate text-meta text-warning" title={reason}>{reason}</span>}
+      {botModel && <span data-bot-model className="shrink-0 text-note leading-4 text-ink-tertiary">{t("model.botModelTag")}</span>}
       {meta && <span className={MENU_META}>{meta}</span>}
       {option.loaded && (
-        <span className="flex shrink-0 items-center gap-1 text-[12px] leading-4 text-ink-tertiary">
+        <span className="flex shrink-0 items-center gap-1 text-note leading-4 text-ink-tertiary">
           <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
           {t("model.loadedNow")}
         </span>
       )}
       {current && <Check size={14} className="shrink-0 text-accent" aria-hidden="true" />}
     </button>
+  );
+}
+
+/** Favourites live above the list, so adding one never changes what the
+ * keyboard-navigable [data-menu-row] list means. */
+export function ModelFavoritesBar({ favorites, instances, currentKey, onPick, onToggleCurrent, currentFavorite }: {
+  favorites: ReadonlySet<string>;
+  instances: readonly InstanceInfo[];
+  currentKey?: string;
+  onPick: (instance: InstanceInfo, modelId: string) => void;
+  onToggleCurrent?: () => void;
+  currentFavorite?: boolean;
+}) {
+  const rows = [...favorites].flatMap((key) => {
+    const [instanceId, ...rest] = key.split(":");
+    const modelId = rest.join(":");
+    const instance = instances.find((candidate) => candidate.instanceId === instanceId);
+    const model = instance?.models.options.find((option) => option.id === modelId);
+    return instance && model ? [{ instance, model }] : [];
+  }).slice(0, 8);
+  if (!rows.length && !onToggleCurrent) return null;
+  return (
+    <div data-model-favorites className="flex flex-wrap items-center gap-1.5 px-3 py-2">
+      <span className="shrink-0 text-meta font-medium text-ink-tertiary">收藏</span>
+      {onToggleCurrent && (
+        <button type="button" data-toggle-model-favorite onClick={onToggleCurrent}
+          aria-pressed={currentFavorite === true}
+          className="shrink-0 rounded-full border border-dashed border-hairline/60 px-2 py-0.5 text-meta text-ink-tertiary hover:bg-raised hover:text-ink">
+          {currentFavorite ? "★ 取消收藏当前模型" : "☆ 收藏当前模型"}
+        </button>
+      )}
+      {rows.map(({ instance, model }) => (
+        <button key={favoriteKey(instance.instanceId, model.id)} type="button"
+          onClick={() => onPick(instance, model.id)}
+          aria-pressed={currentKey === favoriteKey(instance.instanceId, model.id)}
+          className="max-w-[46%] truncate rounded-full border border-hairline/50 bg-control/60 px-2 py-0.5 text-meta text-ink-secondary hover:bg-raised hover:text-ink">
+          {model.label}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -60,11 +110,11 @@ export function FollowBotModelRow({ name, model, follows, onPick }: { name: stri
       data-menu-row
       aria-pressed={follows}
       onClick={onPick}
-      className="flex h-9 w-full shrink-0 items-center justify-between gap-2 border-b-[0.5px] border-ink/10 px-3.5 text-left text-[13px] leading-[18px] text-ink hover:bg-ink/[0.06] focus:bg-ink/[0.06]"
+      className="flex h-9 w-full shrink-0 items-center justify-between gap-2 border-b-[0.5px] border-ink/10 px-3.5 text-left text-ui leading-[18px] text-ink hover:bg-ink/[0.06] focus:bg-ink/[0.06]"
     >
       <span className="flex min-w-0 items-baseline gap-2">
         <span className="shrink-0 font-medium">{t("model.useBotModel", { name })}</span>
-        <span className="truncate text-[12px] leading-4 text-ink-tertiary">{model}</span>
+        <span className="truncate text-note leading-4 text-ink-tertiary">{model}</span>
       </span>
       {follows && <Check size={14} className="shrink-0 text-accent" aria-hidden="true" />}
     </button>
@@ -81,7 +131,7 @@ export function ModelSearch({ value, onChange, local }: { value: string; onChang
         onChange={(event) => onChange(event.target.value)}
         placeholder={t("model.search")}
         aria-label={local ? t("model.searchLocal") : t("model.search")}
-        className="min-w-0 flex-1 bg-transparent text-[13px] leading-[18px] text-ink outline-none placeholder:text-ink-tertiary"
+        className="min-w-0 flex-1 bg-transparent text-ui leading-[18px] text-ink outline-none placeholder:text-ink-tertiary"
       />
     </div>
   );
@@ -119,7 +169,7 @@ export function railProviders(instances: InstanceInfo[], selectedInstance: Insta
   return { subscription: subscription.map(entry), api: api.map(entry), custom: custom.map(entry) };
 }
 
-const RAIL_LABEL = "pb-0.5 text-center text-[11px] leading-[14px] text-ink-tertiary";
+const RAIL_LABEL = "pb-0.5 text-center text-meta leading-[14px] text-ink-tertiary";
 
 export function ModelEngineRail({ instances, selectedInstance, claudeInstance, openaiInstance, onSelect, onAddApiKeys }: {
   instances: InstanceInfo[];
@@ -187,7 +237,7 @@ export function ClaudeAccountSelect({ accounts, selectedId, onSelect }: {
   onSelect: (instance: InstanceInfo) => void;
 }) {
   return (
-    <label className="mt-2 flex min-w-0 items-center gap-2 text-[12px] leading-4 text-ink-secondary">
+    <label className="mt-2 flex min-w-0 items-center gap-2 text-note leading-4 text-ink-secondary">
       <span>{t("model.account")}:</span>
       <Select size="sm" variant="quiet" className="flex-1"
         aria-label={t("model.account")}

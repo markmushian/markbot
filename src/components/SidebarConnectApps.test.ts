@@ -17,14 +17,14 @@ describe("the Connect apps faces", () => {
 
   it("puts connected apps first, fills with popular ones, and never shows more than three", () => {
     const cards = new Map([["github", card("github")], ["gmail", card("gmail")]]);
-    expect(appFaces(["github", "gmail"], cards).map((face) => face.slug)).toEqual(["github", "gmail", "slack"]);
+    expect(appFaces(["github", "gmail"], cards).map((face) => face.slug)).toEqual(["github", "gmail", POPULAR_APPS[0]!.slug]);
     const many = new Map(["a", "b", "c", "d"].map((slug) => [slug, card(slug)]));
     expect(appFaces(["a", "b", "c", "d"], many)).toHaveLength(APP_FACES);
   });
 
   it("draws a 36px pill with a 14px medium label and three overlapping 16px logos whose outer two fan out on hover", () => {
     const html = renderToStaticMarkup(createElement(SidebarConnectApps));
-    expect(html).toMatch(/class="group\/apps flex h-9 min-w-0 flex-1 items-center justify-center gap-1\.5 rounded-full pl-4 pr-3 text-\[14px\] font-medium leading-5 text-ink /);
+    expect(html).toMatch(/class="group\/apps flex h-9 min-w-0 flex-1 items-center justify-center gap-1\.5 rounded-full pl-4 pr-3 text-body font-medium leading-5 text-ink /);
     const faces = [...html.matchAll(/data-app-face="[^"]+" class="([^"]*)"/g)].map(([, classes]) => classes!);
     expect(faces).toHaveLength(3);
     for (const face of faces) expect(face).toContain("size-[18px] shrink-0 items-center justify-center overflow-hidden rounded-md bg-white p-px");
@@ -42,6 +42,6 @@ describe("the Connect apps faces", () => {
   });
 
   it("keeps a connected app it cannot draw yet out, and the popular ones in", () => {
-    expect(appFaces(["linear"], new Map()).map((face) => face.slug)).toEqual(["gmail", "slack", "notion"]);
+    expect(appFaces(["linear"], new Map()).map((face) => face.slug)).toEqual(POPULAR_APPS.map((app) => app.slug));
   });
 });

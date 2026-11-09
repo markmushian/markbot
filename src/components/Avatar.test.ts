@@ -20,9 +20,17 @@ const renderBot = (bot: Partial<BotAvatarProps["bot"]>) =>
   );
 
 describe("MausAvatar body", () => {
-  it("uses the original Mark avatar when no body is given", () => {
-    expect(render({})).toContain('/mark-avatars/guide.png');
-    expect(render({})).toContain('class="mark-mascot"');
+  it("keeps a chosen picture and applies its saved color rotation", () => {
+    const markup = renderBot({ avatarUrl: "/api/attachments/coder.png", avatarCrop: "circle", avatarHue: 120 });
+    expect(markup).toContain('/api/attachments/coder.png');
+    expect(markup).toContain('hue-rotate(120deg)');
+    expect(markup).not.toContain('表情：');
+  });
+  it("draws the default cursor body when no body is given", () => {
+    // The default body is a real silhouette with a face, not a flat portrait: every bot
+    // shares one character, so an unknown or missing body reads as that character too.
+    expect(render({})).toContain(MASCOT_BODIES.cursor.fit);
+    expect(render({})).not.toContain('/mark-avatars/');
   });
 
   it("wears the body it is given", () => {
@@ -100,16 +108,16 @@ describe("BotAvatar's two avatar outcomes", () => {
     expect(markup).not.toContain("radialGradient");
   });
 
-  it("renders the Mark mascot when the crop is mascot, image or not", () => {
+  it("renders the drawn mascot when the crop is mascot, image or not", () => {
     const markup = renderBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "mascot" });
-    expect(markup).toContain('/mark-avatars/guide.png');
-    expect(markup).toContain('class="mark-mascot"');
+    expect(markup).toContain(MASCOT_BODIES.cursor.fit);
+    expect(markup).not.toContain('/mark-avatars/');
   });
 
-  it("falls back to the Mark mascot when a flat crop has no valid image", () => {
+  it("falls back to the drawn mascot when a flat crop has no valid image", () => {
     const markup = renderBot({ avatarUrl: undefined, avatarCrop: "circle" });
-    expect(markup).toContain('/mark-avatars/guide.png');
-    expect(markup).toContain('class="mark-mascot"');
+    expect(markup).toContain(MASCOT_BODIES.cursor.fit);
+    expect(markup).not.toContain('/mark-avatars/');
   });
 });
 

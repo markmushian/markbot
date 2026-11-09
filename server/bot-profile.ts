@@ -25,6 +25,7 @@ export const BOT_PROFILE_PATCH_FIELDS = [
   "avatarUrl",
   "avatarCrop",
   "avatarZoom",
+  "avatarHue",
   "avatarFocusX",
   "avatarFocusY",
   "mascotBody",
@@ -59,11 +60,12 @@ export const profilePatchSchema = z.object({
   notifications: z.boolean({ error: "notifications must be true or false" }).optional(),
   avatarUrl: z
     .union([botAvatarUrlSchema, z.literal(""), z.null()], {
-      error: "avatarUrl must be a stored PNG, JPEG, GIF, or WebP attachment",
+      error: "avatarUrl must be a stored PNG, JPEG, GIF, or WebP attachment, or a built-in Mark Bot portrait",
     })
     .optional(),
   avatarCrop: botAvatarCropSchema.optional(),
   avatarZoom: z.number({ error: "avatarZoom must be a number from 1 to 3" }).finite().min(AVATAR_ZOOM_MIN).max(AVATAR_ZOOM_MAX).optional(),
+  avatarHue: z.number({ error: "avatarHue must be a number from 0 to 360" }).finite().min(0).max(360).optional(),
   avatarFocusX: z.number({ error: "avatarFocusX must be a number from 0 to 1" }).finite().min(0).max(1).optional(),
   avatarFocusY: z.number({ error: "avatarFocusY must be a number from 0 to 1" }).finite().min(0).max(1).optional(),
   mascotBody: botBodySchema.optional(),
@@ -89,6 +91,7 @@ export type BotProfilePatch = Partial<
     | "avatarUrl"
     | "avatarCrop"
     | "avatarZoom"
+    | "avatarHue"
     | "avatarFocusX"
     | "avatarFocusY"
     | "mascotBody"

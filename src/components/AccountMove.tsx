@@ -138,7 +138,7 @@ export function AccountMoveStatus({ kind, retry = null, onOpen, className }: { k
   const words = accountMoveWords(kind);
   if (!words) return null;
   const Icon = kind === "failed" ? CloudAlert : CloudUpload;
-  const look = cn("flex min-w-0 items-center gap-1.5 text-start text-[12px] leading-4", kind === "failed" ? "font-medium text-warning" : "text-ink-secondary");
+  const look = cn("flex min-w-0 items-center gap-1.5 text-start text-note leading-4", kind === "failed" ? "font-medium text-warning" : "text-ink-secondary");
   const body = <>
     <Icon size={13} aria-hidden="true" className="shrink-0" />
     <span className="truncate">{words}</span>

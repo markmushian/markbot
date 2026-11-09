@@ -3,8 +3,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { StoreProvider, type Bot } from "@/state/store";
-import { MASCOT_BODY_IDS, MASCOT_BODIES } from "../../shared/mascot-bodies";
-import { HALLOWEEN_BODIES, HALLOWEEN_BODY_IDS } from "../../shared/halloween-bodies";
 import { BotProfileAvatarCard } from "./BotProfileAvatarCard";
 
 function makeBot(overrides: Partial<Bot> = {}): Bot {
@@ -38,38 +36,24 @@ function renderCard(bot: Bot) {
   );
 }
 
-describe("BotProfileAvatarCard body picker", () => {
-  it("renders one option per body catalog entry, labeled by name", () => {
-    const markup = renderCard(makeBot());
-
-    expect(markup).toContain(">Body<");
-    for (const id of MASCOT_BODY_IDS) {
-      expect(markup).toContain(`aria-label="Use the ${MASCOT_BODIES[id].name} body"`);
-    }
-  });
-
-  it("offers the Halloween bodies in their own row", () => {
-    const markup = renderCard(makeBot({ mascotBody: "witch" }));
-
-    expect(markup).toContain(">Halloween<");
-    for (const id of HALLOWEEN_BODY_IDS) {
-      expect(markup).toContain(`aria-label="Use the ${HALLOWEEN_BODIES[id].name} body"`);
-    }
-    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${HALLOWEEN_BODIES.witch.name} body"`);
-  });
-
-  it("marks the current body pressed and the rest unpressed, defaulting to cursor", () => {
-    const markup = renderCard(makeBot());
-
-    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${MASCOT_BODIES.cursor.name} body"`);
-    expect(markup).toContain(`aria-pressed="false" aria-label="Use the ${MASCOT_BODIES.star.name} body"`);
-  });
-
-  it("reflects an explicitly chosen body", () => {
+describe("BotProfileAvatarCard", () => {
+  it("no longer offers the body picker or the Halloween costumes", () => {
     const markup = renderCard(makeBot({ mascotBody: "star" }));
 
-    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${MASCOT_BODIES.star.name} body"`);
-    expect(markup).toContain(`aria-pressed="false" aria-label="Use the ${MASCOT_BODIES.cursor.name} body"`);
+    expect(markup).not.toContain(">Body<");
+    expect(markup).not.toContain(">Halloween<");
+    expect(markup).not.toContain(' body"');
+    expect(markup).not.toContain("data-halloween-bodies");
+  });
+
+  it("still offers the mascot colours", () => {
+    expect(renderCard(makeBot())).toContain('aria-label="Use green mascot color"');
+  });
+
+  it("hides the colours for a flat image crop", () => {
+    for (const crop of ["circle", "rounded", "square"] as const) {
+      expect(renderCard(makeBot({ avatarCrop: crop }))).not.toContain('aria-label="Use green mascot color"');
+    }
   });
 
   it("offers zoom and drag framing for a custom image", () => {
@@ -89,18 +73,10 @@ describe("BotProfileAvatarCard body picker", () => {
     expect(markup).not.toContain('aria-label="Zoom avatar"');
   });
 
-  it("hides the body picker for flat crops that have no mascot to wear one", () => {
-    const markup = renderCard(makeBot({ avatarCrop: "circle" }));
-
-    expect(markup).not.toContain(">Body<");
-    expect(markup).not.toContain(`aria-label="Use the ${MASCOT_BODIES.cursor.name} body"`);
-  });
-
-  it("hides the body picker for every flat crop, not just circle", () => {
-    for (const crop of ["rounded", "square"] as const) {
-      const markup = renderCard(makeBot({ avatarCrop: crop }));
-
-      expect(markup).not.toContain(">Body<");
-    }
+  it("previews a picked image while a new bot is still a draft", () => {
+    const draft = renderCard(makeBot({ id: "draft-1", avatarUrl: "blob:https://localhost/avatar-2", avatarCrop: "circle" }));
+    const saved = renderCard(makeBot({ avatarUrl: "blob:https://localhost/avatar-2", avatarCrop: "circle" }));
+    expect(draft).toContain('src="blob:https://localhost/avatar-2"');
+    expect(saved).not.toContain('src="blob:https://localhost/avatar-2"');
   });
 });

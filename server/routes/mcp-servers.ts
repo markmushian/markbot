@@ -1,3 +1,5 @@
+import { applyCredentialValues, credentialValueError, findCredentialTargets, normalizeCredentialValue } from "../../shared/mcp-credentials.ts";
+import { verifyOutcome } from "../../shared/verify-outcome.ts";
 import type { ChatAppsMcp } from "../chat-apps-mcp.ts";
 import type { CloudHomeConfig } from "../cloud-home.ts";
 import type { AppConfig } from "../config.ts";
@@ -5,7 +7,7 @@ import { hostedWorkspaceConfiguration } from "../enterprise.ts";
 import type { TeamConnectionsHost } from "../host/team-connections-host.ts";
 import { McpOAuthError, McpSignInError, mcpCallbackOrigin, withMcpSignIn, type McpOAuthManager } from "../mcp-oauth.ts";
 import { probeMcpServer } from "../mcp-probe.ts";
-import { MAX_MCP_SERVERS, isRemoteMcpServer, mcpServerBody, parseMcpServerMutation, parseMcpServersImport, parseStoredMcpServer, type McpRunsOn, type StoredMcpServer } from "../mcp-registry.ts";
+import { MAX_MCP_SERVERS, argumentPlaceholders, isRemoteMcpServer, mcpServerBody, parseMcpServerMutation, parseMcpServersImport, parseStoredMcpServer, type McpRunsOn, type StoredMcpServer } from "../mcp-registry.ts";
 import { personKey } from "../person-key.ts";
 import { postizKeyHeaders } from "../postiz/connection.ts";
 import { isLoopbackHost, isProxied, provesSameOrigin, requestOrigin } from "../request-auth.ts";
@@ -102,12 +104,80 @@ export function createMcpServerRoutes(deps: McpServerRouteDeps): RouteHandler {
           const signedIn = (await withMcpSignIn({ [name]: target }, oauth))[name];
           if (signedIn) target = { ...signedIn, enabled: target.enabled } as typeof target;
         }
+        const credentials = isRemoteMcpServer(target) ? target.headers : target.env;
+        const missing = [...new Set([
+          ...Object.entries(credentials).filter(([, value]) => /REPLACE/i.test(String(value))).map(([key]) => key),
+          ...(isRemoteMcpServer(target) ? [] : argumentPlaceholders(target.args)),
+        ])].sort();
+        if (missing.length > 0) {
+          // Starting the process with placeholder credentials proves nothing and looks like a real failure.
+          const placeholder = { ok: false, error: `还有凭证未填写：${missing.join(", ")}。请点「填写凭证」把它们填好，再来验证。` } as const;
+          return json(res, 200, { ...placeholder, outcome: verifyOutcome(placeholder).outcome });
+        }
         const result = await probeMcpServer(target, undefined, controller.signal, personal ? {} : appCatalog?.probeOptions(name, parsed.server) ?? {});
-        if (!result.ok && result.auth === "required" && isRemoteMcpServer(target)) oauth.markNeedsSignIn(name, target.url);
-        return json(res, 200, result);
+        if (!result.ok && result.auth === "required" && isRemoteMcpServer(target)) {
+          // Tencent Docs (and other static-token endpoints) advertise OAuth metadata even when they simply
+          // refused the token. For a preset filled from settings that is a bad key, never a pending sign-in.
+          if ((parsed.server.credentialTargets?.length ?? 0) > 0) {
+            const rejected = { ok: false, reason: "keys", status: 401, error: "The server didn't accept the keys (HTTP 401). Check the header values." } as const;
+            return json(res, 200, { ...rejected, outcome: verifyOutcome(rejected).outcome });
+          }
+          oauth.markNeedsSignIn(name, target.url);
+        }
+        return json(res, 200, { ...result, outcome: verifyOutcome(result).outcome });
       } finally {
         res.off("close", disconnect);
         mcpProbesInFlight -= 1;
+      }
+    }
+
+    /** A person fills credentials in settings; this writes them where the presets' REPLACE_ markers sat.
+     * No secret is ever echoed: the response is the same name-only listing a GET returns. */
+    const mcpCredentials = /^\/api\/mcp\/servers\/([a-z][a-z0-9_-]{0,31})\/credentials$/.exec(path);
+    if (method === "POST" && mcpCredentials) {
+      if (!String(req.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) {
+        return json(res, 415, { error: "content-type must be application/json" });
+      }
+      if (mcpConfigBusy.get()) return json(res, 409, { error: "MCP servers are already being updated." });
+      mcpConfigBusy.set(true);
+      try {
+        const name = mcpCredentials[1]!;
+        const current = cfg.mcpServers ?? {};
+        const raw = current[name];
+        if (raw === undefined) return json(res, 404, { error: "找不到这个工具。" });
+        const parsed = parseStoredMcpServer(name, raw);
+        if (!parsed.ok) return json(res, 400, { error: parsed.error });
+        if (parsed.server.runsOn) return json(res, 409, { error: runsElsewhere(parsed.server.runsOn) });
+        const targets = parsed.server.credentialTargets ?? findCredentialTargets(raw);
+        if (!targets.length) return json(res, 400, { error: "这个工具没有需要填写的凭证。" });
+        const known = new Set(targets.flatMap((target) => target.tokens));
+        const body = await readBody(req);
+        const incoming = (body as { values?: unknown } | null)?.values;
+        if (!incoming || typeof incoming !== "object" || Array.isArray(incoming)) {
+          return json(res, 400, { error: "请提交要保存的凭证。" });
+        }
+        const values: Record<string, string> = {};
+        for (const [token, value] of Object.entries(incoming as Record<string, unknown>)) {
+          if (!known.has(token)) return json(res, 400, { error: `未知的凭证项：${token}` });
+          const invalid = credentialValueError(value);
+          if (invalid) return json(res, 400, { error: `${token}：${invalid}` });
+          values[token] = normalizeCredentialValue(name, token, (value as string).trim());
+        }
+        if (!Object.keys(values).length) return json(res, 400, { error: "请至少填写一项凭证。" });
+        const next = { ...applyCredentialValues(raw, targets, values), credentialTargets: targets };
+        const checked = parseStoredMcpServer(name, next);
+        if (!checked.ok) return json(res, 400, { error: checked.error });
+        const personalRefusal = personalHeaderRefusal(name, checked.server);
+        if (personalRefusal) return json(res, 400, { error: personalRefusal });
+        const refusal = mcpPolicyRefusal(name, checked.server);
+        if (refusal) return json(res, 403, { error: refusal, code: "managed_policy" });
+        persistMcpServers({ ...current, [name]: next });
+        appCatalog?.forgetServer(name);
+        appCatalog?.serverChanged(name);
+        health?.changed(name);
+        return json(res, 200, withServerDetails(mcpServerResponse()));
+      } finally {
+        mcpConfigBusy.set(false);
       }
     }
 

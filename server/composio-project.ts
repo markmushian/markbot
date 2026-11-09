@@ -27,12 +27,21 @@ export function projectHeaders(apiKey: string, json = false) {
   return headers;
 }
 
+/** An HTML body means a proxy, gateway, or login wall answered — never a message to show a person. */
+function htmlInsteadOfAnswer(raw: string, status: number): string | null {
+  const head = raw.trimStart().slice(0, 200).toLowerCase();
+  if (!head.startsWith("<") && !head.includes("<html") && !head.includes("<!doctype")) return null;
+  return `The connected-apps service answered with a web page instead of a result (HTTP ${status}); a proxy or gateway is in the way. Try again later.`;
+}
+
 export async function responseError(res: Response, fallback: string) {
   const raw = await res.text().catch(() => "");
   try {
     const body = JSON.parse(raw);
     return String(body?.message ?? body?.error?.message ?? body?.error ?? fallback);
   } catch {
+    const html = htmlInsteadOfAnswer(raw, res.status);
+    if (html) return html;
     return raw.trim().slice(0, 300) || fallback;
   }
 }

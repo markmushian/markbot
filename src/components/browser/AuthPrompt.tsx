@@ -22,13 +22,13 @@ export function AuthPrompt({ origin, realm, onAnswer }: {
   };
   return (
     <form role="dialog" aria-label={t("browserAuth.title")} onSubmit={submit} className="absolute inset-x-3 top-3 z-20 mx-auto flex max-w-sm flex-col gap-2.5 rounded-xl border border-hairline/60 bg-card p-4 text-ink shadow-xl">
-      <div className="flex items-center gap-2 text-[13px] font-medium"><LockKeyhole size={14} aria-hidden="true" />{t("browserAuth.submit")}</div>
-      <p className="break-words text-[12px] text-ink-secondary">{origin}{realm ? t("browserAuth.asksFor", { realm }) : ""}</p>
-      <input name="username" aria-label={t("browserAuth.username")} autoComplete="off" spellCheck={false} maxLength={1024} placeholder={t("browserAuth.username")} className="rounded-lg bg-inset px-3 py-2 text-[13px] outline-none focus:ring-1 focus:ring-accent" />
-      <input name="password" type="password" aria-label={t("browserAuth.password")} autoComplete="new-password" maxLength={1024} placeholder={t("browserAuth.password")} className="rounded-lg bg-inset px-3 py-2 text-[13px] outline-none focus:ring-1 focus:ring-accent" />
+      <div className="flex items-center gap-2 text-ui font-medium"><LockKeyhole size={14} aria-hidden="true" />{t("browserAuth.submit")}</div>
+      <p className="break-words text-note text-ink-secondary">{origin}{realm ? t("browserAuth.asksFor", { realm }) : ""}</p>
+      <input name="username" aria-label={t("browserAuth.username")} autoComplete="off" spellCheck={false} maxLength={1024} placeholder={t("browserAuth.username")} className="rounded-lg bg-inset px-3 py-2 text-ui outline-none focus:ring-1 focus:ring-accent" />
+      <input name="password" type="password" aria-label={t("browserAuth.password")} autoComplete="new-password" maxLength={1024} placeholder={t("browserAuth.password")} className="rounded-lg bg-inset px-3 py-2 text-ui outline-none focus:ring-1 focus:ring-accent" />
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => onAnswer(null)} className="rounded-lg px-3 py-1.5 text-[12px] text-ink-secondary hover:bg-inset">{t("common.cancel")}</button>
-        <button type="submit" className="rounded-lg bg-accent px-3 py-1.5 text-[12px] text-accent-ink">{t("browserAuth.submit")}</button>
+        <button type="button" onClick={() => onAnswer(null)} className="rounded-lg px-3 py-1.5 text-note text-ink-secondary hover:bg-inset">{t("common.cancel")}</button>
+        <button type="submit" className="rounded-lg bg-accent px-3 py-1.5 text-note text-accent-ink">{t("browserAuth.submit")}</button>
       </div>
     </form>
   );

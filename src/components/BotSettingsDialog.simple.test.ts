@@ -467,7 +467,7 @@ describe("the hero", () => {
   });
 
   it("sets the name at 17px, and shows the title line only once one is set", () => {
-    expect(find(hero(makeBot()), "data-panel-rename").props.className).toContain("text-[17px]");
+    expect(find(hero(makeBot()), "data-panel-rename").props.className).toContain("text-title");
     const untitled = hero(makeBot({ title: "" }));
     expect(has(untitled, "data-panel-label")).toBe(false);
     expect(untitled.html).not.toContain("Add a label");
@@ -493,7 +493,7 @@ describe("the hero", () => {
 describe("the avatar editor", () => {
   const editor = (bot: Bot) => capture(() => AvatarEditorCard({ bot, activeState: "idle", onPatch: patch, onClose }));
 
-  it("shows the ten bodies and twelve colors, with the Halloween bodies and the faces behind More looks", () => {
+  it("shows the ten bodies and twelve colors, with Halloween bodies behind More looks", () => {
     const bot = makeBot();
     const rendered = editor(bot);
     expect(rendered.html.match(/aria-label="Use the \w+ body"/g)).toHaveLength(10);
@@ -522,25 +522,21 @@ describe("the avatar editor", () => {
     expect(open.html).toContain(">Halloween<");
     click(find(open, "aria-label", "Use the Pumpkin body"));
     expect(patch).toHaveBeenLastCalledWith({ mascotBody: "pumpkin" });
-    expect(find(open, "data-avatar-face", "idle").props["aria-pressed"]).toBe(true);
-    click(find(open, "data-avatar-face", "proud"));
-    expect(patch).toHaveBeenLastCalledWith({ mascotExpression: "proud" });
-    expect(open.html).toContain(">Proud<");
+    expect(has(open, "data-avatar-face", "idle")).toBe(false);
   });
 
-  it("opens More looks at once for a Halloween body or a chosen face", () => {
+  it("opens More looks at once for a Halloween body", () => {
     expect(find(editor(makeBot({ mascotBody: "pumpkin" })), "data-avatar-more").props["aria-expanded"]).toBe(true);
-    fresh();
-    expect(find(editor(makeBot({ mascotExpression: "proud" })), "data-avatar-more").props["aria-expanded"]).toBe(true);
     fresh();
     expect(find(editor(makeBot()), "data-avatar-more").props["aria-expanded"]).toBe(false);
   });
 
-  it("switches back to the mascot when a body is picked over a picture", () => {
+  it("keeps a selected picture when the image tab is opened", () => {
     const bot = makeBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "circle" });
     click(find(editor(bot), "data-avatar-tab", "bot"));
-    click(find(editor(bot), "aria-label", "Use the Star body"));
-    expect(patch).toHaveBeenLastCalledWith({ mascotBody: "star", avatarCrop: "mascot" });
+    const pictured = editor(bot);
+    expect(has(pictured, "aria-label", "Use the Star body")).toBe(false);
+    expect(ofType(pictured, AvatarFraming)?.props.bot).toBe(bot);
   });
 
   it("resets the mascot as the Advanced card does", () => {
@@ -549,6 +545,7 @@ describe("the avatar editor", () => {
   });
 
   it("edits facial feature color without changing body color or expression", () => {
+    fresh();
     const props = ofType(editor(makeBot({ mascotFaceColor: "black" })), MascotFaceColorPicker)!.props;
     const choices = segment(capture(() => MascotFaceColorPicker(props as Parameters<typeof MascotFaceColorPicker>[0])), "data-avatar-face-color");
     expect(choices.value).toBe("black");
@@ -557,7 +554,7 @@ describe("the avatar editor", () => {
     expect(patch).toHaveBeenLastCalledWith({ mascotFaceColor: "white" });
   });
 
-  it("generates with the shared generator, and uploads with shape and framing", () => {
+  it("generates with the shared generator, and uploads with framing and recoloring", () => {
     const bot = makeBot();
     click(find(editor(bot), "data-avatar-tab", "generate"));
     const generate = editor(bot);
@@ -567,9 +564,7 @@ describe("the avatar editor", () => {
     const upload = editor(bot);
     expect(upload.html).toContain("Drop a picture here, or choose one");
     expect(upload.html).toContain("PNG, JPEG, GIF, or WebP · up to 10 MB");
-    expect(segment(upload, "data-avatar-crop").options.map((option) => [option.value, option.disabled])).toEqual([
-      ["circle", true], ["rounded", true], ["square", true],
-    ]);
+    expect(has(upload, "data-avatar-crop", "circle")).toBe(false);
     expect(ofType(upload, AvatarFraming)).toBeUndefined();
 
     fresh();
@@ -577,11 +572,9 @@ describe("the avatar editor", () => {
     const withImage = editor(pictured);
     expect(find(withImage, "data-avatar-tab", "upload").props["aria-selected"]).toBe(true);
     expect(ofType(withImage, AvatarFraming)!.props.bot).toBe(pictured);
-    expect(segment(withImage, "data-avatar-crop").value).toBe("circle");
-    segment(withImage, "data-avatar-crop").onChange("square");
-    expect(patch).toHaveBeenLastCalledWith({ avatarCrop: "square" });
+    expect(has(withImage, "data-avatar-crop", "circle")).toBe(false);
     click(find(withImage, "aria-label", "Remove custom avatar image"));
-    expect(patch).toHaveBeenLastCalledWith({ avatarUrl: null, avatarCrop: "mascot", avatarZoom: AVATAR_ZOOM_MIN, avatarFocusX: AVATAR_FOCUS_CENTER, avatarFocusY: AVATAR_FOCUS_CENTER });
+    expect(patch).toHaveBeenLastCalledWith({ avatarUrl: null, avatarCrop: "mascot", avatarZoom: AVATAR_ZOOM_MIN, avatarHue: 0, avatarFocusX: AVATAR_FOCUS_CENTER, avatarFocusY: AVATAR_FOCUS_CENTER });
   });
 
   it("closes on Escape without letting the dialog close settings", () => {

@@ -36,6 +36,7 @@ export function duplicateBotProfile(source: Bot) {
     avatarUrl: source.avatarUrl,
     avatarCrop: source.avatarCrop,
     avatarZoom: source.avatarZoom,
+    avatarHue: source.avatarHue,
     avatarFocusX: source.avatarFocusX,
     avatarFocusY: source.avatarFocusY,
   };

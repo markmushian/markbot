@@ -4,6 +4,7 @@ import { memo, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { botShowsUnread } from "@/lib/bot-unread";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
+import { EmptyState } from "./states";
 import { useLiveMedia } from "@/lib/live-call-media";
 import { stateForBot } from "@/lib/mascot";
 import { useShowThreads } from "@/lib/thread-preferences";
@@ -99,7 +100,7 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
             <Phone size={9} strokeWidth={2.5} aria-hidden="true" />
           </span>
         ) : waiting ? (
-          <span data-testid="waiting-dot" aria-hidden="true" className={cn("absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-warning text-[11px] font-black leading-none text-panel", RING)}>!</span>
+          <span data-testid="waiting-dot" aria-hidden="true" className={cn("absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-warning text-meta font-black leading-none text-panel", RING)}>!</span>
         ) : working ? dot("working-dot", "bg-success")
           : teammateWait ? dot("teammate-wait-dot", "bg-accent")
           : queued ? dot("queued-dot", "bg-ink-tertiary")
@@ -118,8 +119,8 @@ export const SidebarBotTile = memo(function SidebarBotTile({ primary = false, dr
           title={tooltip}
           onCommit={rename}
           onEditingChange={setRenaming}
-          className="min-w-0 truncate text-center text-[13px] font-medium leading-4 text-ink"
-          inputClassName="w-full rounded bg-inset px-1 text-center text-[13px] font-medium leading-4"
+          className="min-w-0 truncate text-center text-ui font-medium leading-4 text-ink"
+          inputClassName="w-full rounded bg-inset px-1 text-center text-ui font-medium leading-4"
         />
       </span>
     </div>
@@ -131,7 +132,7 @@ export function SidebarNoBots() {
   const { state } = useStore();
   const chiefStep = useChiefStepOpen();
   if (!chiefStep || state.bots.some((bot) => !bot.hidden && !bot.defaultBot)) return null;
-  return <p data-sidebar-empty="" className="px-5 pt-4 text-[13px] leading-[18px] text-ink-tertiary">{t("onboarding.shell.noBots")}</p>;
+  return <EmptyState data-sidebar-empty="" className="items-start px-5 pt-4 text-left" title={t("onboarding.shell.noBots")} />;
 }
 
 export function SidebarTileGrid({ primary, pinned, row }: { primary: Bot | null; pinned: Bot[]; row: (bot: Bot) => BotRowProps }) {

@@ -2,7 +2,7 @@
   "name": "@markbot/companion",
   "version": "0.1.0",
   "private": true,
-  "description": "A sidecar that lets a paired phone reach an unmodified OpenMausBot harness",
+  "description": "A sidecar that lets a paired phone reach this computer's Mark Bot harness",
   "type": "module",
   "bin": {
     "markbot-companion": "./src/index.ts"

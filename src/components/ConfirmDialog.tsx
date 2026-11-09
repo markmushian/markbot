@@ -119,10 +119,10 @@ export function ConfirmDialogCard({
           {icon ?? <AlertTriangle size={18} />}
         </span>
         <div className="min-w-0">
-          <h2 id="confirm-dialog-title" className="text-[15px] font-semibold text-ink">
+          <h2 id="confirm-dialog-title" className="text-lead font-semibold text-ink">
             {title}
           </h2>
-          <p id="confirm-dialog-body" className="mt-1.5 text-[13px] leading-relaxed text-ink-secondary">
+          <p id="confirm-dialog-body" className="mt-1.5 text-ui leading-relaxed text-ink-secondary">
             {body}
           </p>
         </div>
@@ -133,7 +133,7 @@ export function ConfirmDialogCard({
           type="button"
           onClick={onCancel}
           disabled={pending}
-          className="rounded-xl px-4 py-2 text-[13px] text-ink-secondary hover:bg-raised hover:text-ink"
+          className="rounded-xl px-4 py-2 text-ui text-ink-secondary hover:bg-raised hover:text-ink"
         >
           {cancelLabel}
         </button>
@@ -142,7 +142,7 @@ export function ConfirmDialogCard({
           onClick={onConfirm}
           disabled={pending}
           className={cn(
-            "rounded-xl px-4 py-2 text-[13px] font-medium",
+            "rounded-xl px-4 py-2 text-ui font-medium",
             danger ? "bg-danger text-white hover:brightness-110" : "bg-accent text-white hover:brightness-110",
           )}
         >

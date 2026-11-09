@@ -223,3 +223,28 @@ describe("the Simple model menu", () => {
     expect(menu([claude(), codex, many], { query: "zzz" })).toMatchObject({ groups: [], results: 0 });
   });
 });
+
+describe("a custom-access engine that ships its own models", () => {
+  const workbuddy = engine("workbuddy-codebuddy", "claudeAgent", "WorkBuddy · CodeBuddy", "custom", [
+    { id: "auto", label: "Auto (WorkBuddy routing)" },
+    { id: "hy3", label: "hy3" },
+    { id: "glm-5.3", label: "glm-5.3" },
+    { id: "deepseek-v4-pro", label: "deepseek-v4-pro" },
+  ]);
+
+  it("lists that catalogue instead of reporting an empty group", () => {
+    const built = menu([workbuddy], {
+      selection: { instanceId: "workbuddy-codebuddy", model: "auto" },
+      expanded: new Set(["workbuddy-codebuddy"]),
+    });
+    expect(body(built).kind).toBe("models");
+    expect(body(built)).toMatchObject({ total: 4 });
+    expect(rows(built)).toEqual(expect.arrayContaining(["hy3", "glm-5.3", "deepseek-v4-pro"]));
+  });
+
+  it("still hides an engine whose models are all user-entered", () => {
+    const built = menu([pi], { selection: sonnet, expanded: new Set(["pi"]) });
+    expect(body(built)).toMatchObject({ kind: "models", total: 2 });
+    expect(rows(built)).toEqual(expect.arrayContaining(["Llama 4", "Gemma 4"]));
+  });
+});

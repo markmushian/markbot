@@ -77,6 +77,21 @@ export function isBrowserControlAccess(method: string, path: string): boolean {
     || (method === BROWSER_ACTION_ROUTE.method && BROWSER_ACTION_ROUTE.path.test(path));
 }
 
+/** An interactive shell on the host is a computer-access grant, not an ordinary
+ * chat right. Opaque UUIDs only; the harness refuses any other path shape. */
+export const TERMINAL_ROUTES = [
+  { method: "POST", path: /^\/api\/terminal\/sessions$/ },
+  { method: "POST", path: /^\/api\/terminal\/sessions\/[0-9a-f-]{36}\/input$/ },
+  { method: "GET", path: /^\/api\/terminal\/sessions\/[0-9a-f-]{36}\/stream$/ },
+  { method: "DELETE", path: /^\/api\/terminal\/sessions\/[0-9a-f-]{36}$/ },
+] as const;
+
+/** Needs the device's computer-access capability, checked again in the proxy
+ * when the SSE headers arrive and when a capability is revoked. */
+export function isTerminalAccess(method: string, path: string): boolean {
+  return TERMINAL_ROUTES.some((route) => route.method === method && route.path.test(path));
+}
+
 /** Every request the iOS app makes, and nothing else. Paths arrive undecoded
  * and are anchored at both ends, so an encoded traversal fails to match. */
 const ALLOWED: ReadonlyArray<{ method: string; path: RegExp }> = [
@@ -146,6 +161,9 @@ const ALLOWED: ReadonlyArray<{ method: string; path: RegExp }> = [
   LOCAL_VM_SCREENSHOT_ROUTE,
   // Behind the same capability, while a person holds the computer.
   LOCAL_VM_JOIN_ROUTE,
+  // An interactive shell is the broadest grant here: still default-deny, and
+  // behind the per-device computer-access capability in the proxy.
+  ...TERMINAL_ROUTES,
   { method: "POST", path: /^\/api\/groups$/ },
   { method: "POST", path: /^\/api\/groups\/[\w-]+\/messages$/ },
   { method: "POST", path: /^\/api\/groups\/[\w-]+\/interrupt$/ },

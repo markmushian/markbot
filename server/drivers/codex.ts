@@ -454,6 +454,8 @@ function mountMcpServer(
   if (approval !== "prompt") appServerArgs.push("-c", `${prefix}.default_tools_approval_mode="${approval}"`);
 }
 
+import { resolveCodexCli } from "./codex-cli-path.ts";
+
 export const CodexDriver: ProviderDriver<CodexConfig> = {
   driverKind: DRIVER_KIND,
   metadata: { displayName: "Codex", supportsMultipleInstances: true },
@@ -472,7 +474,9 @@ export const CodexDriver: ProviderDriver<CodexConfig> = {
   defaultConfig: () => decodeConfig({}),
 
   async create(input: DriverCreateInput<CodexConfig>): Promise<ProviderInstance> {
-    const { instanceId, config } = input;
+    const { instanceId } = input;
+    // A desktop update moves the binary to a new hash directory; follow it instead of going dark.
+    const config = { ...input.config, cli: resolveCodexCli(input.config.cli) };
     const plan = config.authMode === "chatgpt-plan";
     const planUnavailable = plan && (hostedWorkspaceConfigured() || cloudHomeConfigured())
       ? "ChatGPT plan sign-in for hosted Pro requires OpenAI's hosted-app approval. Use a Company model or API key until that integration is approved; the local desktop flow cannot be used here."

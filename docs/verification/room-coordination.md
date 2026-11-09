@@ -102,6 +102,14 @@ room (default), or — in ordinary direct chat without a room — the sender's o
 thread with each recipient for that conversation. Every bot can reach every
 other bot, in any department; a Chief's authority over other departments is a
 separate grant ([Chief authority](team-access.md)).
+
+When the Chief needs to direct work in a room while specialists execute in their
+own conversations, it calls `coordinate_bots` with `thread: "new"` and no
+`group_id`. The room receives an assignment link for each specialist, each
+specialist gets a fresh private task thread, and the completed results resume
+the Chief in the room. `post_to_room` only posts a message and never starts a
+teammate turn. A `group_id` naming another room cannot be combined with
+`thread: "new"` from a room.
 A multi-recipient room request posts its brief once, addressed to all accepted
 recipients. Each recipient still has a separate execution and result. An
 identical retry does not post again; different briefs remain separate. Requests

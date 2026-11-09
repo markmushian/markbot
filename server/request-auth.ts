@@ -422,7 +422,7 @@ export function requiredScope(method: string, path: string, features: { sharedCo
 /** A client may change how a bot looks, never what it may do. */
 const CLIENT_BOT_PATCH_FIELDS = new Set([
   "unread", "pinned", "pinnedMessageId", "color", "mascotExpression", "mascotBody", "mascotFaceColor",
-  "avatarUrl", "avatarCrop", "avatarZoom", "avatarFocusX", "avatarFocusY", "sidebarHidden", "welcomed",
+  "avatarUrl", "avatarCrop", "avatarZoom", "avatarHue", "avatarFocusX", "avatarFocusY", "sidebarHidden", "welcomed",
 ]);
 /** `ownMarkBot`: the session's own Mark Bot on a Team Cloud, which its member may also rename. */
 export function clientBotPatchViolation(body: unknown, ownMarkBot = false): string | null {

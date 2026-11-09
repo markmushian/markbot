@@ -24,6 +24,7 @@ export type BotPatch = Partial<
     | "avatarUrl"
     | "avatarCrop"
     | "avatarZoom"
+    | "avatarHue"
     | "avatarFocusX"
     | "avatarFocusY"
     | "alwaysAllow"

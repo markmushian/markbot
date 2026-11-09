@@ -19,7 +19,10 @@ export interface RoomJobsDeps {
 }
 
 export function parallelRoomJobsEnabled(cfg: AppConfig): boolean {
-  return cfg.features?.parallelRoomJobs === true;
+  // On by default: a room job that names several bots should run them side by side, not
+  // one after another. An explicit false (older configs, or a user who wants strict
+  // turn-taking) still wins.
+  return cfg.features?.parallelRoomJobs !== false;
 }
 
 const live = (n: HandoffView) => n.parentId !== undefined && (n.status === "queued" || n.status === "running");
@@ -68,16 +71,21 @@ export function createRoomJobs({ store, coordinator, cfg, operations, speakerOf,
     options: { senderId: string; returns: string; lanes: boolean; awaited: boolean }): string {
     const nameOf = (botId: string) => botId === options.senderId ? "your own turn" : peerName(store.bot(botId)?.name ?? "") || "a teammate";
     const line = roomLineOf(room).filter(entry => entry.threadId === roomThreadId);
-    for (const [index, receipt] of receipts.entries()) {
-      const entry = line.find(candidate => candidate.assignmentId === receipt.requestId && candidate.state === "queued");
-      if (!entry || receipt.outcome !== "queued") continue;
-      receipts[index] = peerDeliveryReceipt({ ...receipt, detail: `${queuedJobDetail(entry, nameOf)}; ${options.returns}`,
-        queue: { position: entry.position, of: entry.of, ...(entry.waitingForBotId ? { waitingFor: nameOf(entry.waitingForBotId) } : {}) } });
+    // A lane is already running beside the room: it has no queue position and nobody waits on it,
+    // so reporting a position there is what made a parallel dispatch look sequential.
+    if (!options.lanes) {
+      for (const [index, receipt] of receipts.entries()) {
+        const entry = line.find(candidate => candidate.assignmentId === receipt.requestId && candidate.state === "queued");
+        if (!entry || receipt.outcome !== "queued") continue;
+        receipts[index] = peerDeliveryReceipt({ ...receipt, detail: `${queuedJobDetail(entry, nameOf)}; ${options.returns}`,
+          queue: { position: entry.position, of: entry.of, ...(entry.waitingForBotId ? { waitingFor: nameOf(entry.waitingForBotId) } : {}) } });
+      }
     }
     const parallel = options.lanes && options.awaited
-      ? "These run in parallel, each in a thread of its own beside this room; each posts its result card here when it finishes, and you resume once with all of them."
+      ? "These run in parallel right now, each in a thread of its own beside this room: nobody is waiting for anybody, each posts its result card here when it finishes, and you resume once with all of them."
       : undefined;
-    const sequential = sequentialRoomNotice(line, new Set(receipts.flatMap(receipt => receipt.requestId ? [receipt.requestId] : [])), nameOf);
+    const sequential = options.lanes ? undefined
+      : sequentialRoomNotice(line, new Set(receipts.flatMap(receipt => receipt.requestId ? [receipt.requestId] : [])), nameOf);
     return [parallel, sequential].filter(Boolean).join(" ");
   }
 

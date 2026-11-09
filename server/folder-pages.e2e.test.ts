@@ -99,10 +99,10 @@ it("shows a dashboard folder inline, serves its Parquet to the frame by token on
 
   const [published] = await turn(analyst, [{ tool: "publish_page", arguments: { path: "dash", title: "Sales dashboard" } }]);
   const [pageId] = [...stub.service.pages.keys()];
-  expect(published).toContain(`Published “Sales dashboard” at https://${pageId}.mausbot.page/`);
+  expect(published).toContain(`Published “Sales dashboard” at https://${pageId}.markbot.page/`);
   expect(Buffer.from(stub.service.pages.get(pageId!)!.files.get("data.parquet")!, "latin1").byteLength).toBeGreaterThan(0);
   const rows = (await api(`/api/threads/${analyst.activeTaskId}/messages?limit=50`)).body.messages as any[];
   expect(rows.filter((message) => message.kind === "app").map((message) => [message.id, message.publishedPage?.state, message.publishedPage?.url]))
-    .toEqual([[appId, "live", `https://${pageId}.mausbot.page/`]]);
+    .toEqual([[appId, "live", `https://${pageId}.markbot.page/`]]);
   expect(rows.filter((message) => message.publishedPage && message.kind !== "app")).toEqual([]);
 }, 120_000);

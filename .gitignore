@@ -43,3 +43,6 @@ deploy/podman/.env
 deploy/podman/.env.*
 !deploy/podman/.env.example
 /.env
+dist-prev-*/
+.pnpm-home/
+tmp-*.log

@@ -18,16 +18,17 @@ export function botRole(id: string): BotRole | undefined {
   return BOT_ROLES.find((role) => role.id === id);
 }
 
-export function roleProfilePatch(role: BotRole): {
+export function roleProfilePatch(role: BotRole, localized?: { name: string; title: string; description: string }): {
   name: string;
   title: string;
   description: string;
   soul: string;
 } {
+  // A role picked in Chinese should not land as an English name and title on the new bot.
   return {
-    name: role.name,
-    title: role.title,
-    description: role.description,
+    name: localized?.name ?? role.name,
+    title: localized?.title ?? role.title,
+    description: localized?.description ?? role.description,
     soul: role.soul,
   };
 }

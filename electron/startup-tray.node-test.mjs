@@ -137,13 +137,17 @@ test("closing during startup keeps the eventual workspace hidden until tray rest
   assert.deepEqual(calls, ["finished"]);
 });
 
-test("tray restores minimized windows, supports explicit quit, and disposes once", async () => {
+test("tray restores minimized windows, hides to the tray, supports explicit quit, and disposes once", async () => {
   const { splash, win, tray, trayInstance, setActive, calls } = fixture();
   await splash.ready; splash.dispose(); setActive(win);
   win.minimize(); tray.hide(win); trayInstance.emit("click");
   assert.equal(win.minimized, false); assert.equal(win.focused, true);
   assert.equal(win.skipTaskbar, false);
-  trayInstance.menu[2].click();
+  // Open, hide, a separator, quit.
+  assert.equal(trayInstance.menu.length, 4);
+  trayInstance.menu[1].click();
+  assert.equal(win.visible, false); assert.equal(tray.isHidden(), true);
+  trayInstance.menu[3].click();
   tray.destroy(); tray.destroy();
   assert.deepEqual(calls, ["finished", "quit", "destroy-tray"]);
   win.destroy(); assert.equal(tray.show(), false);

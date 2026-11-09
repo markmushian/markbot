@@ -4,13 +4,12 @@ import { api, BotEditorStore, useStore, type Bot } from "@/state/store";
 import { BotCreationDraft, EMPTY_BOT_DEFAULTS } from "@/lib/bot-creation-draft";
 import { createConfiguredBot, preparedBotTemplate } from "@/lib/create-configured-bot";
 import { BOT_ROLES, roleProfilePatch } from "@/lib/bot-roles";
-import { readyBot, readyBotTemplate } from "@/lib/ready-bots";
+import { localizedReadyBot, readyBot, readyBotTemplate } from "@/lib/ready-bots";
 import { chosenPreset, presetDraftPatch, presetGroups, presetPictureFile, presetSummaryLines, type BotPreset } from "@/lib/bot-presets";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
-import { useAdvancedMode } from "@/lib/interface-mode";
 import { announceNewBot, reportsToFor, startingTemplate, type BotDefaultsAnswer } from "@/lib/new-bot";
 import { useShowThreads } from "@/lib/thread-preferences";
 import { openServerMenu } from "./DesktopWorkspaceSwitcher";
@@ -47,6 +46,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
   defaultsMode?: boolean; onClose: () => void; onCreated?: (bot: Bot) => void | Promise<void>;
   /** A ready-made bot from the Templates gallery, filled in over the person's New bot defaults. */
   readyBotId?: string;
+  /** Mark Bot portrait id chosen for this template; the created bot keeps it instead of the blank mascot. */
 }) {
   const parent = useStore();
   const [, render] = useState(0);
@@ -66,7 +66,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
   const [chosenOwner, setChosenOwner] = useState<string | null>(null);
   const ownerOrAdmin = useOwnerOrAdmin();
   const showThreads = useShowThreads();
-  const sections = useAdvancedMode() ? SECTIONS : SECTIONS.filter((section) => section !== "Model");
+  const sections = SECTIONS;
   const choosesVisibility = !defaultsMode && typeof window !== "undefined" && !window.ogb && ownerOrAdmin === true;
   const dialog = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
@@ -110,7 +110,10 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
     return () => { window.removeEventListener("keydown", onKey); if (previous?.isConnected) previous.focus(); };
   }, []);
   const save = async () => {
-    if (!ready || savingRef.current || parent.state.botCreationPending) return;
+    // `ready` is the template chosen from the role gallery, not a save precondition: a plain
+    // "new bot" has no readyBotId, and requiring it here silently swallowed every Create click.
+    if (savingRef.current || parent.state.botCreationPending) return;
+    if (readyBotId && !defaultsMode && !readyBot(readyBotId)) { setError(t("botSettings.new.templateUnavailable")); return; }
     if (!defaultsMode && draft.bot.approvalMode === "auto" && draft.bot.computer === "local" && !draft.consent.acknowledgeLocalAuto) { setWarning("local"); return; }
     const visibility = choosesVisibility ? visibilityFromForm(audience, people) : null;
     if (visibility && !visibility.ok) { setError(t("botSettings.visibility.needPeople")); return; }
@@ -153,13 +156,13 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
     <div ref={dialog} role="dialog" aria-modal="true" aria-label={title} aria-busy={saving} tabIndex={-1}
       className="flex h-[min(760px,94dvh)] w-full max-w-[900px] flex-col overflow-hidden rounded-2xl border border-hairline/50 bg-panel shadow-2xl outline-none">
       <div className="flex shrink-0 items-center justify-between border-b border-hairline/40 px-5 py-4">
-        <h2 className="text-[17px] font-semibold text-ink">{title}</h2>
+        <h2 className="text-title font-semibold text-ink">{title}</h2>
         <button type="button" onClick={() => closeRef.current()} aria-label={t("common.close")}
           className="flex size-8 shrink-0 items-center justify-center rounded-lg text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-40"><X size={18} className="pointer-events-none" /></button>
       </div>
         {team && !defaultsMode && teamName && <SharedInTeam team={teamName} />}
         {choosesVisibility && (
-          <div className="flex flex-wrap items-center gap-2 px-5 pt-3 text-[13px] text-ink-secondary" data-new-bot-visibility>
+          <div className="flex flex-wrap items-center gap-2 px-5 pt-3 text-ui text-ink-secondary" data-new-bot-visibility>
             <label className="flex items-center gap-2">
               {t("botSettings.visibility.title")}
               <Select size="sm"
@@ -179,7 +182,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
                 onChange={(event) => setPeople(event.target.value)}
                 placeholder={t("botSettings.visibility.peoplePlaceholder")}
                 aria-label={t("botSettings.visibility.peopleLabel")}
-                className="min-w-[16rem] flex-1 rounded-lg border border-hairline/40 bg-inset px-3 py-1.5 text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+                className="min-w-[16rem] flex-1 rounded-lg border border-hairline/40 bg-inset px-3 py-1.5 text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
               />
             )}
           </div>
@@ -187,10 +190,10 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
       <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
         <nav aria-label={t("newBot.sections")} className="flex shrink-0 gap-1 overflow-x-auto border-b border-hairline/40 p-2 sm:w-40 sm:flex-col sm:border-b-0 sm:border-r">
           {sections.map(label => <button key={label} type="button" onClick={() => setActive(label)} aria-current={active === label ? "page" : undefined}
-            className={cn("shrink-0 rounded-lg px-3 py-2 text-left text-[13px]", active === label ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/50")}>{t(SECTION_KEYS[label])}</button>)}
+            className={cn("shrink-0 rounded-lg px-3 py-2 text-left text-ui", active === label ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/50")}>{t(SECTION_KEYS[label])}</button>)}
         </nav>
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-5">
-          {!ready && !error && <div role="status" className="flex items-center gap-2 text-[13px] text-ink-secondary"><Loader2 size={16} className="animate-spin" />{t("newBot.loading")}</div>}
+          {!ready && !error && <div role="status" className="flex items-center gap-2 text-ui text-ink-secondary"><Loader2 size={16} className="animate-spin" />{t("newBot.loading")}</div>}
           {ready && <fieldset disabled={saving} className="min-w-0">
             <BotEditorStore value={scopedStore}><BotEditorContext.Provider value={{ request: draft.request, draft: true, uploadAvatar: draft.uploadAvatar }}>
               <DraftSection active={active} draft={draft} defaultsMode={defaultsMode}
@@ -199,11 +202,11 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
           </fieldset>}
         </div>
       </div>
-      {error && <p role="alert" className="max-h-24 overflow-y-auto border-t border-hairline/40 px-5 py-3 text-[13px] text-danger">{error}</p>}
+      {error && <p role="alert" className="max-h-24 overflow-y-auto border-t border-hairline/40 px-5 py-3 text-ui text-danger">{error}</p>}
       <div className="flex shrink-0 justify-end gap-2 border-t border-hairline/40 px-5 py-3">
-        <button type="button" onClick={() => closeRef.current()} className="rounded-lg px-4 py-2 text-[13px] text-ink-secondary hover:bg-control">{t("common.cancel")}</button>
+        <button type="button" onClick={() => closeRef.current()} className="rounded-lg px-4 py-2 text-ui text-ink-secondary hover:bg-control">{t("common.cancel")}</button>
         <button type="button" disabled={!ready || saving || (!defaultsMode && !bot.name.trim())} onClick={() => void save()}
-          className="ui-button-primary flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-40">
+          className="ui-button-primary flex items-center gap-2 rounded-lg bg-accent px-5 py-2 text-ui font-medium text-white hover:brightness-110 disabled:opacity-40">
           {saving && <Loader2 size={15} className="animate-spin" />}{t(defaultsMode ? "newBot.saveDefaults" : "newBot.create")}
         </button>
       </div>
@@ -214,7 +217,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
 
 function SharedInTeam({ team }: { team: string }) {
   const bridge = typeof window === "undefined" ? undefined : window.ogb?.workspaces;
-  return <div data-new-bot-shared className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-hairline/40 bg-raised/30 px-5 py-2.5 text-[13px] text-ink-secondary">
+  return <div data-new-bot-shared className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-hairline/40 bg-raised/30 px-5 py-2.5 text-ui text-ink-secondary">
     <span>{t("newBot.sharedWith", { team })}</span>
     {bridge
       ? <button type="button" onClick={() => void openServerMenu(bridge).catch(() => {})} className="font-medium text-accent hover:underline">{t("newBot.justForYou")}</button>
@@ -232,16 +235,17 @@ function DraftSection({ active, draft, defaultsMode, owner }: { active: Section;
     <StartingRole draft={draft} defaultsMode={defaultsMode} />
     <IdentitySection bot={bot} patch={derived.patch} activeState={derived.activeState} mascotMotion={null}
       namePlaceholder={defaultsMode ? t("newBot.randomName") : undefined} />
-    <label className="block text-[13px] text-ink-secondary">{t("newBot.team")}
+    <NewBotModelChoice draft={draft} />
+    <label className="block text-ui text-ink-secondary">{t("newBot.team")}
       <Select size="lg" className="mt-1.5 w-full" value={bot.section ?? ""} onChange={event => draft.patch({ section: event.target.value })}>
         <option value="">{t("teamSettings.general")}</option>{[...new Set([...(state.sections ?? []), ...state.bots.map(bot => bot.section ?? "")])].filter(Boolean).map(name => <option key={name}>{name}</option>)}
       </Select>
     </label>
-    {owner && team && <label className="block text-[13px] text-ink-secondary" data-new-bot-reports-to>{t("newBot.reportsTo")}
+    {owner && team && <label className="block text-ui text-ink-secondary" data-new-bot-reports-to>{t("newBot.reportsTo")}
       <Select size="lg" className="mt-1.5 w-full" value={owner.value ?? ""} onChange={event => owner.choose(event.target.value)}>
         {team.people.map(person => <option key={person.email} value={person.email}>{person.you ? t("owner.you", { name: person.name }) : person.name}</option>)}
       </Select>
-      <span className="mt-1 block text-[12px]">{t("owner.pickHint")}</span>
+      <span className="mt-1 block text-note">{t("owner.pickHint")}</span>
     </label>}
   </div>;
   if (active === "Soul") return <SoulSection bot={bot} patch={derived.patch} />;
@@ -252,6 +256,31 @@ function DraftSection({ active, draft, defaultsMode, owner }: { active: Section;
   if (active === "Model") return <ModelSection bot={bot} />;
   if (active === "Permissions") return <PermissionsSection bot={bot} derived={derived} />;
   return <VoiceSection bot={bot} derived={derived} />;
+}
+
+function NewBotModelChoice({ draft }: { draft: BotCreationDraft }) {
+  const { state } = useStore();
+  const bot = draft.bot;
+  const instances = state.instances.filter((instance) => instance.models.options.length > 0 || instance.models.default.trim());
+  const current = instances.find((instance) => instance.instanceId === bot.modelSelection.instanceId);
+  const models = current?.models.options ?? [];
+  return <div className="rounded-xl border border-hairline/40 bg-card p-4" data-new-bot-model-choice>
+    <div className="mb-3 text-body font-medium text-ink">服务商与模型</div>
+    {instances.length ? <div className="grid gap-3 sm:grid-cols-2">
+      <label className="text-note text-ink-secondary">服务商
+        <Select size="lg" className="mt-1 w-full" value={bot.modelSelection.instanceId} onChange={(event) => { const selected = instances.find((instance) => instance.instanceId === event.target.value); if (selected) draft.setModel({ instanceId: selected.instanceId, model: selected.models.default || selected.models.options[0]?.id || "" }); }}>
+          {!current && <option value={bot.modelSelection.instanceId}>{bot.modelSelection.instanceId || "请选择服务商"}</option>}
+          {instances.map((instance) => <option key={instance.instanceId} value={instance.instanceId}>{instance.displayName}{instance.snapshot.state !== "available" ? "（需要配置）" : ""}</option>)}
+        </Select>
+      </label>
+      <label className="text-note text-ink-secondary">模型
+        <Select size="lg" className="mt-1 w-full" value={bot.modelSelection.model} onChange={(event) => draft.setModel({ ...bot.modelSelection, model: event.target.value })}>
+          {!models.some((model) => model.id === bot.modelSelection.model) && <option value={bot.modelSelection.model}>{bot.modelSelection.model || "请选择模型"}</option>}
+          {models.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
+        </Select>
+      </label>
+    </div> : <p className="text-note text-ink-secondary">当前没有检测到可选模型，请先在“设置 → AI”连接服务商。</p>}
+  </div>;
 }
 
 function StartingRole({ draft, defaultsMode }: { draft: BotCreationDraft; defaultsMode: boolean }) {
@@ -275,8 +304,8 @@ function StartingRole({ draft, defaultsMode }: { draft: BotCreationDraft; defaul
       draft.choosePreset(undefined);
       const role = BOT_ROLES.find(role => role.id === value);
       draft.chooseRole(role?.id);
-      const look = role && readyBot(role.id)?.look;
-      if (role) draft.patch({ ...roleProfilePatch(role), ...look });
+      const ready = role ? readyBot(role.id) : undefined;
+      if (role) draft.patch({ ...roleProfilePatch(role, ready ? localizedReadyBot(ready) : undefined), ...ready?.look });
       return;
     }
     draft.patch(presetDraftPatch(preset));
@@ -304,10 +333,14 @@ function StartingRole({ draft, defaultsMode }: { draft: BotCreationDraft; defaul
       setError(cause instanceof Error ? cause.message : String(cause));
     }
   };
-  const roles = BOT_ROLES.map(role => <option key={role.id} value={role.id}>{role.title}</option>);
+  const roles = BOT_ROLES.map(role => {
+    const ready = readyBot(role.id);
+    const text = ready ? localizedReadyBot(ready) : null;
+    return <option key={role.id} value={role.id}>{text ? `${text.name} · ${text.title}` : role.title}</option>;
+  });
   return <div>
-    <label className="block text-[13px] text-ink-secondary">{t("newBot.startingRole")}
-      <Select size="lg" className="mt-1.5 w-full" value={draft.preset ? `preset:${draft.preset.id}` : ""} onChange={event => void choose(event.target.value)}>
+    <label className="block text-ui text-ink-secondary">{t("newBot.startingRole")}
+      <Select size="lg" className="mt-1.5 w-full" value={draft.preset ? `preset:${draft.preset.id}` : draft.role ?? ""} onChange={event => void choose(event.target.value)}>
         <option value="">{t("newBot.customSettings")}</option>
         {presetGroups(presets).map(group => <optgroup key={group.label} label={group.label}>
           {group.presets.map(preset => <option key={preset.id} value={`preset:${preset.id}`}>{preset.name}</option>)}
@@ -315,12 +348,12 @@ function StartingRole({ draft, defaultsMode }: { draft: BotCreationDraft; defaul
         {presets.length ? <optgroup label={t("newBot.builtInRoles")}>{roles}</optgroup> : roles}
       </Select>
     </label>
-    {chosen && <div className="mt-2 space-y-1 rounded-lg bg-card px-3 py-2.5 text-[13px] text-ink-secondary" data-new-bot-preset>
+    {chosen && <div className="mt-2 space-y-1 rounded-lg bg-card px-3 py-2.5 text-ui text-ink-secondary" data-new-bot-preset>
       {presetSummaryLines(chosen).map((line, index) => <p key={index} className="break-words">{line}</p>)}
       {chosen.source === "file" && <button type="button" onClick={() => void remove(chosen)}
-        className="mt-1 rounded-md px-2 py-1 text-[12px] text-ink-secondary hover:bg-control hover:text-ink">{t("newBot.presetRemove")}</button>}
+        className="mt-1 rounded-md px-2 py-1 text-note text-ink-secondary hover:bg-control hover:text-ink">{t("newBot.presetRemove")}</button>}
     </div>}
-    {error && <p role="alert" className="mt-2 text-[13px] text-danger">{error}</p>}
+    {error && <p role="alert" className="mt-2 text-ui text-danger">{error}</p>}
   </div>;
 }
 
@@ -342,10 +375,10 @@ function DraftMemory({ draft }: { draft: BotCreationDraft }) {
 function DraftRoutines({ draft }: { draft: BotCreationDraft }) {
   const [editing, setEditing] = useState<Routine | "new" | null>(null);
   return <div className="space-y-3">
-    <button type="button" className="rounded-lg bg-accent px-3 py-2 text-[13px] text-white" onClick={() => setEditing("new")}>{t("computer.routines.create")}</button>
+    <button type="button" className="rounded-lg bg-accent px-3 py-2 text-ui text-white" onClick={() => setEditing("new")}>{t("computer.routines.create")}</button>
     {draft.routines.map(routine => <div key={routine.id} className="flex items-center gap-2 rounded-lg bg-card p-3">
-      <button type="button" className="min-w-0 flex-1 text-left text-[13px]" onClick={() => setEditing(routine)}>{routine.name}</button>
-      <label className="flex items-center gap-1.5 text-[12px] text-ink-secondary"><input type="checkbox" checked={routine.enabled} onChange={event => draft.setRoutineEnabled(routine.id, event.target.checked)} />{t("newBot.enabled")}</label>
+      <button type="button" className="min-w-0 flex-1 text-left text-ui" onClick={() => setEditing(routine)}>{routine.name}</button>
+      <label className="flex items-center gap-1.5 text-note text-ink-secondary"><input type="checkbox" checked={routine.enabled} onChange={event => draft.setRoutineEnabled(routine.id, event.target.checked)} />{t("newBot.enabled")}</label>
       <button type="button" aria-label={t("newBot.removeRoutine", { name: routine.name })} onClick={() => draft.removeRoutine(routine.id)} className="rounded p-1.5 hover:bg-control"><Trash2 size={15} /></button>
     </div>)}
     {editing && <RoutineEditor routine={editing === "new" ? undefined : editing} bots={[draft.bot]} lockedBotId={draft.id} onClose={() => setEditing(null)} />}
@@ -358,8 +391,8 @@ export function DefaultBotSettings() {
 
     const content = <>
       <div className="flex shrink-0 gap-2">
-        <button type="button" onClick={() => setSharing(true)} className="cursor-pointer rounded-lg px-3 py-1.5 text-[13px] text-ink-secondary hover:bg-control hover:text-ink">{t("newBot.sharePreset")}</button>
-        <button type="button" onClick={() => setOpen(true)} className="cursor-pointer rounded-lg bg-control px-3 py-1.5 text-[13px] text-ink hover:bg-raised-hover">{t("newBot.edit")}</button>
+        <button type="button" onClick={() => setSharing(true)} className="cursor-pointer rounded-lg px-3 py-1.5 text-ui text-ink-secondary hover:bg-control hover:text-ink">{t("newBot.sharePreset")}</button>
+        <button type="button" onClick={() => setOpen(true)} className="cursor-pointer rounded-lg bg-control px-3 py-1.5 text-ui text-ink hover:bg-raised-hover">{t("newBot.edit")}</button>
       </div>
       {open && <NewBotDialog defaultsMode onClose={() => setOpen(false)} />}
       {sharing && <SharePresetDialog onClose={() => setSharing(false)} />}

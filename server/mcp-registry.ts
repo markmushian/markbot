@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { credentialFields, findCredentialTargets, MASKED_ARG, maskCredentialArgs, type McpCredentialField, type McpCredentialTarget } from "../shared/mcp-credentials.ts";
 import { RESERVED_MCP_NAMES, slugMcpName } from "../shared/mcp-name.ts";
 import type { McpServerSpec, RemoteMcpSpec, StdioMcpSpec } from "./contracts.ts";
 
@@ -25,6 +26,8 @@ export interface StoredStdioMcpServer extends StdioMcpSpec {
   bot?: string;
   /** "Show its apps in chat": stored only as `false`; on by default. */
   apps?: false;
+  /** Where `REPLACE_…` markers sat: lets settings overwrite a saved credential without exposing it. */
+  credentialTargets?: McpCredentialTarget[];
 }
 /** An app pre-registered with the server's authorization server; its secret is a credential, never listed. */
 export interface McpOAuthClientConfig {
@@ -39,6 +42,8 @@ export interface StoredRemoteMcpServer extends RemoteMcpSpec {
   runsOn?: McpRunsOn;
   /** "Show its apps in chat": stored only as `false`; on by default. */
   apps?: false;
+  /** Where `REPLACE_…` markers sat: lets settings overwrite a saved credential without exposing it. */
+  credentialTargets?: McpCredentialTarget[];
 }
 export type StoredMcpServer = StoredStdioMcpServer | StoredRemoteMcpServer;
 
@@ -48,6 +53,12 @@ export interface StdioMcpServerListing {
   command: string;
   args: string[];
   envKeys: string[];
+  /** Keys whose stored value is still a `REPLACE_…` placeholder: nothing can authenticate yet. */
+  placeholders: string[];
+  /** Fillable credentials; values are never listed. */
+  credentials: McpCredentialField[];
+  /** An argv entry was masked: the raw command editor must not write it back. */
+  maskedArgs?: boolean;
   enabled: boolean;
   resultBudget?: number;
   runsOn?: McpRunsOn;
@@ -58,6 +69,10 @@ export interface RemoteMcpServerListing {
   name: string;
   type: "http" | "sse";
   url: string;
+  /** Header keys whose stored value is still a `REPLACE_…` placeholder. */
+  placeholders: string[];
+  /** Fillable credentials; values are never listed. */
+  credentials: McpCredentialField[];
   headerKeys: string[];
   enabled: boolean;
   resultBudget?: number;
@@ -139,6 +154,14 @@ const runsOnSchema = z.object({
   label: z.string().trim().min(1).max(120),
 }).strict();
 
+/** Markers only: a template never carries a real credential. */
+const credentialTargetsSchema = z.array(z.object({
+  source: z.enum(["env", "header", "arg"]),
+  key: z.string().min(1).max(128),
+  template: z.string().max(16_384),
+  tokens: z.array(z.string().regex(/^[A-Z0-9_]+$/)).min(1).max(16),
+}).strict()).max(64);
+
 const stdioEntrySchema = z.object({
   command: z.string().trim().min(1).max(1_024),
   args: z.array(z.string().max(4_096)).max(MAX_ARGS).optional(),
@@ -148,6 +171,7 @@ const stdioEntrySchema = z.object({
   runsOn: runsOnSchema.optional(),
   apps: z.boolean().optional(),
   bot: z.string().regex(BOT_ID).optional(),
+  credentialTargets: credentialTargetsSchema.optional(),
 }).strict();
 
 /** `runsOn: null` says it runs here after all; left out, an edit keeps the computer it runs on and the bot it is for. */
@@ -178,6 +202,7 @@ const remoteEntrySchema = z.object({
   resultBudget: resultBudgetSchema.optional(),
   runsOn: runsOnSchema.optional(),
   apps: z.boolean().optional(),
+  credentialTargets: credentialTargetsSchema.optional(),
 }).strict();
 
 const remoteMutationSchema = remoteEntrySchema.extend({
@@ -243,6 +268,21 @@ function resolveSecrets(
   return { ok: true, values };
 }
 
+/** A masked argv entry means "keep the saved one": never write the mask into config.json. */
+function resolveMaskedArgs(args: string[], existing?: StoredMcpServer): { ok: true; args: string[] } | { ok: false; error: string } {
+  if (!args.includes(MASKED_ARG)) return { ok: true, args };
+  const saved = existing && !isRemoteMcpServer(existing) ? existing.args : undefined;
+  const out: string[] = [];
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]!;
+    if (arg !== MASKED_ARG) { out.push(arg); continue; }
+    const kept = saved?.[index];
+    if (kept === undefined) return { ok: false, error: "A saved credential is not available for that command argument. Fill it in again." };
+    out.push(kept);
+  }
+  return { ok: true, args: out };
+}
+
 function parseStdio(raw: unknown, mutation: boolean, existing?: StoredMcpServer): Parsed {
   const parsed = (mutation ? stdioMutationSchema : stdioEntrySchema).safeParse(raw);
   if (!parsed.success) {
@@ -257,17 +297,20 @@ function parseStdio(raw: unknown, mutation: boolean, existing?: StoredMcpServer)
   // Checked after resolving, so a kept write-only value is judged by what would run.
   const invalidEnv = Object.entries(env.values).map(([name, value]) => environmentEntryError(name, value)).find((error) => error !== null);
   if (invalidEnv) return { ok: false, error: invalidEnv };
+  const args = resolveMaskedArgs(parsed.data.args ?? [], existing);
+  if (!args.ok) return args;
   return {
     ok: true,
     server: {
       command: parsed.data.command,
-      args: parsed.data.args ?? [],
+      args: args.args,
       env: env.values,
       enabled: enabledFor(parsed.data.enabled, mutation, existing),
       ...(parsed.data.resultBudget !== undefined ? { resultBudget: parsed.data.resultBudget } : {}),
       ...runsOnFor(parsed.data.runsOn, mutation, existing),
       ...appsFor(parsed.data.apps, mutation, existing),
       ...botFor(parsed.data.bot, mutation, existing),
+      ...targetsFor(parsed.data.credentialTargets, mutation, existing),
     },
   };
 }
@@ -305,8 +348,15 @@ function parseRemote(raw: unknown, mutation: boolean, existing?: StoredMcpServer
       ...(parsed.data.resultBudget !== undefined ? { resultBudget: parsed.data.resultBudget } : {}),
       ...runsOnFor(parsed.data.runsOn, mutation, existing),
       ...appsFor(parsed.data.apps, mutation, existing),
+      ...targetsFor(parsed.data.credentialTargets, mutation, existing),
     },
   };
+}
+
+/** Settings never sends the templates back: an edit keeps the ones its server already has. */
+function targetsFor(value: McpCredentialTarget[] | undefined, mutation: boolean, existing?: StoredMcpServer): { credentialTargets?: McpCredentialTarget[] } {
+  const targets = value ?? (mutation ? existing?.credentialTargets : undefined);
+  return targets?.length ? { credentialTargets: targets } : {};
 }
 
 function runsOnFor(value: McpRunsOn | null | undefined, mutation: boolean, existing?: StoredMcpServer): { runsOn?: McpRunsOn } {
@@ -386,17 +436,34 @@ export function addDisabledMcpServer(current: Record<string, unknown>, body: unk
   return { ok: true, name, server: parsed.server, next: { ...current, [name]: parsed.server } };
 }
 
+/** Credentials nobody has filled in yet, so the UI can say so instead of implying the keys work. */
+function placeholderKeys(record: Record<string, string>): string[] {
+  return Object.entries(record).filter(([, value]) => /REPLACE/i.test(String(value))).map(([key]) => key).sort();
+}
+
+/** `--token=REPLACE_YUQUE_TOKEN` carries its credential on argv, so the env pass alone misses it. */
+export function argumentPlaceholders(args: string[]): string[] {
+  return args
+    .flatMap((arg) => [...String(arg).matchAll(/REPLACE_([A-Z0-9_]+)/gi)].map((match) => match[1].toUpperCase()))
+    .filter((value, index, all) => all.indexOf(value) === index)
+    .sort();
+}
+
 export function listMcpServers(raw: Record<string, unknown> | undefined): McpServerListing[] {
   return Object.entries(raw ?? {}).flatMap(([name, value]): McpServerListing[] => {
     const parsed = parseStoredMcpServer(name, value);
     if (!parsed.ok) return [];
     const { server } = parsed;
+    const targets = server.credentialTargets ?? findCredentialTargets(value);
+    const credentials = credentialFields(value, targets);
     if (isRemoteMcpServer(server)) {
       return [{
         name,
         type: server.type,
         url: server.url,
         headerKeys: Object.keys(server.headers).sort(),
+        placeholders: placeholderKeys(server.headers),
+        credentials,
         enabled: server.enabled,
         ...(server.resultBudget !== undefined ? { resultBudget: server.resultBudget } : {}),
         apps: server.apps !== false,
@@ -406,11 +473,15 @@ export function listMcpServers(raw: Record<string, unknown> | undefined): McpSer
         ...(server.runsOn ? { runsOn: server.runsOn } : {}),
       }];
     }
+    const masked = maskCredentialArgs(server.args, targets);
     return [{
       name,
       command: server.command,
-      args: server.args,
+      args: masked.args,
       envKeys: Object.keys(server.env).sort(),
+      placeholders: [...new Set([...placeholderKeys(server.env), ...argumentPlaceholders(server.args)])],
+      credentials,
+      ...(masked.masked ? { maskedArgs: true } : {}),
       enabled: server.enabled,
       ...(server.resultBudget !== undefined ? { resultBudget: server.resultBudget } : {}),
       ...(server.runsOn ? { runsOn: server.runsOn } : {}),

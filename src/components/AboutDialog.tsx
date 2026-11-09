@@ -59,16 +59,16 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
         aria-labelledby="about-dialog-title"
         className="w-full max-w-[360px] rounded-2xl border border-hairline/50 bg-panel p-6 text-center shadow-2xl"
       >
-        <img src="/app-icon.svg" alt="" width={56} height={56} className="mx-auto size-14" />
-        <h2 id="about-dialog-title" className="mt-3 text-[17px] font-semibold text-ink">
+        <img src="/mark-avatars/guide.png" alt="" width={56} height={56} className="mx-auto size-14 rounded-2xl object-contain" />
+        <h2 id="about-dialog-title" className="mt-3 text-title font-semibold text-ink">
           {productName()}
         </h2>
-        <p className="mt-1 text-[13px] text-ink-secondary">{version}</p>
-        {connected && <p className="mt-0.5 text-[13px] text-ink-secondary">{connected}</p>}
-        <p className="mt-3 text-[13px] leading-relaxed text-ink-secondary">
+        <p className="mt-1 text-ui text-ink-secondary">{version}</p>
+        {connected && <p className="mt-0.5 text-ui text-ink-secondary">{connected}</p>}
+        <p className="mt-3 text-ui leading-relaxed text-ink-secondary">
           {activeLocale() === "zh" ? `你的桌面智能助手中心，基于 ${APP_NAME} 构建，采用 Apache 2.0 开源许可。` : `A desktop home for your agents, built on ${APP_NAME}: open source, Apache 2.0 licensed.`}
         </p>
-        <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[13px]">
+        <div className="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-ui">
           <AboutLink href={APP_REPOSITORY} label="GitHub" />
           <AboutLink href={DOCS_URL} label={activeLocale() === "zh" ? "使用说明" : "Docs"} />
           <AboutLink href={RELEASES_URL} label={activeLocale() === "zh" ? "版本发布" : "Releases"} />
@@ -78,7 +78,7 @@ export function AboutDialog({ open, onClose }: { open: boolean; onClose: () => v
           ref={closeRef}
           type="button"
           onClick={onClose}
-          className="mt-5 w-full rounded-xl bg-raised px-4 py-2 text-[13px] font-medium text-ink hover:brightness-110"
+          className="mt-5 w-full rounded-xl bg-raised px-4 py-2 text-ui font-medium text-ink hover:brightness-110"
         >
           {activeLocale() === "zh" ? "关闭" : "Close"}
         </button>

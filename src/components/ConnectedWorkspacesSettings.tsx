@@ -67,25 +67,25 @@ export function ConnectedWorkspacesSettings() {
       if (generation.current === current) setBusy(false);
     }
   };
-  if (!bridge) return <p className="text-[13px] text-ink-secondary">{t("connectedWorkspaces.manageInDesktop")}</p>;
+  if (!bridge) return <p className="text-ui text-ink-secondary">{t("connectedWorkspaces.manageInDesktop")}</p>;
   const confirmAction = (message: string) => window.ogb?.confirm ? window.ogb.confirm(message) : window.confirm(message);
   const connected = saved?.environments.find(entry => entry.id === computerId);
   const computerWorkspace = connected?.origin && !connected.home ? { id: connected.id, name: connected.name, origin: connected.origin } : undefined;
   const locals = saved?.environments.filter(entry => entry.kind === "local") ?? [];
   const forgetEntry = locals.find(entry => entry.id === envForget);
   return <>
-    <p className="text-[13px] leading-relaxed text-ink-secondary">{t("connectedWorkspaces.intro")}</p>
+    <p className="text-ui leading-relaxed text-ink-secondary">{t("connectedWorkspaces.intro")}</p>
     {saved?.packaged && <Card title={t("connectedWorkspaces.localTitle")} subtitle={t("connectedWorkspaces.localSubtitle")}>
-      {envError && <p role="alert" className="text-[12px] text-danger">{envError}</p>}
+      {envError && <p role="alert" className="text-note text-danger">{envError}</p>}
       {locals.length > 0 && <ul className="divide-y divide-hairline/40">
         {locals.map((entry) => {
           const active = entry.id === saved.activeId;
           return <li key={entry.id} className="flex items-center gap-3 py-3">
             <Laptop size={18} className="shrink-0 text-ink-secondary" />
-            <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-medium text-ink">{entry.name}</div>
-              <div className="break-all text-[12px] text-ink-secondary">{entry.dataDir}
-                {entry.missing && <span className="ml-2 rounded-md bg-inset px-1.5 py-0.5 text-[11px]">{t("connectedWorkspaces.missing")}</span>}</div></div>
-            {active ? <span className="flex shrink-0 items-center gap-1 text-[12px] text-ink-secondary"><Check size={13} />{t("connectedWorkspaces.current")}</span> :
+            <div className="min-w-0 flex-1"><div className="truncate text-ui font-medium text-ink">{entry.name}</div>
+              <div className="break-all text-note text-ink-secondary">{entry.dataDir}
+                {entry.missing && <span className="ml-2 rounded-md bg-inset px-1.5 py-0.5 text-meta">{t("connectedWorkspaces.missing")}</span>}</div></div>
+            {active ? <span className="flex shrink-0 items-center gap-1 text-note text-ink-secondary"><Check size={13} />{t("connectedWorkspaces.current")}</span> :
               <button type="button" disabled={busy} aria-label={t("connectedWorkspaces.switchTo", { name: entry.name })}
                 onClick={() => void perform(async () => {
                   if (!await confirmAction(t("connectedWorkspaces.switchConfirm", { name: entry.name }))) return;
@@ -93,7 +93,7 @@ export function ConnectedWorkspacesSettings() {
                   if (result && result.ok === false) throw new Error(t("connectedWorkspaces.switchError"));
                   return true;
                 }, setEnvError)}
-                className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.switch")}</button>}
+                className="rounded-md px-2 py-1.5 text-note text-ink hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.switch")}</button>}
             {!active && <button type="button" disabled={busy} aria-label={t("connectedWorkspaces.forgetName", { name: entry.name })} title={t("connectedWorkspaces.forgetName", { name: entry.name })}
               onClick={() => { setEnvForget(entry.id); setEnvPurge(false); }}
               className="rounded-md p-1.5 text-ink-secondary hover:bg-control hover:text-danger disabled:opacity-50"><Trash2 size={14} /></button>}
@@ -101,7 +101,7 @@ export function ConnectedWorkspacesSettings() {
         })}
       </ul>}
       {forgetEntry && <div className="mt-3 rounded-lg border border-hairline/40 p-3">
-        <label className="flex items-start gap-2 text-[12px] leading-relaxed text-ink-secondary">
+        <label className="flex items-start gap-2 text-note leading-relaxed text-ink-secondary">
           <input type="checkbox" checked={envPurge} disabled={busy} className="mt-0.5" onChange={(event) => setEnvPurge(event.target.checked)} />
           {t("connectedWorkspaces.forgetPurge", { path: forgetEntry.dataDir ?? "" })}
         </label>
@@ -110,11 +110,11 @@ export function ConnectedWorkspacesSettings() {
             const result = envPurge ? await bridge.forget(forgetEntry.id, true) : await bridge.forget(forgetEntry.id);
             if (result && result.ok === false) throw new Error(t("connectedWorkspaces.forgetError"));
             setEnvForget(null);
-          }, setEnvError)} className="rounded-lg px-3 py-1.5 text-[12px] font-medium text-danger hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.forget")}</button>
-          <button type="button" onClick={() => setEnvForget(null)} className="rounded-lg px-3 py-1.5 text-[12px] text-ink hover:bg-control">{t("connectedWorkspaces.cancel")}</button>
+          }, setEnvError)} className="rounded-lg px-3 py-1.5 text-note font-medium text-danger hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.forget")}</button>
+          <button type="button" onClick={() => setEnvForget(null)} className="rounded-lg px-3 py-1.5 text-note text-ink hover:bg-control">{t("connectedWorkspaces.cancel")}</button>
         </div>
       </div>}
-      <p className="mt-4 text-[13px] font-medium text-ink">{t("connectedWorkspaces.newEnvironment")}</p>
+      <p className="mt-4 text-ui font-medium text-ink">{t("connectedWorkspaces.newEnvironment")}</p>
       <form className="flex flex-col gap-3 pt-2" onSubmit={(event) => {
         event.preventDefault();
         if (!envName.trim()) return;
@@ -124,39 +124,39 @@ export function ConnectedWorkspacesSettings() {
           setEnvName(""); setEnvDir("");
         }, setEnvError);
       }}>
-        <label className="flex flex-col gap-1.5 text-[12px] text-ink-secondary">{t("connectedWorkspaces.name")}
+        <label className="flex flex-col gap-1.5 text-note text-ink-secondary">{t("connectedWorkspaces.name")}
           <input required value={envName} disabled={busy} maxLength={60} onChange={(event) => setEnvName(event.target.value)} placeholder={t("connectedWorkspaces.environmentPlaceholder")}
-            className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink outline-none focus:border-accent/50" />
+            className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-body text-ink outline-none focus:border-accent/50" />
         </label>
-        <label className="flex flex-col gap-1.5 text-[12px] text-ink-secondary">{t("connectedWorkspaces.dataFolder")}
+        <label className="flex flex-col gap-1.5 text-note text-ink-secondary">{t("connectedWorkspaces.dataFolder")}
           <span className="flex gap-2">
             <input value={envDir} disabled={busy} onChange={(event) => setEnvDir(event.target.value)} placeholder={t("connectedWorkspaces.defaultFolder")}
-              className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink outline-none focus:border-accent/50" />
+              className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-body text-ink outline-none focus:border-accent/50" />
             <button type="button" disabled={busy} onClick={() => void perform(async () => {
               const picked = await bridge.pickDir();
               if (picked?.ok && picked.path) setEnvDir(picked.path);
-            }, setEnvError)} className="shrink-0 rounded-lg border border-hairline/40 px-3 text-[12px] text-ink hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.choose")}</button>
+            }, setEnvError)} className="shrink-0 rounded-lg border border-hairline/40 px-3 text-note text-ink hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.choose")}</button>
           </span>
         </label>
-        <button type="submit" disabled={busy || !envName.trim()} className="flex w-fit items-center gap-2 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-accent-ink disabled:opacity-50">
+        <button type="submit" disabled={busy || !envName.trim()} className="flex w-fit items-center gap-2 rounded-lg bg-accent px-3 py-2 text-ui font-medium text-accent-ink disabled:opacity-50">
           {busy && <Loader2 size={14} className="animate-spin" />}{t("connectedWorkspaces.create")}
         </button>
       </form>
     </Card>}
     <Card title={t("connectedWorkspaces.serversTitle")} subtitle={t("connectedWorkspaces.serversSubtitle")}>
-      {!saved ? <p role="status" className="text-[13px] text-ink-secondary">{error ? t("connectedWorkspaces.loadFailedShort") : t("connectedWorkspaces.loadingServers")}</p> :
+      {!saved ? <p role="status" className="text-ui text-ink-secondary">{error ? t("connectedWorkspaces.loadFailedShort") : t("connectedWorkspaces.loadingServers")}</p> :
         <ul className="divide-y divide-hairline/40">
           {[{ id: "local", name: t("connectedWorkspaces.thisComputer"), origin: "", color: undefined }, ...saved.environments.filter((entry) => entry.kind !== "local")].map((entry) => {
             const active = entry.id === saved.activeId;
             const Icon = entry.id === "local" ? Laptop : Cloud;
             return <li key={entry.id} className="flex items-center gap-3 py-3">
               {cloudColor(entry.color) ? <CloudTile color={entry.color} size={20} /> : <Icon size={18} className="shrink-0 text-ink-secondary" />}
-              <div className="min-w-0 flex-1"><div className="truncate text-[13px] font-medium text-ink">{entry.name}</div>
-                <div className="break-all text-[12px] text-ink-secondary">{entry.origin || t("connectedWorkspaces.localBots")}</div></div>
-              {active ? <span className="flex shrink-0 items-center gap-1 text-[12px] text-ink-secondary"><Check size={13} />{t("connectedWorkspaces.current")}</span> :
+              <div className="min-w-0 flex-1"><div className="truncate text-ui font-medium text-ink">{entry.name}</div>
+                <div className="break-all text-note text-ink-secondary">{entry.origin || t("connectedWorkspaces.localBots")}</div></div>
+              {active ? <span className="flex shrink-0 items-center gap-1 text-note text-ink-secondary"><Check size={13} />{t("connectedWorkspaces.current")}</span> :
                 <button type="button" disabled={busy} aria-label={t("connectedWorkspaces.switchTo", { name: entry.name })} onClick={() => void perform(async () => { await bridge.switch(entry.id); return true; })}
-                  className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.switch")}</button>}
-              {entry.id !== "local" && !ownCloud(entry) && sharingOffered && <button type="button" disabled={busy} aria-label={t("connectedWorkspaces.computerAccessFor", { name: entry.name })} onClick={() => setComputerId(entry.id)} className="rounded-md px-2 py-1.5 text-[12px] text-ink hover:bg-control">{t("connectedWorkspaces.computerAccess")}</button>}
+                  className="rounded-md px-2 py-1.5 text-note text-ink hover:bg-control disabled:opacity-50">{t("connectedWorkspaces.switch")}</button>}
+              {entry.id !== "local" && !ownCloud(entry) && sharingOffered && <button type="button" disabled={busy} aria-label={t("connectedWorkspaces.computerAccessFor", { name: entry.name })} onClick={() => setComputerId(entry.id)} className="rounded-md px-2 py-1.5 text-note text-ink hover:bg-control">{t("connectedWorkspaces.computerAccess")}</button>}
               {entry.id !== "local" && <button type="button" disabled={busy} aria-label={t("connectedWorkspaces.forgetName", { name: entry.name })} title={t("connectedWorkspaces.forgetName", { name: entry.name })}
                 onClick={() => void perform(() => bridge.forget(entry.id))} className="rounded-md p-1.5 text-ink-secondary hover:bg-control hover:text-danger disabled:opacity-50"><Trash2 size={14} /></button>}
             </li>;
@@ -169,22 +169,22 @@ export function ConnectedWorkspacesSettings() {
         event.preventDefault();
         if (address.trim()) void perform(() => bridge.addFromLink(address.trim(), name.trim()));
       }}>
-        <label className="flex flex-col gap-1.5 text-[12px] text-ink-secondary">{t("connectedWorkspaces.serverAddress")}
+        <label className="flex flex-col gap-1.5 text-note text-ink-secondary">{t("connectedWorkspaces.serverAddress")}
           <input required value={address} disabled={busy} onChange={(event) => setAddress(event.target.value)}
             placeholder="https://bots.yourcompany.com" autoCapitalize="none" autoCorrect="off" autoComplete="off" spellCheck={false}
-            className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink outline-none focus:border-accent/50" />
+            className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-body text-ink outline-none focus:border-accent/50" />
         </label>
-        <label className="flex flex-col gap-1.5 text-[12px] text-ink-secondary">{t("connectedWorkspaces.serverName")}
+        <label className="flex flex-col gap-1.5 text-note text-ink-secondary">{t("connectedWorkspaces.serverName")}
           <input value={name} disabled={busy} maxLength={60} onChange={(event) => setName(event.target.value)} placeholder={t("connectedWorkspaces.serverNamePlaceholder")}
-            className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-[14px] text-ink outline-none focus:border-accent/50" />
+            className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-body text-ink outline-none focus:border-accent/50" />
         </label>
-        <p className="text-[12px] leading-relaxed text-ink-secondary">{t("connectedWorkspaces.pasteLink")}</p>
-        <details className="text-[12px] text-ink-secondary"><summary className="cursor-pointer">{t("connectedWorkspaces.needCode")}</summary>
+        <p className="text-note leading-relaxed text-ink-secondary">{t("connectedWorkspaces.pasteLink")}</p>
+        <details className="text-note text-ink-secondary"><summary className="cursor-pointer">{t("connectedWorkspaces.needCode")}</summary>
           <p className="mt-2">{t("connectedWorkspaces.runOnServer")}</p>
           <code className="mt-1 block select-all break-words rounded-md bg-inset px-2 py-2 text-ink">npx markbot pair --label "My desktop"</code>
         </details>
-        {error && <p role="alert" className="text-[12px] text-danger">{error}</p>}
-        <button type="submit" disabled={busy || !address.trim()} className="flex w-fit items-center gap-2 rounded-lg bg-accent px-3 py-2 text-[13px] font-medium text-accent-ink disabled:opacity-50">
+        {error && <p role="alert" className="text-note text-danger">{error}</p>}
+        <button type="submit" disabled={busy || !address.trim()} className="flex w-fit items-center gap-2 rounded-lg bg-accent px-3 py-2 text-ui font-medium text-accent-ink disabled:opacity-50">
           {busy && <Loader2 size={14} className="animate-spin" />}{t("connectedWorkspaces.connect")}
         </button>
       </form>

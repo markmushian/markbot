@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import { normalizeImageGenerationUrl, type ImageGenerationConfig } from "../shared/image-generation.ts";
+import { findCredentialTargets } from "../shared/mcp-credentials.ts";
 import { botAvatarUrlSchema } from "../shared/bot-avatar.ts";
 import { writeFileAtomic } from "./atomic.ts";
 import { anthropicKeyEnv } from "./anthropic-key-env.ts";
@@ -13,7 +14,7 @@ import { newBotDefaultsSchema, type NewBotDefaults } from "./new-bot-defaults.ts
 import { replaySettings } from "./replay-settings.ts";
 import { EFFORT_LEVELS, type EffortLevel } from "../shared/wire.ts";
 import { isModelVariant, type InstanceConfigMap, type McpServerSpec, type ModelSelection } from "./contracts.ts";
-import { API_KEY_FLEET, DEFAULT_FLEET, OPENAI_API_INSTANCE, OPENROUTER_API_INSTANCE, CLAUDE_API_INSTANCE, PRODUCT_FLEET_ADDITIONS } from "./instance-fleets.ts";
+import { API_KEY_FLEET, DEFAULT_FLEET, OPENAI_API_INSTANCE, OPENROUTER_API_INSTANCE, CLAUDE_API_INSTANCE, DOUBAO_API_INSTANCE, PRODUCT_FLEET_ADDITIONS } from "./instance-fleets.ts";
 export { CLAUDE_API_INSTANCE, OPENAI_API_INSTANCE, OPENROUTER_API_INSTANCE, XAI_API_INSTANCE } from "./instance-fleets.ts";
 import { DEFAULT_WINDOW_MINUTES, MAX_WINDOW_MINUTES } from "./cache-keepwarm.ts";
 import { PROVIDER_ICON_PRESETS, providerIconError } from "../shared/provider-icon.ts";
@@ -337,6 +338,7 @@ const appConfigSchema = z.object({
   mistral: z.object({ key: optionalText }).optional(),
   cerebras: z.object({ key: optionalText }).optional(), treg: z.object({ key: optionalText }).optional(), postiz: z.object({ key: optionalText, url: optionalText }).optional(),
   groq: z.object({ key: optionalText, url: optionalText }).optional(),
+  doubao: z.object({ key: optionalText }).optional(),
   meta: z.object({ key: optionalText, url: optionalText }).optional(),
   deepseek: z.object({ key: optionalText }).optional(),
   xai: z.object({ key: optionalText, url: optionalText }).optional(),
@@ -486,6 +488,7 @@ export interface AppConfig extends HelperConfig {
   mistral?: { key?: string };
   cerebras?: { key?: string }; treg?: { key?: string }; /** Postiz: an organisation API key and the server it belongs to (blank: Postiz Cloud). */ postiz?: { key?: string; url?: string };
   groq?: { key?: string; url?: string };
+  doubao?: { key?: string };
   meta?: { key?: string; url?: string };
   /** DeepSeek API key for the DeepSeek Harness engine (`dsh`). */
   deepseek?: { key?: string };
@@ -746,6 +749,76 @@ export function ensureDirs() {
   migrateLegacyFeatureFlags(DATA_DIR);
 }
 
+/**
+ * MCP presets shipped with the desktop build. They are added only when the
+ * person's config.json has no entry under that name, so an edited command, a
+ * filled credential or a deliberately removed tool is never overwritten.
+ * Every secret stays a REPLACE_… marker until it is filled in from Settings.
+ */
+export const SHIPPED_MCP_PRESETS: Record<string, Record<string, unknown>> = {
+  // WeChat: community MCP over Tencent's iLink/ClawBot channel. Scan a QR code
+  // with the login_qrcode tool; no AppID or password is stored here.
+  wechat: {
+    command: "npx", args: ["-y", "@wemind/wechat-mcp"],
+    env: { npm_config_registry: "https://registry.npmmirror.com" }, enabled: false,
+  },
+  // QQ: community MCP wrapping the official QQ Bot OpenAPI (q.qq.com), not a personal QQ login.
+  qq: {
+    command: "npx", args: ["-y", "qqbot-mcp", "--mcp"],
+    env: {
+      QQBOT_APP_ID: "REPLACE_QQ_APP_ID", QQBOT_APP_SECRET: "REPLACE_QQ_APP_SECRET",
+      QQBOT_MCP_MODE: "read", npm_config_registry: "https://registry.npmmirror.com",
+    },
+    enabled: false,
+  },
+  // Tencent Meeting: the official hosted MCP endpoint; a personal account token
+  // from meeting.tencent.com/ai-skill goes in X-Tencent-Meeting-Token.
+  "tencent-meeting": {
+    type: "http", url: "https://mcp.meeting.tencent.com/mcp/wemeet-open/v1",
+    headers: { "X-Tencent-Meeting-Token": "REPLACE_TENCENT_MEETING_TOKEN", "X-Skill-Version": "1.0.10" },
+    enabled: false,
+  },
+  // Gmail via the same IMAP/SMTP MCP used for QQ Mail, with Google's own hosts
+  // and an app password (never the account password).
+  gmail: {
+    command: "npx", args: ["-y", "imap-smtp-email-mcp"],
+    env: {
+      IMAP_HOST: "imap.gmail.com", IMAP_PORT: "993", SMTP_HOST: "smtp.gmail.com", SMTP_PORT: "465",
+      EMAIL_USER: "REPLACE_GMAIL_EMAIL", EMAIL_PASS: "REPLACE_GMAIL_APP_PASSWORD",
+    },
+    enabled: false,
+  },
+  // GitHub's official hosted MCP endpoint. The old @modelcontextprotocol/server-github
+  // npm package is archived, and npx's first download outlived the local probe.
+  // A personal account and private repos work with a fine-grained PAT; no Copilot plan
+  // is needed. The targets stay declared so the field can be edited after it is filled:
+  // once a real token replaces the marker, nothing on the value itself says it is editable.
+  github: {
+    type: "http", url: "https://api.githubcopilot.com/mcp/",
+    headers: { Authorization: "Bearer REPLACE_GITHUB_TOKEN" },
+    credentialTargets: [{ source: "header", key: "Authorization", template: "Bearer REPLACE_GITHUB_TOKEN", tokens: ["GITHUB_TOKEN"] }],
+    enabled: false,
+  },
+  // Jimeng (Dreamina) through Volcengine's official image/video API.
+  jimeng: {
+    command: "npx", args: ["-y", "jimeng-ai-mcp"],
+    env: {
+      JIMENG_ACCESS_KEY: "REPLACE_JIMENG_ACCESS_KEY", JIMENG_SECRET_KEY: "REPLACE_JIMENG_SECRET_KEY",
+      npm_config_registry: "https://registry.npmmirror.com",
+    },
+    enabled: false,
+  },
+  // Remotion: programmatic React video, rendered locally with Chrome.
+  remotion: { command: "npx", args: ["-y", "remotion-mcp"], enabled: false },
+  // ChatCut's official hosted MCP; the person signs in with their own ChatCut account.
+  chatcut: { type: "http", url: "https://api.chatcut.io/api/external-mcp/mcp", enabled: false },
+  // CapCut / JianYing desktop: writes the local draft JSON, then the person exports in the app.
+  capcut: {
+    command: "npx", args: ["-y", "capcut-mcp-server"],
+    env: { npm_config_registry: "https://registry.npmmirror.com" }, enabled: false,
+  },
+};
+
 let lastIgnoredConfigWarning = "";
 
 export function loadConfig(): AppConfig {
@@ -773,6 +846,8 @@ export function loadConfig(): AppConfig {
   if (process.env.OMB_TREG_KEY !== undefined) cfg.treg = { ...cfg.treg, key: process.env.OMB_TREG_KEY }; if (process.env.OMB_POSTIZ_API_KEY !== undefined) cfg.postiz = { ...cfg.postiz, key: process.env.OMB_POSTIZ_API_KEY };
   cfg.groq = { ...cfg.groq };
   if (process.env.OMB_GROQ_API_KEY !== undefined) cfg.groq.key = process.env.OMB_GROQ_API_KEY;
+  cfg.doubao = { ...cfg.doubao };
+  if (process.env.OMB_DOUBAO_API_KEY !== undefined) cfg.doubao.key = process.env.OMB_DOUBAO_API_KEY;
   cfg.meta = { ...cfg.meta };
   if (process.env.OMB_META_API_KEY !== undefined) cfg.meta.key = process.env.OMB_META_API_KEY;
   cfg.deepseek = { ...cfg.deepseek };
@@ -817,6 +892,41 @@ export function loadConfig(): AppConfig {
     if (process.env.OMB_SIGNIN_EMAILS !== undefined) cfg.signIn.admins = splitEmails(process.env.OMB_SIGNIN_EMAILS);
     if (process.env.OMB_SIGNIN_MEMBER_EMAILS !== undefined) cfg.signIn.members = splitEmails(process.env.OMB_SIGNIN_MEMBER_EMAILS);
   }
+  // A shipped preset appears on first run (and after an upgrade) without hand-editing config.json.
+  cfg.mcpServers = { ...cfg.mcpServers };
+  for (const [name, preset] of Object.entries(SHIPPED_MCP_PRESETS)) {
+    if (cfg.mcpServers[name] === undefined) cfg.mcpServers[name] = structuredClone(preset);
+  }
+  // A preset that was already filled in no longer contains a REPLACE_ marker, so the settings
+  // screen cannot tell it still has an editable field and answers "this tool needs no
+  // credentials". Carry each preset's declared targets alongside the stored value instead.
+  for (const [name, preset] of Object.entries(SHIPPED_MCP_PRESETS)) {
+    const current = cfg.mcpServers[name];
+    if (!current || typeof current !== "object" || Array.isArray(current)) continue;
+    const entry = current as Record<string, unknown>;
+    if (Array.isArray(entry.credentialTargets) && entry.credentialTargets.length > 0) continue;
+    const targets = findCredentialTargets(preset);
+    if (targets.length === 0) continue;
+    cfg.mcpServers[name] = { ...entry, credentialTargets: targets };
+  }
+  // The archived @modelcontextprotocol/server-github preset is upgraded in place to
+  // GitHub's hosted MCP, keeping whatever token the person already saved.
+  const github = cfg.mcpServers.github;
+  if (github && typeof github === "object" && !Array.isArray(github)) {
+    const entry = github as Record<string, unknown>;
+    const args = Array.isArray(entry.args) ? entry.args.map(String) : [];
+    if (!entry.type && args.some((arg) => arg.includes("@modelcontextprotocol/server-github"))) {
+      const env = entry.env && typeof entry.env === "object" ? entry.env as Record<string, unknown> : {};
+      const token = env.GITHUB_PERSONAL_ACCESS_TOKEN;
+      cfg.mcpServers.github = {
+        ...structuredClone(SHIPPED_MCP_PRESETS.github),
+        ...(typeof token === "string" && token.trim() && !/REPLACE/i.test(token)
+          ? { headers: { Authorization: `Bearer ${token.trim()}` } }
+          : {}),
+        enabled: entry.enabled === true,
+      };
+    }
+  }
   return cfg;
 }
 
@@ -844,6 +954,7 @@ export function syncCredentialEnv(patch: Partial<Omit<AppConfig, "threads" | "ne
     [patch.mistral?.key, "MISTRAL_API_KEY"],
     [patch.cerebras?.key, "CEREBRAS_API_KEY"], [patch.treg?.key, "OMB_TREG_KEY"], [patch.postiz?.key, "OMB_POSTIZ_API_KEY"],
     [patch.groq?.key, "OMB_GROQ_API_KEY"],
+    [patch.doubao?.key, "OMB_DOUBAO_API_KEY"],
     [patch.meta?.key, "OMB_META_API_KEY"],
     [patch.deepseek?.key, "OMB_DEEPSEEK_API_KEY"],
     [patch.anthropic?.key, "OMB_ANTHROPIC_API_KEY"],
@@ -955,7 +1066,7 @@ export function saveConfig(
   const before = configSaveListeners.size ? structuredClone(disk) : disk;
   const storedProfiles = storedBrowserProfilesSchema.safeParse(disk.browserProfiles);
   if (storedProfiles.success) disk.browserProfiles = storedProfiles.data;
-  for (const key of ["xai", "anthropic", "mistral", "cerebras", "treg", "postiz", "groq", "meta", "deepseek", "openai", "openrouter", "openaiCompat", "composio", "box", "opencodeGo", "tts", "decider", "imageGen", "live", "profile", "rooms", "mcp", "threads", "context", "memory", "localVm", "features", "budgets", "billing", "decisions", "loopGuard", "onboarding", "browserEngine", "newBots", "safetyFloor"] as const) {
+  for (const key of ["xai", "anthropic", "mistral", "cerebras", "treg", "postiz", "groq", "doubao", "meta", "deepseek", "openai", "openrouter", "openaiCompat", "composio", "box", "opencodeGo", "tts", "decider", "imageGen", "live", "profile", "rooms", "mcp", "threads", "context", "memory", "localVm", "features", "budgets", "billing", "decisions", "loopGuard", "onboarding", "browserEngine", "newBots", "safetyFloor"] as const) {
     const section = checkedPatch[key];
     if (!section) continue;
     const current = jsonObjectSchema.safeParse(disk[key]);
@@ -1177,6 +1288,8 @@ function injectedEnvironment(cfg: AppConfig, instanceId: string, driver: string)
     if (cfg.openai?.key) environment.set("OMB_OPENAI_API_KEY", cfg.openai.key);
   } else if (driver === "openai-compat" && instanceId === OPENROUTER_API_INSTANCE) {
     if (cfg.openrouter?.key) environment.set("OMB_OPENROUTER_API_KEY", cfg.openrouter.key);
+  } else if (driver === "openai-compat" && instanceId === DOUBAO_API_INSTANCE) {
+    if (cfg.doubao?.key) environment.set("OMB_DOUBAO_API_KEY", cfg.doubao.key);
   } else {
     if (driver === "openai-compat" && cfg.openaiCompat?.key)
       environment.set("OPENAI_COMPAT_API_KEY", cfg.openaiCompat.key);
@@ -1218,11 +1331,13 @@ export function instanceConfigs(cfg: AppConfig): InstanceConfigMap {
       ? (sourceEntry.config as { cli: string }).cli : "";
     // WorkBuddy 2.165 ships only its lite-wb stream-json bundle. Its advertised --acp mode exits 0
     // without answering initialize, while the Claude-compatible stream-json transport is healthy.
-    const workBuddyCompat = sourceEntry.driver === "customAcp"
-      && sourceEntry.environment?.CODEBUDDY_FORCE_LITE_WB_BUNDLE === "1"
+    // Idempotent: an earlier save may already have persisted driver "claudeAgent" while the
+    // config still carries "codebuddy --acp". Keying off driver alone then skipped the rewrite,
+    // so the CLI was spawned with --acp and the instance stopped owning its own routing.
+    const workBuddyCompat = sourceEntry.environment?.CODEBUDDY_FORCE_LITE_WB_BUNDLE === "1"
       && /(?:^|[\\/])codebuddy\s+--acp\s*$/iu.test(workBuddyCli);
     const entry = workBuddyCompat
-      ? { ...sourceEntry, driver: "claudeAgent", config: { ...sourceEntry.config as object, cli: workBuddyCli.replace(/\s+--acp\s*$/u, "") } }
+      ? { ...sourceEntry, driver: "claudeAgent", access: "custom" as const, config: { ...sourceEntry.config as object, cli: workBuddyCli.replace(/\s+--acp\s*$/u, "") } }
       : { ...sourceEntry };
     map[id] = entry;
     const environment = { ...entry.environment };

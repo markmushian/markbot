@@ -292,6 +292,54 @@ export const STATIC_CLAUDE_MODELS: ModelCatalog = {
   ],
 };
 
+/**
+ * WorkBuddy's lite bundle publishes its real model ids in `codebuddy --help`, not in
+ * ~/.workbuddy/models.json (that file is an empty array; the multipliers in the WorkBuddy
+ * client come from its own account service). Verified 2026-11-04 on the installed CLI.
+ * These ids are a fallback so the picker is never empty when --help is slow or offline.
+ */
+const WORKBUDDY_MODEL_IDS: readonly string[] = [
+  "fast-model", "balanced-model", "deep-model", "hy4free", "hy4std", "hy3", "hy3-x",
+  "deepseek-v4.1-flash", "glm-5.3", "glm-5.3-flash", "glm-5.2", "space-bunny",
+  "minimax-m3.1-flash", "kimi-k3.1-pro", "kimi-k3-1", "kimi-k2.8-preview",
+  "deepseek-v4-pro", "step-5-preview", "mimo-v2.6-pro",
+];
+
+/** Parse the `--model <model> ... Currently supported: (a, b, c)` line from the CLI's own help. */
+export function parseWorkBuddyModelIds(help: string): string[] {
+  const marker = "Currently supported:";
+  const line = help.split(String.fromCharCode(10)).find((row) => row.includes("--model") && row.includes(marker));
+  if (!line) return [];
+  const open = line.indexOf("(", line.indexOf(marker));
+  const close = line.indexOf(")", open + 1);
+  if (open < 0 || close < 0) return [];
+  const valid = (id: string) => id.length > 0 && id.length <= 64 &&
+    /[a-z0-9]/i.test(id.charAt(0)) && [...id].every((ch) => /[a-z0-9._-]/i.test(ch));
+  return [...new Set(line.slice(open + 1, close).split(",").map((id) => id.trim()).filter(valid))];
+}
+
+/** "Auto" stays the default: WorkBuddy still owns routing for existing sessions. */
+function workBuddyModelCatalog(ids: readonly string[]): ModelCatalog {
+  return {
+    default: "auto",
+    options: [
+      { id: "auto", label: "Auto (WorkBuddy routing)" },
+      ...ids.filter((id) => id !== "auto").map((id) => ({ id, label: id })),
+    ],
+  };
+}
+
+const WORKBUDDY_LITE_MODELS: ModelCatalog = workBuddyModelCatalog(WORKBUDDY_MODEL_IDS);
+
+function readWorkBuddyModelIds(cli: string, env: NodeJS.ProcessEnv): Promise<string[]> {
+  return new Promise((resolve) => {
+    execCli(cli, ["--help"], { timeout: 15_000, env }, (err, stdout) => {
+      if (err) return resolve([]);
+      resolve(parseWorkBuddyModelIds(String(stdout ?? "")));
+    });
+  });
+}
+
 /** Maps an API slug a local host serves to `host::model`, so the turn injects instead of asking
  *  for /login. */
 async function resolveClaudeTurnModel(
@@ -798,7 +846,7 @@ function diagnosticClaudeUserMessage(message: ClaudeUserMessage): ClaudeUserMess
 
 export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
   driverKind: DRIVER_KIND,
-  metadata: { displayName: "Claude", supportsMultipleInstances: true },
+  metadata: { displayName: "Claude Code", supportsMultipleInstances: true },
   install: {
     command: {
       darwin: "npm install -g @anthropic-ai/claude-code",
@@ -815,27 +863,38 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
 
   async create(input: DriverCreateInput<ClaudeConfig>): Promise<ProviderInstance> {
     const { instanceId, config } = input;
+    const workBuddyLite = input.environment.CODEBUDDY_FORCE_LITE_WB_BUNDLE === "1";
     const environment = (model?: string | null) =>
       claudeEnvironment(config.managed ? undefined : model, { ...process.env, ...input.environment }, config.configDir, input.environment);
     const catalogEnv = environment();
     if (inheritsUserConfig(catalogEnv)) {
       console.error(`claude (${instanceId}): OMB_CLAUDE_INHERIT_USER_CONFIG=1 — bots inherit this machine's Claude Code MCP servers, skills, hooks and CLAUDE.md on every turn; remove it unless a bot needs a user-scope server`);
     }
-    let models = config.managedModels ? { default: config.managedModels[0], options: config.managedModels.map(id => ({ id, label: id })) } : STATIC_CLAUDE_MODELS;
+    let models = workBuddyLite ? WORKBUDDY_LITE_MODELS : config.managedModels
+      ? { default: config.managedModels[0], options: config.managedModels.map(id => ({ id, label: id })) } : STATIC_CLAUDE_MODELS;
     const refreshModels = async () => {
       if (config.managed) return;
+      if (workBuddyLite) {
+        // Re-read the CLI's own help so newly shipped WorkBuddy models appear without a rebuild.
+        const ids = await readWorkBuddyModelIds(config.cli, catalogEnv);
+        // Merge instead of replace: a probe that sees a shorter help (different bundle or an
+        // older global CLI) must not drop ids this build already knows about.
+        if (ids.length) models = workBuddyModelCatalog([...new Set([...ids, ...WORKBUDDY_MODEL_IDS])]);
+        return;
+      }
       try {
         const resolved = await mergeLocalInject(readClaudeModelCatalog(catalogEnv), catalogEnv);
         if (resolved.options.length) models = resolved;
       } catch {}
       try { writeStartupModelCache(instanceId, models); } catch {}
     };
-    const startupModelRefresh = config.managed ? null : (await openStartupModelCatalog({
+    const startupModelRefresh = config.managed || workBuddyLite ? null : (await openStartupModelCatalog({
       instanceId,
       use: (catalog) => { models = catalog; },
       current: () => models,
       refresh: refreshModels,
     }))?.pending ?? null;
+    if (workBuddyLite) void refreshModels();
 
     let cliVersion: ClaudeCliVersion | null = null;
     let cliVersionChecked = false;
@@ -960,7 +1019,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       s.idleTimer = setTimeout(() => closeSession(threadId, "idle"), Math.min(2_147_483_647, Math.max(engineIdleMs(threadId, sessionIdle), held)));
       s.idleTimer.unref?.();
     };
-    const writeUser = (s: Session, threadId: string, promptMsg: ClaudeUserMessage): Promise<boolean> => {
+    const writeUser = (s: Session, threadId: string, promptMsg: ClaudeUserMessage, recordedMsg = promptMsg): Promise<boolean> => {
       if (!s.child.stdin.writable || s.child.stdin.destroyed) return Promise.resolve(false);
       return new Promise((resolve) => {
         try {
@@ -969,7 +1028,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
             appendNative(threadId, {
               dir: "out",
               source: "claude.sdk.message",
-              msg: diagnosticClaudeUserMessage(promptMsg),
+              msg: diagnosticClaudeUserMessage(recordedMsg),
             });
             resolve(true);
           });
@@ -1047,6 +1106,11 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
         "--include-partial-messages",
         "--permission-mode", permissionMode,
       ];
+      // WorkBuddy's desktop app runs its own `codebuddy --serve`, which holds the CLI's stable
+      // local port (58551 on this machine). A non-interactive child without an explicit port
+      // dies with `listen EADDRINUSE` before the first token, and the turn then looks like
+      // "no reply" instead of a failure. 0 lets the OS pick a free port.
+      if (workBuddyLite) args.push("--port", "0");
       if (turn.guestConfined && permissionMode !== "default") {
         throw new Error("A guest's turn on this Cloud runs only in Ask.");
       }
@@ -1060,7 +1124,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       if (turn.guestConfined && !claudeCliSupports(cliVersion, "--restricted")) {
         throw new Error(withWhy("This Claude Code is too old to run this turn without a shell. Update Claude Code.", turn.confinedWhy));
       }
-      const replaysUserMessages = cliVersion === null || versionAtLeast(cliVersion, CLAUDE_REPLAY_FLOOR);
+      const replaysUserMessages = !workBuddyLite && (cliVersion === null || versionAtLeast(cliVersion, CLAUDE_REPLAY_FLOOR));
       if (replaysUserMessages) args.push("--replay-user-messages");
       const isolated = !inheritsUserConfig(turnEnvironment);
       if (turn.toolScope !== undefined && (!isolated || turn.mcpFromUserConfig || cliVersion === null || !claudeCliSupports(cliVersion, "--strict-mcp-config"))) {
@@ -1069,7 +1133,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       if (isolated) {
         // Without these every turn gets this machine's MCP servers, connectors, skills, hooks and CLAUDE.md (one desktop: 407 tools, ~10k tokens).
         if (!turn.mcpFromUserConfig && claudeCliSupports(cliVersion, "--strict-mcp-config")) args.push("--strict-mcp-config");
-        if (claudeCliSupports(cliVersion, "--setting-sources")) args.push("--setting-sources", "project");
+        if (!workBuddyLite && claudeCliSupports(cliVersion, "--setting-sources")) args.push("--setting-sources", "project");
         if (turn.userSkillsDir) args.push("--add-dir", turn.userSkillsDir);
       }
       const compactWindow = autoCompactWindow(turnEnvironment);
@@ -1077,14 +1141,17 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
         args.push("--autocompact", compactWindow);
       }
       // --resume keeps the recorded system prompt, so every turn refreshes it.
-      if (cliVersionChecked && claudeCliSupports(cliVersion, "--system-prompt-snapshot")) {
+      if (!workBuddyLite && cliVersionChecked && claudeCliSupports(cliVersion, "--system-prompt-snapshot")) {
         args.push("--system-prompt-snapshot", "off");
       }
       // WorkBuddy's lite bundle owns its default-model routing. `agent-default` is the ACP sentinel,
       // not a model slug understood by its Claude-compatible stream-json transport.
-      const workBuddyDefault = input.environment.CODEBUDDY_FORCE_LITE_WB_BUNDLE === "1" && turn.model === "agent-default";
+      const workBuddyDefault = workBuddyLite && turn.model === "agent-default";
       const requestedModel = workBuddyDefault ? null : turn.model;
-      const turnModel = config.managed ? requestedModel : await resolveClaudeTurnModel(requestedModel, turnEnvironment);
+      // A WorkBuddy model id is passed through to `--model` verbatim; it is not a Claude
+      // inject slug, so skip the local-inject probe entirely for known WorkBuddy options.
+      const knownWorkBuddyModel = workBuddyLite && models.options.some((option) => option.id === requestedModel);
+      const turnModel = config.managed || knownWorkBuddyModel ? requestedModel : await resolveClaudeTurnModel(requestedModel, turnEnvironment);
       const injected = config.managed ? { model: turnModel ?? null, injected: false } : applyClaudeInject({ ...turnEnvironment }, turnModel);
       if (injected.model) args.push("--model", injected.model);
       if (turn.effort) args.push("--effort", turn.effort);
@@ -1282,7 +1349,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       };
 
       try {
-        if (launchSystem) {
+        if (launchSystem && !workBuddyLite) {
           systemPromptPath = join(mkdtempSync(join(tmpdir(), "omb-system-")), "prompt.txt");
           writeFileSync(systemPromptPath, launchSystem, { mode: 0o600 });
           args.push("--append-system-prompt-file", systemPromptPath);
@@ -1609,6 +1676,18 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
             }
             break;
           }
+          case "error": {
+            // A CLI that cannot even start (for example WorkBuddy's stable local port already
+            // held by its own desktop app) reports this before any result arrives. Without
+            // this branch the turn looks silent until the timeout says "no reply".
+            const message = typeof o.error === "string" && o.error ? o.error : "The CLI reported an error.";
+            const t = session.turn;
+            if (t && !t.settled && !t.explained) {
+              t.explained = true;
+              emit({ ...base(threadId, currentTurnId()), type: "runtime.error", message });
+            }
+            break;
+          }
           case "rate_limit_event":
             if (session.turn) session.turn.limit = claudeLimitRefusal(o.rate_limit_info);
             break;
@@ -1909,7 +1988,12 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
       emit({ ...base(threadId, turnId), type: "turn.started" });
 
       // Prompt over stdin, never argv (ARG_MAX); stdin stays open for steers and the next turn.
-      if (!(await writeUser(session, threadId, halves.stable !== null && halves.volatile.trim() ? claudeUserMessage(withVolatileNote(turn.text, halves.volatile, true), turn.images) : promptMsg))) {
+      const initialText = halves.stable !== null && halves.volatile.trim()
+        ? withVolatileNote(turn.text, halves.volatile, true) : turn.text;
+      const firstMessage = workBuddyLite && launchSystem
+        ? claudeUserMessage(`${launchSystem}\n\n${initialText}`, turn.images)
+        : claudeUserMessage(initialText, turn.images);
+      if (!(await writeUser(session, threadId, firstMessage, claudeUserMessage(initialText, turn.images)))) {
         if (!session.turn?.stopRequested) settle(false, "stdin_write_failed");
         closeSession(threadId, "stdin write failed");
       }
@@ -1969,9 +2053,9 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
           reject(new Error(NO_ANTHROPIC_KEY));
           return;
         }
-        const model = named ?? config.managedModels?.[0] ?? "claude-haiku-5-5";
+        const model = named ?? config.managedModels?.[0] ?? (workBuddyLite ? "auto" : "claude-haiku-5-5");
         const env = environment(model);
-        const args = backgroundCallArgs({ model, outputFormat: onUsage ? "json" : "text", supports: (flag) => cliVersion !== null && claudeCliSupports(cliVersion, flag), isolated: !inheritsUserConfig(env) });
+        const args = backgroundCallArgs({ model, outputFormat: onUsage ? "json" : "text", supports: (flag) => !(workBuddyLite && flag === "--setting-sources") && cliVersion !== null && claudeCliSupports(cliVersion, flag), isolated: !inheritsUserConfig(env) });
         const { child, removeCwd } = spawnBackgroundCall(config.cli, args, env);
         let stdout = "";
         let stderr = "";
@@ -2081,7 +2165,7 @@ export const ClaudeDriver: ProviderDriver<ClaudeConfig> = {
           steerImages: true,
           // Only while this CLI can refresh a resumed session's recorded prompt (--system-prompt-snapshot).
           get strictResume() {
-            return cliVersionChecked && cliVersion !== null && claudeCliSupports(cliVersion, "--system-prompt-snapshot");
+            return !workBuddyLite && cliVersionChecked && cliVersion !== null && claudeCliSupports(cliVersion, "--system-prompt-snapshot");
           },
           localComputerMcp: true,
           hooks: true, askTool: { kind: "mcp", server: "ogb", name: "ask_user" },

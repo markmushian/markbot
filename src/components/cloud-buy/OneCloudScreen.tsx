@@ -16,7 +16,7 @@ export function OneCloudScreen({ name, color, busy, interest, openFailed, onInte
       {interest !== "sent" && <button type="button" className={QUIET} disabled={busy} onClick={onInterest}>{t("cloudBuy.one.email")}</button>}
       <button type="button" className={PRIMARY} disabled={busy} onClick={onOpen}>{t("cloudBuy.setup.open", { name })}</button>
     </div>
-    <div aria-live="polite" className="text-[13px] leading-[18px] empty:-mt-5">
+    <div aria-live="polite" className="text-ui leading-[18px] empty:-mt-5">
       {interest === "sent" && <p className="text-ink-secondary">{t("cloudBuy.one.thanks")}</p>}
       {interest === "failed" && <p role="alert" className="text-danger">{t("cloudBuy.one.failed")}</p>}
       {openFailed && <p role="alert" className="text-danger">{t("cloudBuy.openFailed", { name })}</p>}
@@ -28,8 +28,8 @@ export function OneCloudScreen({ name, color, busy, interest, openFailed, onInte
 export function StatusScreen({ kind, line, onRetry, onClose }: { kind: string; line: string | null; onRetry?: () => void; onClose: () => void }) {
   return <div data-cloud-add={kind} className={SCREEN}>
     <Heading title={t("cloudAdd.title")} />
-    {line ? <p role="alert" className="text-[14px] leading-5 text-ink">{line}</p>
-      : <p role="status" className="flex items-center gap-2 text-[13px] leading-[18px] text-ink-secondary"><Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />{t("cloudAdd.checking")}</p>}
+    {line ? <p role="alert" className="text-body leading-5 text-ink">{line}</p>
+      : <p role="status" className="flex items-center gap-2 text-ui leading-[18px] text-ink-secondary"><Loader2 size={14} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />{t("cloudAdd.checking")}</p>}
     <div className={ACTIONS}>
       <button type="button" className={QUIET} onClick={onClose}>{t("cloudAdd.close")}</button>
       {onRetry && <button type="button" className={PRIMARY} onClick={onRetry}>{t("cloudAdd.tryAgain")}</button>}

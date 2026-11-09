@@ -45,8 +45,10 @@ import { cacheUntilConfigChanges,
   mergeOpenCodeProviderKeys,
   openCodeProviderKeys,
   OPENCODE_PROVIDER_KEY_LIMIT,
+  SHIPPED_MCP_PRESETS,
   type AppConfig,
 } from "./config.ts";
+import { parseStoredMcpServer } from "./mcp-registry.ts";
 
 const reloaded = (patch: object, cfg: AppConfig = {}) =>
   changedInstanceIds(engineLaunches(instanceConfigs(cfg), {}), engineLaunches(instanceConfigs({ ...cfg, ...patch } as AppConfig), {}));
@@ -850,7 +852,7 @@ describe("default fleet", () => {
 
   it("adds a separate ChatGPT plan account without copying Codex credentials", () => {
     const cfg: AppConfig = { instances: { codex: { driver: "codex", config: { cli: "/fixture/codex" }, environment: { CODEX_HOME: "/other-account", OPENAI_API_KEY: "not-for-plan" } } } };
-    expect(instanceConfigs(cfg).chatgpt).toMatchObject({ driver: "codex", displayName: "ChatGPT plan", config: { cli: "/fixture/codex", authMode: "chatgpt-plan" }, environment: {} });
+    expect(instanceConfigs(cfg).chatgpt).toMatchObject({ driver: "codex", displayName: "ChatGPT 方案", config: { cli: "/fixture/codex", authMode: "chatgpt-plan" }, environment: {} });
     expect(cfg.instances).not.toHaveProperty("chatgpt");
     expect(instanceConfigs({ instances: { standalone: { driver: "fake" } } })).not.toHaveProperty("chatgpt");
   });
@@ -1066,6 +1068,7 @@ describe("default fleet", () => {
     } } });
     expect(map.workbuddy).toMatchObject({
       driver: "claudeAgent",
+      access: "custom",
       config: { cli: "C:\\Program Files\\WorkBuddy\\cli\\bin\\codebuddy" },
       environment: { CODEBUDDY_FORCE_LITE_WB_BUNDLE: "1" },
     });
@@ -2261,5 +2264,68 @@ describe("X research's included relay token", () => {
   it("keeps the plan's research token and the person's own treg key as workspace credentials that never reach an engine", () => {
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_CLOUD_X_TOKEN");
     expect(WORKSPACE_CREDENTIAL_ENV).toContain("OMB_TREG_KEY");
+  });
+});
+
+describe("shipped MCP presets", () => {
+  it("upgrades the archived GitHub preset to the hosted MCP and keeps the saved token", () => {
+    const path = join(DATA_DIR, "config.json");
+    mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(path, JSON.stringify({
+      mcpServers: {
+        github: {
+          command: "npx", args: ["-y", "@modelcontextprotocol/server-github"],
+          env: { GITHUB_PERSONAL_ACCESS_TOKEN: "ghp_saved_token" }, enabled: true,
+        },
+      },
+    }));
+    try {
+      const loaded = loadConfig();
+      expect(loaded.mcpServers?.github).toMatchObject({
+        type: "http", url: "https://api.githubcopilot.com/mcp/",
+        headers: { Authorization: "Bearer ghp_saved_token" }, enabled: true,
+      });
+    } finally {
+      rmSync(path, { force: true });
+    }
+  });
+
+  it("keeps a filled preset editable, so the settings screen does not answer 'no credentials'", () => {
+    const path = join(DATA_DIR, "config.json");
+    mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(path, JSON.stringify({
+      mcpServers: {
+        // A token already saved: no REPLACE_ marker is left, so nothing on the value itself says
+        // which field it belongs to. The preset's declared targets must still reach the screen.
+        github: { type: "http", url: "https://api.githubcopilot.com/mcp/", headers: { Authorization: "Bearer ghp_saved_token" }, enabled: true },
+      },
+    }));
+    try {
+      const loaded = loadConfig();
+      const github = loaded.mcpServers?.github as { credentialTargets?: Array<{ tokens: string[] }> } | undefined;
+      expect(github?.credentialTargets?.flatMap((target) => target.tokens)).toContain("GITHUB_TOKEN");
+    } finally {
+      rmSync(path, { force: true });
+    }
+  });
+
+  it("parses every preset under its own name, so the settings dialog can fill it in", () => {
+    expect(Object.keys(SHIPPED_MCP_PRESETS)).toEqual(expect.arrayContaining([
+      "wechat", "qq", "tencent-meeting", "gmail", "github",
+    ]));
+    for (const [name, raw] of Object.entries(SHIPPED_MCP_PRESETS)) {
+      const parsed = parseStoredMcpServer(name, raw);
+      expect(parsed.ok, parsed.ok ? name : `${name}: ${parsed.error}`).toBe(true);
+    }
+  });
+
+  it("leaves every credential a REPLACE_ marker instead of shipping a secret", () => {
+    for (const [name, raw] of Object.entries(SHIPPED_MCP_PRESETS)) {
+      const record = raw as { env?: Record<string, string>; headers?: Record<string, string> };
+      for (const [key, value] of Object.entries({ ...record.env, ...record.headers })) {
+        if (/^(npm_config_registry|QQBOT_MCP_MODE|X-Skill-Version|IMAP_HOST|IMAP_PORT|SMTP_HOST|SMTP_PORT)$/.test(key)) continue;
+        expect(value, `${name}.${key}`).toMatch(/REPLACE_[A-Z0-9_]+/);
+      }
+    }
   });
 });

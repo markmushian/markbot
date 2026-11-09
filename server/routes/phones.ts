@@ -18,7 +18,11 @@ export function phoneKey(auth: RequestAuth): string | null {
 
 /** Long polls are held open on purpose, so the idle-timeout check exempts them. */
 export function isLongPollPath(path: string): boolean {
-  return path.startsWith("/api/shared-computers/") || path === "/api/phones/self/jobs";
+  return path.startsWith("/api/shared-computers/")
+    || path === "/api/phones/self/jobs"
+    // The interactive terminal's SSE reader stays open for the whole session;
+    // counting it would pin workspace maintenance for as long as it is open.
+    || /^\/api\/terminal\/sessions\/[0-9a-f-]{36}\/stream$/.test(path);
 }
 
 export interface PhoneRouteDeps {

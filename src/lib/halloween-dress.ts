@@ -16,6 +16,12 @@ function storage(): Storage | undefined {
   }
 }
 
+/** October, plus the first two days of November: outside that window the costumes are clutter. */
+export function halloweenSeason(now: Date = new Date()): boolean {
+  const month = now.getMonth();
+  return month === 9 || (month === 10 && now.getDate() <= 2);
+}
+
 export function readDressUp(): boolean {
   if (sessionChoice !== undefined) return sessionChoice;
   try {
@@ -27,7 +33,10 @@ export function readDressUp(): boolean {
 
 function readDressed(): boolean {
   if (typeof document === "undefined") return false;
-  return document.documentElement.dataset.skin === "halloween" && readDressUp();
+  // The season is part of the answer: the skin may stay on all year, but a costume outside
+  // October is clutter (see halloweenSeason). Without this check the plum skin kept every
+  // mascot dressed as a ghost or skull well into November.
+  return document.documentElement.dataset.skin === "halloween" && readDressUp() && halloweenSeason();
 }
 
 function notify() {

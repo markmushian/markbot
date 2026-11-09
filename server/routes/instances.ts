@@ -8,11 +8,12 @@ import {
   newClaudeAccount,
 } from "../claude-accounts.ts";
 import { updateClaudeCli } from "../claude-update.ts";
-import { persistableInstanceConfigs, saveConfig, withInstanceCli, type AppConfig } from "../config.ts";
+import { CLAUDE_API_INSTANCE, persistableInstanceConfigs, saveConfig, withInstanceCli, type AppConfig } from "../config.ts";
 import { addEndpoint, addEndpointSchema, isAddedEndpoint, withEndpointUrls } from "../openai-compat-endpoints.ts";
 import type { InstanceConfigMap, ModelSelection, ProviderInstance } from "../contracts.ts";
 import { removeAntigravityProfile } from "../drivers/antigravity-acp.ts";
 import { BUILT_IN_DRIVERS } from "../drivers/builtIn.ts";
+import { probeClaudeAuthStatus } from "../drivers/claude-login-auth.ts";
 import { findCliCandidates, resetPathCache } from "../env-path.ts";
 import type { ProviderRegistry } from "../harness/registry.ts";
 import { checkEngine, type EngineCheck } from "../engine-check.ts";
@@ -24,6 +25,31 @@ import type { SessionRegistry } from "../sessions.ts";
 import type { Store } from "../store.ts";
 import type { BusyFlag, ConfigStatus } from "./config.ts";
 import { PASS, type RouteHandler } from "./table.ts";
+
+/** Agent CLIs this app can drive, with the command a person's install puts on PATH. */
+const ENGINE_SCAN_TARGETS: ReadonlyArray<{ instanceId: string; cli: string; label: string }> = [
+  { instanceId: "workbuddy-codebuddy", cli: "codebuddy", label: "WorkBuddy · CodeBuddy" },
+  { instanceId: "claudeApi", cli: "claude", label: "Claude Code" },
+  { instanceId: "codex", cli: "codex", label: "Codex" },
+  { instanceId: "grok", cli: "grok", label: "Grok" },
+  { instanceId: "kimi", cli: "kimi", label: "Kimi" },
+  { instanceId: "droid", cli: "droid", label: "Droid" },
+  { instanceId: "opencodeGo", cli: "opencode", label: "OpenCode" },
+  { instanceId: "deepseek", cli: "dsh", label: "DeepSeek Harness" },
+  { instanceId: "cursor", cli: "cursor-agent", label: "Cursor" },
+  { instanceId: "qwen", cli: "qwen", label: "Qwen" },
+];
+
+/**
+ * Local agent CLIs that accept an explicit executable path. Pure model-provider APIs
+ * (openai-compat, mistral, cerebras, groq, meta, ...) are deliberately absent: they
+ * have no CLI to link. Mirrors AGENT_CLI_DRIVERS in src/lib/built-in-instances.ts.
+ */
+const CLI_LINK_DRIVERS: ReadonlySet<string> = new Set([
+  "customAcp", "claudeAgent", "codex", "cursorAgent", "copilotAgent", "qwenAgent",
+  "hermesAgent", "clineAgent", "piAgent", "droidAgent", "kimiAgent", "grokAgent",
+  "deepseekAgent", "opencodeGo", "antigravityAgent", "geminiAgent", "museCode",
+]);
 
 export interface InstanceRouteDeps {
   store: Pick<Store, "bots" | "tasks">;
@@ -149,6 +175,30 @@ export function createInstanceRoutes(deps: InstanceRouteDeps): RouteHandler {
       } finally { providerConfigBusy.set(false); }
     }
 
+    // One pick from the ACP registry: the command line is the registry's own, so the instance is a plain custom ACP
+    // engine and every later edit goes through the same fields as a hand-written one.
+    if (method === "POST" && path === "/api/instances/acp") {
+      if (!String(req.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) return json(res, 415, { error: "content-type must be application/json" });
+      const body = await readBody(req, 8192);
+      const cli = typeof body?.cli === "string" ? body.cli.trim() : "";
+      const displayName = typeof body?.displayName === "string" ? body.displayName.trim() : "";
+      const requested = typeof body?.id === "string" ? body.id.trim() : "";
+      if (!cli) return json(res, 400, { error: "This agent needs a command line." });
+      if (!displayName) return json(res, 400, { error: "This agent needs a display name." });
+      if (displayName.length > 80) return json(res, 400, { error: "That name is too long." });
+      if (providerConfigBusy.get()) return json(res, 409, { error: "provider settings are already being updated" });
+      providerConfigBusy.set(true);
+      try {
+        const instances = persistableInstanceConfigs(cfg);
+        const base = (requested || displayName).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "agent";
+        let instanceId = base;
+        for (let n = 2; instances[instanceId]; n += 1) instanceId = `${base}-${n}`;
+        instances[instanceId] = { driver: "customAcp", displayName, enabled: true, config: { cli } } as never;
+        await persistProviderInstance(instanceId, instances);
+        return json(res, 201, { instanceId, instances: await describeInstances() });
+      } finally { providerConfigBusy.set(false); }
+    }
+
     if (method === "POST" && path === "/api/instances/claude-accounts") {
       if (!String(req.headers["content-type"] ?? "").toLowerCase().startsWith("application/json")) {
         return json(res, 415, { error: "content-type must be application/json" });
@@ -171,6 +221,24 @@ export function createInstanceRoutes(deps: InstanceRouteDeps): RouteHandler {
       // A finished device sign-in changed what the engine reports; the page reads the engines next.
       if (state.phase !== "waiting") registry.forgetSnapshots();
       return json(res, 200, { auth: state });
+    }
+    // "Check status" asks Claude Code itself, not the app's own flow: a login finished in a terminal
+    // or through the browser callback leaves no code in this form, but the CLI's credentials do exist.
+    const authState = /^\/api\/instances\/([\w.-]+)\/auth\/state$/.exec(path);
+    if (method === "GET" && authState) {
+      res.setHeader("cache-control", "no-store");
+      const instanceId = authState[1];
+      if (!registry.get(instanceId)) return json(res, 404, { error: "unknown instance" });
+      const cli = registry.cliTarget(instanceId)?.cli ?? "claude";
+      const configured = (cfg.instances as Record<string, { config?: unknown }> | undefined)?.[instanceId];
+      const configDir = (configured?.config as { configDir?: unknown } | undefined)?.configDir;
+      const env = {
+        ...cliProbeEnvironment(),
+        ...(typeof configDir === "string" && configDir ? { CLAUDE_CONFIG_DIR: configDir } : {}),
+      };
+      let status: "in" | "out" | "unknown" = "unknown";
+      try { status = await probeClaudeAuthStatus(cli, env); } catch { /* Report an unreadable CLI as unknown. */ }
+      return json(res, 200, { signedIn: status === "in", status });
     }
     const instanceAction = /^\/api\/instances\/([\w.-]+)\/(refresh-models|install|check|auth\/start|auth\/complete|auth\/cancel|auth\/sign-out)$/.exec(path);
     if (method === "POST" && instanceAction) {
@@ -248,6 +316,21 @@ export function createInstanceRoutes(deps: InstanceRouteDeps): RouteHandler {
       return json(res, 200, { candidates: findCliCandidates(name) });
     }
 
+    // One pass over every agent CLI this app knows how to drive, so a new install does not have to
+    // be discovered card by card. Read-only: it only reports where each binary is.
+    if (method === "GET" && path === "/api/engine-scan") {
+      resetPathCache();
+      const configured = (id: string) => {
+        const cli = (cfg.instances?.[id]?.config as { cli?: unknown } | undefined)?.cli;
+        return typeof cli === "string" && cli.trim() ? [cli.trim().replace(/\s+--acp\s*$/u, "")] : [];
+      };
+      const engines = ENGINE_SCAN_TARGETS.map((target) => {
+        const found = [...new Set([...findCliCandidates(target.cli), ...configured(target.instanceId)])];
+        return { ...target, candidates: found };
+      });
+      return json(res, 200, { engines });
+    }
+
     // POST {cli, driver} → spawn `<cli> --version` with the PATH a turn would use.
     if (method === "POST" && path === "/api/cli-test") {
       // JSON-only: this executes a local binary, so a hostile page must not send it as a simple cross-origin request.
@@ -320,6 +403,28 @@ export function createInstanceRoutes(deps: InstanceRouteDeps): RouteHandler {
         const instances = persistableInstanceConfigs(result.config);
         if (!result.ok || !Object.hasOwn(instances, instanceId)) return json(res, 404, { error: `unknown instance "${instanceId}"` });
         const entry = instances[instanceId];
+        if (body.linkCli !== undefined) {
+          const claudeApiLink = instanceId === CLAUDE_API_INSTANCE && entry.driver === "claudeAgent";
+          if (!claudeApiLink && !CLI_LINK_DRIVERS.has(entry.driver)) {
+            return json(res, 400, { error: "CLI linking is available for local agent CLIs only." });
+          }
+          const config = { ...((entry.config && typeof entry.config === "object" && !Array.isArray(entry.config)
+            ? entry.config : {}) as Record<string, unknown>) };
+          if (claudeApiLink) {
+            // instanceConfigs() re-applies the built-in API-key defaults on every load, so both
+            // flags must be written explicitly (a deleted requireApiKey would come back as true).
+            config.requireApiKey = !body.linkCli;
+            entry.access = body.linkCli ? "subscription" : "api";
+            entry.displayName = body.linkCli ? "Claude Code" : "Claude (API key)";
+          } else if (body.linkCli) {
+            // Marks the instance as intentionally pointed at a local binary, so the settings
+            // card can show the linked path instead of an empty "needs setup" state.
+            config.linkedCli = true;
+          } else {
+            delete config.linkedCli;
+          }
+          entry.config = config;
+        }
         if ((body.configDir !== undefined && entry.driver !== "claudeAgent") || (body.displayName !== undefined && !["claudeAgent", "codex"].includes(entry.driver))) {
           return json(res, 400, { error: "Account settings are available for Claude and ChatGPT accounts only." });
         }

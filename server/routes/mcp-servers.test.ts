@@ -1,7 +1,7 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { join } from "node:path";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { DATA_DIR, type AppConfig } from "../config.ts";
 import { json, readBody } from "../harness/http.ts";
@@ -70,6 +70,75 @@ it.each(["create", "import"])("rejects personal header values on %s without savi
   expect(body.error).toMatch(/personal.*header|header.*personal/i);
   expect(JSON.stringify(body)).not.toContain("private-secret");
   expect(cfg.mcpServers).toEqual({});
+});
+
+/** The settings dialog never sees a saved secret, so its route has to put each value back where its marker was. */
+describe("POST /api/mcp/servers/:name/credentials", () => {
+  const preset = () => ({
+    demo: {
+      command: "npx",
+      args: ["-y", "demo-mcp", "--token=REPLACE_DEMO_TOKEN"],
+      env: { DEMO_ID: "REPLACE_DEMO_ID" },
+      enabled: false,
+    },
+    remote: {
+      type: "http", url: "https://mcp.example.com/mcp",
+      headers: { Authorization: "Bearer REPLACE_DEMO_HEADER" }, enabled: false,
+    },
+  });
+
+  it("lists the fields to fill without ever echoing a value", async () => {
+    const { cfg, get } = await serve();
+    cfg.mcpServers = preset();
+    const listing = await (await get()).json() as { servers: Array<{ name: string; credentials: Array<{ token: string; filled: boolean }> }> };
+    expect(listing.servers.find((server) => server.name === "demo")?.credentials).toMatchObject([
+      { token: "DEMO_ID", filled: false }, { token: "DEMO_TOKEN", filled: false },
+    ]);
+    expect(JSON.stringify(listing)).not.toContain("Bearer REPLACE_DEMO_HEADER");
+  });
+
+  it("writes env, argv and header values, keeps the others on a later edit, and echoes no secret", async () => {
+    const { cfg, post, get } = await serve();
+    cfg.mcpServers = preset();
+    const first = await post("/api/mcp/servers/demo/credentials", { values: { DEMO_ID: "id-1", DEMO_TOKEN: "tok-1" } });
+    expect(first.status).toBe(200);
+    expect(cfg.mcpServers?.demo).toMatchObject({ env: { DEMO_ID: "id-1" }, args: ["-y", "demo-mcp", "--token=tok-1"] });
+    expect(JSON.stringify(await first.json())).not.toContain("tok-1");
+
+    const remote = await post("/api/mcp/servers/remote/credentials", { values: { DEMO_HEADER: "hdr-1" } });
+    expect(remote.status).toBe(200);
+    expect(cfg.mcpServers?.remote).toMatchObject({ headers: { Authorization: "Bearer hdr-1" } });
+
+    const second = await post("/api/mcp/servers/demo/credentials", { values: { DEMO_TOKEN: "tok-2" } });
+    expect(second.status).toBe(200);
+    expect(cfg.mcpServers?.demo).toMatchObject({ env: { DEMO_ID: "id-1" }, args: ["-y", "demo-mcp", "--token=tok-2"] });
+    const listing = await (await get()).json() as { servers: Array<{ name: string; args?: string[]; maskedArgs?: boolean; credentials: Array<{ filled: boolean }> }> };
+    const demo = listing.servers.find((server) => server.name === "demo");
+    expect(demo?.credentials.every((field) => field.filled)).toBe(true);
+    expect(demo?.maskedArgs).toBe(true);
+    expect(JSON.stringify(listing)).not.toContain("tok-2");
+    expect(JSON.stringify(listing)).not.toContain("hdr-1");
+  });
+
+  it.each([
+    ["an unknown token", { OTHER: "value" }],
+    ["an empty body", {}],
+    ["a placeholder as the value", { DEMO_ID: "REPLACE_DEMO_ID" }],
+    ["a multiline value", { DEMO_ID: "one\ntwo" }],
+  ])("rejects %s without changing the entry", async (_why, values) => {
+    const { cfg, post } = await serve();
+    cfg.mcpServers = preset();
+    const before = JSON.stringify(cfg.mcpServers);
+    const response = await post("/api/mcp/servers/demo/credentials", { values });
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(cfg.mcpServers)).toBe(before);
+  });
+
+  it("returns 404 for a server that is not configured", async () => {
+    const { post } = await serve();
+    const response = await post("/api/mcp/servers/missing/credentials", { values: { DEMO_ID: "x" } });
+    expect(response.status).toBe(404);
+  });
 });
 
 it.each(["create", "import"])("accepts blank personal headers on %s and retains team header values", async (action) => {

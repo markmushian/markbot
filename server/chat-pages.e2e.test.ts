@@ -130,7 +130,7 @@ it("shows a jsx page, takes what the person pointed at to the bot as records, re
   expect(html).toContain("_react.useState.call(void 0, \"Pro\")");
   expect(html).not.toContain("useState(\"Pro\")");
   expect(html).not.toContain("Content-Security-Policy");
-  expect((await transcript()).find((message) => message.id === appId).publishedPage).toMatchObject({ state: "live", pageId, url: `https://${pageId}.mausbot.page/` });
+  expect((await transcript()).find((message) => message.id === appId).publishedPage).toMatchObject({ state: "live", pageId, url: `https://${pageId}.markbot.page/` });
   const again = await api(`/api/threads/${threadId}/messages/${appId}/app/publish`, { method: "POST", body: "{}" });
   expect(again.body.card.pageId).toBe(pageId);
   expect(stub.service.pages.size).toBe(1);

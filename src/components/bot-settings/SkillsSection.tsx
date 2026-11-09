@@ -222,31 +222,31 @@ export function SkillReviewDialog({
       className="fixed inset-0 z-[90] flex items-center justify-center bg-black/45 p-6"
     >
       <div className="flex max-h-[min(760px,90vh)] w-full max-w-2xl flex-col rounded-2xl bg-card p-5 shadow-2xl">
-        <div id="skill-review-title" className="text-[16px] font-semibold text-ink">
+        <div id="skill-review-title" className="text-16 font-semibold text-ink">
           {t("skills.review.title", { name: skill.name })}
         </div>
-        <div className="mt-1 break-all text-[12px] text-ink-secondary">
+        <div className="mt-1 break-all text-note text-ink-secondary">
           {t("skills.review.source", { source: skill.source })}
         </div>
         {skill.warnings.length > 0 && (
-          <div className="mt-2 rounded-lg bg-warning/10 px-3 py-2 text-[12px] text-warning">
+          <div className="mt-2 rounded-lg bg-warning/10 px-3 py-2 text-note text-warning">
             {skill.warnings.join(" · ")}
           </div>
         )}
         <pre
           tabIndex={0}
           aria-label={t("skills.review.aria", { name: skill.name })}
-          className="mt-3 min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-inset p-3 font-mono text-[12px] leading-relaxed text-ink"
+          className="mt-3 min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-inset p-3 font-mono text-note leading-relaxed text-ink"
         >
           {text}
         </pre>
-        {error && <div role="alert" className="mt-2 text-[12px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-2 text-note text-danger">{error}</div>}
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"
             disabled={working}
             onClick={onCancel}
-            className="rounded-lg px-4 py-2 text-[13px] font-medium text-ink-secondary hover:bg-raised disabled:opacity-40"
+            className="rounded-lg px-4 py-2 text-ui font-medium text-ink-secondary hover:bg-raised disabled:opacity-40"
           >
             {t("common.cancel")}
           </button>
@@ -254,7 +254,7 @@ export function SkillReviewDialog({
             type="button"
             disabled={working}
             onClick={onEnable}
-            className="rounded-lg bg-accent px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-40"
+            className="rounded-lg bg-accent px-4 py-2 text-ui font-semibold text-white disabled:opacity-40"
           >
             {t("skills.review.enable")}
           </button>
@@ -385,9 +385,9 @@ export function SkillsSection({ bot }: { bot: Bot }) {
       <div className="rounded-xl bg-card p-4">
         <div className="flex items-center gap-2">
           <BookOpen size={16} className="text-ink-secondary" />
-          <div className="text-[15px] font-medium text-ink">{t("skills.learned.title")}</div>
+          <div className="text-lead font-medium text-ink">{t("skills.learned.title")}</div>
         </div>
-        <div className="mt-1 text-[12px] leading-relaxed text-ink-secondary">
+        <div className="mt-1 text-note leading-relaxed text-ink-secondary">
           {featureEnabled ? t("skills.learned.hintOn") : t("skills.learned.hintOff")}
         </div>
 
@@ -410,15 +410,15 @@ export function SkillsSection({ bot }: { bot: Bot }) {
                   type="button"
                   disabled={!addFromLibrary || Boolean(working)}
                   onClick={() => void addToBot()}
-                  className="shrink-0 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                  className="shrink-0 rounded-lg bg-control px-3 py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
                 >
                   {t("common.add")}
                 </button>
               </div>
             ) : (
-              <div className="text-[12px] text-ink-secondary">{t("skills.library.allAssigned")}</div>
+              <div className="text-note text-ink-secondary">{t("skills.library.allAssigned")}</div>
             )}
-            <div className="text-[12px] text-ink-secondary">{t("skills.library.manageHint")}</div>
+            <div className="text-note text-ink-secondary">{t("skills.library.manageHint")}</div>
           </div>
         ) : (
           <>
@@ -439,19 +439,19 @@ export function SkillsSection({ bot }: { bot: Bot }) {
               <button
                 type="submit"
                 disabled={importing || !source.trim()}
-                className="shrink-0 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                className="shrink-0 rounded-lg bg-control px-3 py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
               >
                 {importing ? t("skills.import.importing") : t("skills.import.button")}
               </button>
             </form>
-            {importMessage && <div className="mt-1 text-[12px] text-ink-secondary">{importMessage}</div>}
+            {importMessage && <div className="mt-1 text-note text-ink-secondary">{importMessage}</div>}
           </>
         )}
 
         {loading ? (
-          <div className="mt-3 text-[12px] text-ink-secondary">{t("skills.loading")}</div>
+          <div className="mt-3 text-note text-ink-secondary">{t("skills.loading")}</div>
         ) : skills.length === 0 ? (
-          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-[12px] text-ink-secondary">{t("skills.empty")}</div>
+          <div className="mt-3 rounded-lg bg-inset px-3 py-2 text-note text-ink-secondary">{t("skills.empty")}</div>
         ) : (
           <div className="mt-3 divide-y divide-hairline/40 overflow-hidden rounded-lg border border-hairline/40">
             {skills.map((skill) => (
@@ -462,17 +462,17 @@ export function SkillsSection({ bot }: { bot: Bot }) {
                     onClick={() => void view(skill)}
                     className="min-w-0 flex-1 text-left"
                   >
-                    <div className="truncate font-mono text-[13px] text-ink">{skill.name}</div>
+                    <div className="truncate font-mono text-ui text-ink">{skill.name}</div>
                     {(libraryOn || skill.origin === "imported" || skill.origin === "native") && (
                       <span
-                        className="ml-1.5 rounded bg-control px-1 py-px font-mono text-[10px] uppercase tracking-wide text-ink-secondary"
+                        className="ml-1.5 rounded bg-control px-1 py-px font-mono text-tiny uppercase tracking-wide text-ink-secondary"
                         title={skill.origin === "imported" ? t("skills.origin.importedHint") : skill.origin === "native" ? t("skills.origin.nativeHint") : undefined}
                       >
                         {skill.origin === "imported" ? t("skills.origin.imported") : skill.origin === "native" ? t("skills.origin.native") : skill.origin === "library" ? t("skills.origin.library") : t("skills.origin.private")}
                       </span>
                     )}
-                    <div className="mt-0.5 line-clamp-2 text-[12px] text-ink-secondary">{skill.description}</div>
-                    <div className="mt-0.5 text-[11px] text-ink-secondary">{t("skills.usedWhen")}</div>
+                    <div className="mt-0.5 line-clamp-2 text-note text-ink-secondary">{skill.description}</div>
+                    <div className="mt-0.5 text-meta text-ink-secondary">{t("skills.usedWhen")}</div>
                   </button>
                   {skill.origin !== "native" && (
                     <Switch
@@ -494,20 +494,20 @@ export function SkillsSection({ bot }: { bot: Bot }) {
                     </button>
                   )}
                 </div>
-                <div className="mt-1 truncate text-[11px] text-ink-secondary" title={skill.source}>{t("skills.source", { source: skill.source })}</div>
+                <div className="mt-1 truncate text-meta text-ink-secondary" title={skill.source}>{t("skills.source", { source: skill.source })}</div>
                 {skill.warnings.length > 0 && (
-                  <div className="mt-1 text-[11px] text-warning">{skill.warnings.join(" · ")}</div>
+                  <div className="mt-1 text-meta text-warning">{skill.warnings.join(" · ")}</div>
                 )}
               </div>
             ))}
           </div>
         )}
         {staged.length > 0 && (
-          <div className="mt-2 text-[12px] text-warning">
+          <div className="mt-2 text-note text-warning">
             {t(staged.length === 1 ? "skills.stagedOne" : "skills.stagedMany", { count: staged.length })}
           </div>
         )}
-        {error && <div role="alert" className="mt-2 text-[12px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-2 text-note text-danger">{error}</div>}
       </div>
 
       <WriteCommandCard bot={bot} taken={skills.map((skill) => skill.name)} onSaved={() => void refresh()} />
@@ -536,11 +536,11 @@ export function SkillsSection({ bot }: { bot: Bot }) {
         >
           <div className="flex max-h-[min(760px,90vh)] w-full max-w-2xl flex-col rounded-2xl bg-card p-5 shadow-2xl">
             <div className="flex items-center justify-between gap-3">
-              <div id="skill-view-title" className="text-[16px] font-semibold text-ink">{viewing.name}</div>
+              <div id="skill-view-title" className="text-16 font-semibold text-ink">{viewing.name}</div>
               <button
                 type="button"
                 onClick={() => setViewing(null)}
-                className="rounded-md px-2 py-1 text-[13px] text-ink-secondary hover:bg-control hover:text-ink"
+                className="rounded-md px-2 py-1 text-ui text-ink-secondary hover:bg-control hover:text-ink"
               >
                 {t("common.close")}
               </button>
@@ -548,7 +548,7 @@ export function SkillsSection({ bot }: { bot: Bot }) {
             <pre
               tabIndex={0}
               aria-label={t("skills.review.aria", { name: viewing.name })}
-              className="mt-3 min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-inset p-3 font-mono text-[12px] leading-relaxed text-ink"
+              className="mt-3 min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-inset p-3 font-mono text-note leading-relaxed text-ink"
             >
               {viewing.text}
             </pre>

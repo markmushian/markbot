@@ -1,4 +1,5 @@
 import { gapIn, type PastedGap, type PastedMcpServer, type PastedSecret } from "@/lib/mcp-paste";
+import type { McpCredentialField } from "../../shared/mcp-credentials.ts";
 
 import { resultBudgetDraft, type McpMessage, type McpResultBudgetDraft, type McpResultBudgetListing } from "./McpResultBudgetField";
 
@@ -8,6 +9,12 @@ export interface StdioMcpListing extends McpResultBudgetListing {
   command: string;
   args: string[];
   envKeys: string[];
+  /** Keys still holding a REPLACE_… placeholder. */
+  placeholders?: string[];
+  /** Fillable credential fields; values are never sent to the renderer. */
+  credentials?: McpCredentialField[];
+  /** An argv entry is masked: don't offer the raw command editor. */
+  maskedArgs?: boolean;
   enabled: boolean;
 }
 export interface RemoteMcpListing extends McpResultBudgetListing {
@@ -15,6 +22,11 @@ export interface RemoteMcpListing extends McpResultBudgetListing {
   type: "http" | "sse";
   url: string;
   headerKeys: string[];
+  placeholders?: string[];
+  /** Fillable credential fields; values are never sent to the renderer. */
+  credentials?: McpCredentialField[];
+  /** Only stdio servers mask argv credentials. */
+  maskedArgs?: boolean;
   enabled: boolean;
   auth?: "signed-in" | "needs-sign-in";
   oauth?: McpOAuthClientListing;

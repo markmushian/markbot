@@ -1,3 +1,4 @@
+import { readGroupMemory, writeGroupMemory } from "../group-memory.ts";
 import type { WireGroup } from "../../shared/wire.ts";
 import { validateBotCwd } from "../bot-cwd.ts";
 import type { VisibleSet } from "../bot-visibility.ts";
@@ -54,6 +55,23 @@ export function createGroupRoutes(deps: GroupRouteDeps): RouteHandler {
       if (CLOUD_HOME && auth.kind === "session") threadStarters.set(group.threadId, actorKey(auth));
       return json(res, 201, { group: { ...publicGroupState(group), messages: [] } });
     }
+    // A room's own notes: read by every member's turn, never carried into a private chat.
+    m = path.match(/^\/api\/groups\/([\w-]+)\/memory$/);
+    if (m) {
+      const group = store.group(m[1]);
+      if (!group) return json(res, 404, { error: "no such room" });
+      if (group.dm) return json(res, 400, { error: "direct messages have no room memory" });
+      if (method === "GET") return json(res, 200, { text: readGroupMemory(m[1]) });
+      if (method === "PUT") {
+        const body = await readBody(req);
+        if (typeof body?.text !== "string") return json(res, 400, { error: "text must be a string" });
+        if (body.text.length > 100_000) return json(res, 413, { error: "room memory is too long" });
+        writeGroupMemory(m[1], body.text);
+        return json(res, 200, { text: body.text });
+      }
+      return json(res, 405, { error: "use GET or PUT" });
+    }
+
     m = path.match(/^\/api\/groups\/([\w-]+)\/setup$/);
     if (m && method === "PATCH") {
       const group = store.group(m[1]);

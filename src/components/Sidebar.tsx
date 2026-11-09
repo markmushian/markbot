@@ -1,7 +1,10 @@
+import { EngineUsageRail } from "./EngineUsageRail";
+import { GroupMemoryDialog } from "./GroupMemoryDialog";
+import { NewBotDialog } from "./NewBotDialog";
 import { OrganizationIdentity } from "./OrganizationIdentity";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Dispatch } from "react";
 import { createPortal } from "react-dom";
-import { Activity, Archive, Bot as BotIcon, Check, ChevronRight, ClipboardCopy, Crown, FolderPlus, Library, Loader2, MessageSquarePlus, MoreHorizontal, Pencil, PanelLeftClose, PanelLeftOpen, Phone, Pin, PinOff, Plus, Search, TextQuote, Trash2, Users, X } from "lucide-react";
+import { Activity, Archive, Bot as BotIcon, Check, ChevronRight, ClipboardCopy, Crown, FolderPlus, LayoutDashboard, Library, Loader2, MessageSquarePlus, MoreHorizontal, Pencil, PanelLeftClose, PanelLeftOpen, Phone, Pin, PinOff, Plus, Search, Sun, TextQuote, Trash2, Users, X } from "lucide-react";
 import { api, useStore, formatTime, visibleMessages, currentTaskBot, botOpensTo, openBot, openThread, type Action, type AppState, type Bot, type BotProject, type Group, type InstanceInfo, type Message } from "@/state/store";
 import { approvalModeFor } from "../../shared/approval-mode";
 import { liveActivityLabel } from "@/lib/live-activity";
@@ -52,7 +55,10 @@ import {
   toggleCollapsedSection,
   useSidebarDensity,
   usePinnedCircles,
+  usePinnedRooms,
   useUniversalPins,
+  setPinnedRooms,
+  togglePinnedRoom,
   type SidebarDensity,
 } from "@/lib/sidebar-preferences";
 import {
@@ -218,13 +224,13 @@ export function GroupListItem({
       <StackedMauses members={members} density={railTile ? "comfortable" : density} large={simpleRow || railTile} />
       <div className={cn("min-w-0 flex-1", density === "icons" && "hidden")}>
         <div className={cn("flex items-baseline justify-between gap-2", simpleRow && "pr-7")}>
-          <span className={cn("truncate text-[14px] text-ink", simpleRow ? "font-medium leading-5" : "font-semibold")}>{group.name}</span>
-          {advanced && selected && last && !expanded && <span className="shrink-0 text-[10px] text-ink-secondary">{formatTime(last.at)}</span>}
+          <span className={cn("truncate text-body text-ink", simpleRow ? "font-medium leading-5" : "font-semibold")}>{group.name}</span>
+          {advanced && selected && last && !expanded && <span className="shrink-0 text-tiny text-ink-secondary">{formatTime(last.at)}</span>}
           {!simpleRow && (expanded || (quiet && !groupStatus)) && group.unread && <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-label={t("task.unreadMany")} />}
           {simpleRow && !expanded && group.unread && <RowDot />}
         </div>
         {!expanded && (!quiet || groupStatus) && <div className="flex items-center justify-between gap-2">
-          <span className={cn("truncate text-ink-secondary", simpleRow ? "text-[13px] leading-[18px]" : "text-[11px]")}>{group.description || groupPreview(group, state.bots, state.instances, advanced)}</span>
+          <span className={cn("truncate text-ink-secondary", simpleRow ? "text-ui leading-[18px]" : "text-meta")}>{group.description || groupPreview(group, state.bots, state.instances, advanced)}</span>
           {!simpleRow && group.unread && <span className="size-2 shrink-0 rounded-full bg-accent" />}
         </div>}
         {simpleRow && <RowStatusText unread={group.unread} />}
@@ -248,12 +254,18 @@ export function GroupListItem({
 
 function RoomContextMenu({
   menu,
+  pinned,
   onClose,
+  onTogglePin,
+  onOpenMemory,
   onMoveToSection,
   onDelete,
 }: {
   menu: { groupId: string; x: number; y: number } | null;
+  pinned: boolean;
   onClose: () => void;
+  onTogglePin: (groupId: string) => void;
+  onOpenMemory: (groupId: string) => void;
   onMoveToSection: (groupId: string) => void;
   onDelete: (groupId: string) => void;
 }) {
@@ -336,7 +348,7 @@ function RoomContextMenu({
                 onClose();
               }
             }}
-            className="min-w-0 flex-1 rounded-lg bg-raised px-2 py-1.5 text-[14px] text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+            className="min-w-0 flex-1 rounded-lg bg-raised px-2 py-1.5 text-body text-ink focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <button
             type="button"
@@ -376,7 +388,7 @@ function RoomContextMenu({
                 onClose();
               }
             }}
-            className="min-w-0 flex-1 rounded-lg bg-raised px-2 py-1.5 text-[14px] text-ink focus:outline-none focus:ring-1 focus:ring-accent"
+            className="min-w-0 flex-1 rounded-lg bg-raised px-2 py-1.5 text-body text-ink focus:outline-none focus:ring-1 focus:ring-accent"
           />
           <button
             type="button"
@@ -410,6 +422,26 @@ function RoomContextMenu({
           {isBotChat ? t("sidebar.room.renameChat") : t("sidebar.room.renameChannel")}
         </button>
       ))}
+      {!remoteClient && !isBotChat && (
+        <button
+          role="menuitem"
+          onClick={() => { onTogglePin(group.id); onClose(); }}
+          className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover")}
+        >
+          {pinned ? <PinOff size={16} className="text-ink-secondary" /> : <Pin size={16} className="text-ink-secondary" />}
+          {pinned ? t("sidebar.room.unpin") : t("sidebar.room.pin")}
+        </button>
+      )}
+      {!remoteClient && !isBotChat && (
+        <button
+          role="menuitem"
+          onClick={() => { onOpenMemory(group.id); onClose(); }}
+          className={cn(MENU_ITEM, "text-ink hover:bg-menu-hover")}
+        >
+          <TextQuote size={16} className="text-ink-secondary" />
+          {t("botSettings.sections.memory")}
+        </button>
+      )}
       {!remoteClient && !renaming && !isBotChat && (
         <button
           role="menuitem"
@@ -621,10 +653,10 @@ export function BotThreadList({ bot, selected, density, query, pendingQueued, re
               const next = new Set(previous);
               if (next.has(project.id)) next.delete(project.id); else next.add(project.id);
               return next;
-            })} className="flex min-h-8 min-w-0 flex-1 cursor-grab select-none items-center gap-1.5 py-1 text-left text-[13px] font-semibold active:cursor-grabbing" title={project.name}>
+            })} className="flex min-h-8 min-w-0 flex-1 cursor-grab select-none items-center gap-1.5 py-1 text-left text-ui font-semibold active:cursor-grabbing" title={project.name}>
               <span className="truncate">{project.name}</span>
-              <span className="shrink-0 text-[10px] font-normal opacity-50">{projectTasks.length}</span>
-              {!open && (waiting ? <span className="text-[10px] text-warning">{t("task.waiting")}</span> : working ? <Loader2 size={10} className="shrink-0 animate-spin text-success" /> : projectTasks.some((task) => task.unread) ? <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-label={t("task.unreadMany")} /> : null)}
+              <span className="shrink-0 text-tiny font-normal opacity-50">{projectTasks.length}</span>
+              {!open && (waiting ? <span className="text-tiny text-warning">{t("task.waiting")}</span> : working ? <Loader2 size={10} className="shrink-0 animate-spin text-success" /> : projectTasks.some((task) => task.unread) ? <span className="size-1.5 shrink-0 rounded-full bg-accent" aria-label={t("task.unreadMany")} /> : null)}
             </button>
             <button type="button" title={t("task.newIn", { name: project.name })} aria-label={t("task.newIn", { name: project.name })} onClick={() => dispatch({ type: "newTask", botId: bot.id, projectId: project.id })}
               className="flex size-6 items-center justify-center rounded opacity-0 hover:bg-raised hover:text-ink focus-visible:opacity-100 group-hover/folder:opacity-100 max-md:opacity-70 touch:opacity-70"><Plus size={12} /></button>
@@ -635,18 +667,18 @@ export function BotThreadList({ bot, selected, density, query, pendingQueued, re
           </div>
           {open && <div role="group" aria-label={t("task.namedList", { name: project.name })}>
             {visible.map(renderThread)}
-            {projectTasks.length === 0 && <p className="px-2.5 py-1 text-[11px] text-ink-tertiary">{t("task.empty")}</p>}
+            {projectTasks.length === 0 && <p className="px-2.5 py-1 text-meta text-ink-tertiary">{t("task.empty")}</p>}
             {/* The short list keeps only the newest threads, so an open folder can hold none of them: offer the rest. */}
             {!query && !bulk.active && visible.length < projectTasks.length && <button type="button" data-sidebar-folder-show-all={project.id} onClick={() => setShowAll(true)}
-              className="inline-flex h-7 items-center pl-6 text-[13px] font-medium leading-4 text-ink-secondary hover:text-ink">{t("folder.showAll")}</button>}
+              className="inline-flex h-7 items-center pl-6 text-ui font-medium leading-4 text-ink-secondary hover:text-ink">{t("folder.showAll")}</button>}
           </div>}
         </div>;
       })}
-      {reorderError && <p role="alert" className="px-2.5 py-1 text-[12px] text-danger">{reorderError}</p>}
+      {reorderError && <p role="alert" className="px-2.5 py-1 text-note text-danger">{reorderError}</p>}
       <span role="status" className="sr-only">{reorderStatus}</span>
-      {readError && <p role="alert" className="px-2.5 py-1 text-[12px] text-danger">{readError}</p>}
+      {readError && <p role="alert" className="px-2.5 py-1 text-note text-danger">{readError}</p>}
       <span role="status" className="sr-only">{readStatus}</span>
-      {projects.length > 0 && ungrouped.length > 0 && <div className="pl-6 pr-3 pb-1 pt-2 text-[11px] text-ink-tertiary">{t("task.list")}</div>}
+      {projects.length > 0 && ungrouped.length > 0 && <div className="pl-6 pr-3 pb-1 pt-2 text-meta text-ink-tertiary">{t("task.list")}</div>}
       {ungrouped.map(renderThread)}
       <HelperThreadGroup tasks={orderedThreadList(helpers)} busy={helpers.some((task) => currentTaskBot(bot, task.threadId).busy)} renderThread={renderThread} />
       <ThreadListFooter bulk={bulk} rows={shownRows} selected={selection} total={ownTasks.length} canShowAll={!query && !showAll && ownTasks.length > visibleTasks.length} canSelect={tasks.length > 1}
@@ -777,7 +809,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           />
         )}
         {!simpleRow && waiting && <span data-testid="waiting-dot" role="status" aria-label={t("sidebar.preview.waiting")} title={t("sidebar.preview.waiting")}
-          className={cn("absolute -right-0.5 -bottom-0.5 flex items-center justify-center overflow-hidden rounded-full border-2 border-panel bg-warning font-black text-panel", iconOnly ? "size-5 text-[14px]" : "size-4 text-[12px]")}><span aria-hidden="true">!</span></span>}
+          className={cn("absolute -right-0.5 -bottom-0.5 flex items-center justify-center overflow-hidden rounded-full border-2 border-panel bg-warning font-black text-panel", iconOnly ? "size-5 text-body" : "size-4 text-note")}><span aria-hidden="true">!</span></span>}
         {!simpleRow && teammateWait && <span data-testid="teammate-wait-dot" role="status" aria-label={t("sidebar.preview.waitingOnTeammate")} title={t("sidebar.preview.waitingOnTeammate")}
           className={cn("absolute -right-0.5 -bottom-0.5 rounded-full border-2 border-panel bg-accent", iconOnly ? "size-3" : "size-2.5")} />}
         {!simpleRow && !teammateWait && !waiting && !working && queued && <span data-testid="queued-dot" role="status" aria-label={t("task.queued")} title={t("task.queued")}
@@ -799,7 +831,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
       </span>
       <div className={cn("min-w-0 flex-1", iconOnly && "hidden")}>
         <div className={cn("flex items-baseline justify-between gap-2", simpleRow && "pr-7")}>
-          <span className={cn("flex min-w-0 grow items-center gap-1.5 truncate text-ink", simpleRow ? "text-[14px] font-medium leading-5" : "text-[15px] font-semibold leading-5")}>
+          <span className={cn("flex min-w-0 grow items-center gap-1.5 truncate text-ink", simpleRow ? "text-body font-medium leading-5" : "text-lead font-semibold leading-5")}>
             {!simpleList && bot.pinned && <Pin size={12} className="shrink-0 text-ink-secondary" />}
             <RenameTitle
               key={iconOnly ? "icons" : "expanded"}
@@ -817,7 +849,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
               }}
               onEditingChange={setRenaming}
               className="truncate"
-              inputClassName={cn("w-full rounded bg-inset px-1 py-0.5", simpleRow ? "text-[14px] font-medium" : "text-[15px] font-semibold")}
+              inputClassName={cn("w-full rounded bg-inset px-1 py-0.5", simpleRow ? "text-body font-medium" : "text-lead font-semibold")}
             />
             {!simpleList && bot.chiefOfStaff && !renaming && (
               <Crown size={13} strokeWidth={2.25} className="shrink-0 text-accent" role="img" aria-label={t("sidebar.bot.chiefOfStaff")} data-testid="chief-crown">
@@ -833,7 +865,7 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
           </span>
           {last && !renaming && !expanded && (
             <span className={cn(
-              "shrink-0 text-[12px] tabular-nums text-ink-secondary transition-opacity",
+              "shrink-0 text-note tabular-nums text-ink-secondary transition-opacity",
               // Phones show the time on every row; elsewhere only the selected row, until its actions appear.
               selected && !simpleList ? "group-hover:opacity-0 group-focus-within:opacity-0 touch:opacity-0 max-md:touch:opacity-100" : "hidden max-md:inline",
             )}>
@@ -847,12 +879,12 @@ export const BotListItem = memo(function BotListItem(props: BotRowProps) {
         </div>
         {(!expanded || deleting) && (!quiet || statusLine) && <div className="flex items-center justify-between gap-2">
           {deleting ? (
-            <span role="status" className="flex min-w-0 items-center gap-1.5 truncate text-[13px] leading-[18px] text-ink-secondary">
+            <span role="status" className="flex min-w-0 items-center gap-1.5 truncate text-ui leading-[18px] text-ink-secondary">
               <Loader2 size={12} className="shrink-0 animate-spin" />
               {t("sidebar.bot.deletingRow")}
             </span>
           ) : (
-            <span className={cn("flex min-w-0 items-center gap-1.5 truncate text-[13px] leading-[18px]", waiting ? simpleRow ? "text-warning" : "font-semibold text-warning" : "text-ink-secondary")}>
+            <span className={cn("flex min-w-0 items-center gap-1.5 truncate text-ui leading-[18px]", waiting ? simpleRow ? "text-warning" : "font-semibold text-warning" : "text-ink-secondary")}>
               {working ? (
                 <SidebarWorkingStep bot={bot} last={last} />
               ) : (
@@ -1007,6 +1039,9 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null);
   const deletingRoom = deletingRoomId ? state.groups.find((g) => g.id === deletingRoomId) : undefined;
   const [plusOpen, setPlusOpen] = useState(false);
+  // Creating a bot asks first — its name and face are picked before it exists, instead of being randomly assigned.
+  const [newBotOpen, setNewBotOpen] = useState(false);
+  const [groupMemoryId, setGroupMemoryId] = useState<string | null>(null);
   const plusMotion = useMenuMotion(plusOpen);
   const advanced = useAdvancedMode();
   const [attentionOpen, setAttentionOpen] = useState(false);
@@ -1046,6 +1081,11 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
   );
   const pinnedCircles = usePinnedCircles();
   const universalPins = useUniversalPins();
+  // Rooms someone pinned sit above every bot, in the order they were pinned.
+  const pinnedRoomIds = usePinnedRooms();
+  const pinnedRooms = pinnedRoomIds
+    .map((id) => state.groups.find((group) => group.id === id))
+    .filter((group): group is NonNullable<typeof group> => Boolean(group) && !group!.dm);
   const [pinnedCircleThreadsCollapsed, setPinnedCircleThreadsCollapsed] = useState(true);
   const quietRows = density === "compact";
   const [collapsedSections, setCollapsedSections] = useState<string[]>(() => loadCollapsedSections());
@@ -1166,7 +1206,9 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
     sectionedBots,
     unsectionedBots,
   } = simpleDesk ? withPrimaryTile(parts, myDefaultBot(state.bots, viewerEmail)?.id) : { ...parts, primary: null };
-  const { botChats, sectionedRooms, unsectionedRooms } = partitionSidebarGroups(visibleGroups);
+  const { botChats, sectionedRooms, unsectionedRooms } = partitionSidebarGroups(
+    visibleGroups.filter((group) => !pinnedRoomIds.includes(group.id)),
+  );
 
   const sectionNames: string[] = (state.sections ?? []).filter((name) => !q || name.toLowerCase().includes(q.toLowerCase()));
   for (const bot of sectionedBots) {
@@ -1302,13 +1344,21 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             {t("sidebar.newChat.title")}
           </button>}
           <button
-            onClick={() => { setPlusOpen(false); dispatch({ type: "newBot" }); }}
+            onClick={() => { setPlusOpen(false); setNewBotOpen(true); }}
             role="menuitem"
             className={plusItem}
           >
             <BotIcon size={16} className="text-ink-secondary" />
             <span className="flex-1">{advanced ? t("sidebar.newBot") : t("sidebar.newBotSimple")}</span>
             {advanced && <ShortcutHint id="new-bot" />}
+          </button>
+          <button
+            onClick={() => { setPlusOpen(false); dispatch({ type: "showToday" }); }}
+            role="menuitem"
+            className={plusItem}
+          >
+            <Sun size={16} className="text-ink-secondary" />
+            {t("today.title")}
           </button>
           <button
             onClick={() => {
@@ -1348,7 +1398,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             >
               <Archive size={16} className="text-ink-secondary" />
               <span className="flex-1">{t("sidebar.archived.title")}</span>
-              <span className="text-[12px] text-ink-secondary">{archivedBots.length}</span>
+              <span className="text-note text-ink-secondary">{archivedBots.length}</span>
             </button>
           )}
           </>}
@@ -1448,6 +1498,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           >
             <Search size={20} strokeWidth={1.5} />
           </button>}
+          <button type="button" onClick={() => dispatch({ type: "showToday" })} aria-label={t("today.title")} title={t("today.title")} className={cn("flex items-center justify-center text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus", density === "icons" ? "size-[46px] shrink-0 rounded-xl" : phone ? "size-10 shrink-0 rounded-full border border-hairline bg-card text-ink" : "size-8 rounded-full")}><LayoutDashboard size={density === "icons" ? 20 : 18} strokeWidth={1.5} /></button>
           {advanced && <div ref={attentionMenuRef} className={density === "icons" ? "relative" : "contents"}>
             <button
               type="button"
@@ -1461,7 +1512,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             >
               <Activity size={density === "icons" ? 20 : 18} strokeWidth={1.5} />
               {attention.length > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-0.5 text-[10px] font-semibold leading-4 text-ink">{attention.length > 9 ? "9+" : attention.length}</span>
+                <span className="absolute -right-0.5 -top-0.5 flex min-w-4 items-center justify-center rounded-full bg-accent px-0.5 text-tiny font-semibold leading-4 text-ink">{attention.length > 9 ? "9+" : attention.length}</span>
               )}
               {attentionHasRunningWork(attention) && (
                 <span data-header-activity="" className="absolute bottom-0.5 right-0.5 size-1.5 rounded-full bg-success" aria-hidden="true" />
@@ -1476,7 +1527,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                   attentionMotion.className,
                 )} {...attentionMotion.exitProps}>
                   <div className="flex items-center gap-1 py-0.5 pl-2">
-                    <span className="flex-1 text-[13px] font-medium text-ink">{t("attention.title")}</span>
+                    <span className="flex-1 text-ui font-medium text-ink">{t("attention.title")}</span>
                     <button
                       type="button"
                       onClick={() => setAttentionPinned(!attentionPinned)}
@@ -1488,7 +1539,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                     </button>
                   </div>
                   {attention.length === 0 ? (
-                    <div className="px-2 py-1.5 text-[13px] text-ink-secondary">{t("attention.empty")}</div>
+                    <div className="px-2 py-1.5 text-ui text-ink-secondary">{t("attention.empty")}</div>
                   ) : (
                     <AttentionThreadRows inset entries={attention} onJump={(entry) => { setAttentionOpen(false); dispatch(attentionJumpAction(entry)); }} />
                   )}
@@ -1511,28 +1562,42 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
             onKeyDown={(e) => e.key === "Escape" && setQuery("")}
             placeholder={t("sidebar.search")}
             aria-label={t("sidebar.searchAria")}
-            className="w-full bg-transparent text-[13px] text-ink placeholder:text-ink-tertiary focus:outline-none"
+            className="w-full bg-transparent text-ui text-ink placeholder:text-ink-tertiary focus:outline-none"
           />
         </div>
       </div>}
-      {universalPins && pinnedBots.length > 0 && !simpleDesk && (
+      {/* Rooms are filtered out of the main list unconditionally, so they must be drawn here in every mode. The old
+          !simpleDesk gate was meant for the pinned-bot roster only and made pinned rooms vanish on the default desk. */}
+      {(pinnedRooms.length > 0 || (universalPins && pinnedBots.length > 0 && !simpleDesk)) && (
         <div
           data-sidebar-universal-pins=""
           // vh, not %: a percentage has no height to resolve against inside the glass head.
           className="max-h-[min(40vh,280px)] shrink-0 overflow-y-auto border-b border-hairline/40 px-2 pb-2"
         >
           {density !== "icons" && !pinnedCircles && (
-            <div className="px-2 pb-1 pt-1 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-secondary">
+            <div className="px-2 pb-1 pt-1 text-meta font-mediumtext-ink-secondary">
               {t("sidebar.section.pinned")}
             </div>
           )}
-          <PinnedBotRoster
-            bots={pinnedBots}
-            density={density}
-            circles={pinnedCircles}
-            row={botRow}
-            listItem={BotListItem}
-          />
+          {pinnedRooms.map((group) => (
+            <GroupListItem
+              key={`pinned-${group.id}`}
+              group={group}
+              density={density}
+              quiet={quietRows}
+              query={q}
+              onMenu={setRoomMenu}
+            />
+          ))}
+          {universalPins && pinnedBots.length > 0 && !simpleDesk && (
+            <PinnedBotRoster
+              bots={pinnedBots}
+              density={density}
+              circles={pinnedCircles}
+              row={botRow}
+              listItem={BotListItem}
+            />
+          )}
         </div>
       )}
 
@@ -1568,7 +1633,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
       <GlassScroller className={rail ? "[scrollbar-gutter:stable_both-edges]" : simpleDesk ? "px-3" : "px-2"}>
         <div className={cn("flex flex-col", simpleDesk ? cn("gap-0.5 pb-2", !tiles && "pt-2") : advanced ? "gap-0.5" : "gap-1 pb-2 pt-2")}>
           {matchingBots.length === 0 && visibleGroups.length === 0 && q && q.length < MIN_QUERY && (
-            <div className="px-3 py-6 text-center text-[13px] text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
+            <div className="px-3 py-6 text-center text-ui text-ink-secondary">{t("sidebar.noMatch", { query })}</div>
           )}
           {!q && <NeedsYouButton compact={rail} />}{!q && <SidebarPeople compact={rail} />}
           {unsectionedChief && (phone ? (
@@ -1659,7 +1724,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                 )}
                 {collapsed && queued.length > 0 && <button type="button" onClick={() => toggleSection(id)}
                   title={`${t("task.queued")} · ${queued.join(", ")}`} aria-label={`${t("sidebar.section.expand", { name: sectionLabel(id) })} · ${t("task.queued")} · ${queued.join(", ")}`}
-                  className="mx-3 mb-1 inline-flex h-7 items-center self-start rounded-full bg-raised/50 px-3 text-[13px] font-medium leading-4 text-ink-secondary hover:text-ink">{t("task.queued")} · {queued.length}</button>}
+                  className="mx-3 mb-1 inline-flex h-7 items-center self-start rounded-full bg-raised/50 px-3 text-ui font-medium leading-4 text-ink-secondary hover:text-ink">{t("task.queued")} · {queued.length}</button>}
                 {!collapsed && (
                   <>
                     {sectionChiefItems.map((bot) => <BotListItem key={bot.id} {...botRow(bot)} />)}
@@ -1684,7 +1749,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
                     ) : sectionBotItems.map((bot) => <BotListItem key={bot.id} {...botRow(bot)} />)}
                     {!remoteClient && sectionName && layoutInteractive && (!simple || sectionChiefItems.length + sectionGroupItems.length + sectionBotItems.length === 0) && (
                       <button onClick={() => setMoveToTeam(sectionName)} aria-label={t(state.bots.some(bot => !bot.hidden && bot.section?.trim() === sectionName) ? "team.manageBotsIn" : "team.addBotsTo", { name: sectionName })}
-                        className="mx-3 my-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] text-ink-secondary hover:bg-raised hover:text-ink">
+                        className="mx-3 my-1 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-note text-ink-secondary hover:bg-raised hover:text-ink">
                         <Plus size={13} /> {t(state.bots.some(bot => !bot.hidden && bot.section?.trim() === sectionName) ? "team.manageBots" : "team.addBots")}
                       </button>
                     )}
@@ -1812,6 +1877,9 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
         />
       <RoomContextMenu
           menu={roomMenu}
+          pinned={roomMenu ? pinnedRoomIds.includes(roomMenu.groupId) : false}
+          onTogglePin={(groupId) => setPinnedRooms(togglePinnedRoom(pinnedRoomIds, groupId))}
+          onOpenMemory={setGroupMemoryId}
           onClose={() => setRoomMenu(null)}
           onMoveToSection={(groupId) => {
             if (!roomMenu) return;
@@ -1892,7 +1960,7 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           <div
             role="status"
             className={cn(
-              "fixed bottom-4 left-4 z-[60] max-w-[300px] rounded-xl border px-3.5 py-2.5 text-[13px] shadow-xl",
+              "fixed bottom-4 left-4 z-[60] max-w-[300px] rounded-xl border px-3.5 py-2.5 text-ui shadow-xl",
               teamFeedback.error
                 ? "border-danger/30 bg-card text-danger"
                 : "border-hairline/50 bg-card text-ink",
@@ -1912,6 +1980,16 @@ export function Sidebar({ open, onClose, collapseToIcons = false }: {
           </div>,
           document.body,
         )}
+      {newBotOpen && createPortal(<NewBotDialog onClose={() => setNewBotOpen(false)} />, document.body)}
+      {/* Above the profile row: the numbers a person checks most often should not need Settings. */}
+      {groupMemoryId && (
+        <GroupMemoryDialog
+          groupId={groupMemoryId}
+          groupName={state.groups.find((group) => group.id === groupMemoryId)?.name ?? ""}
+          onClose={() => setGroupMemoryId(null)}
+        />
+      )}
+      <div className="shrink-0"><EngineUsageRail /></div>
     </aside>
   );
 }

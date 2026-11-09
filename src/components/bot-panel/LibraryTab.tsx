@@ -14,6 +14,7 @@ import { memoryNotes } from "./memory-notes";
 import type { SimplePageId } from "./page-registry";
 import { Card, CardLabel, NavRow } from "./rows";
 import { useMemoryDoc } from "./use-memory-doc";
+import { EmptyState } from "../states";
 
 export interface LibraryItems {
   pages: Array<{ messageId: string; title: string; url: string }>;
@@ -90,9 +91,7 @@ export function LibraryTab({ bot, onOpen }: { bot: Bot; onOpen: (page: SimplePag
   if (pages.length + apps.length + shared.length + unshared.length === 0) {
     return (
       <div data-panel-tabpanel="library">
-        <p data-panel-empty="library" className="px-3 py-7 text-center text-[13px] leading-[18px] text-ink-tertiary">
-          {t("botPanel.library.empty")}
-        </p>
+        <EmptyState data-panel-empty="library" title={t("botPanel.library.empty")} />
         {keeps}
       </div>
     );
@@ -125,14 +124,14 @@ export function LibraryTab({ bot, onOpen }: { bot: Bot; onOpen: (page: SimplePag
             {unshared.map((path) => (
               <li key={path} title={t("computer.files.notSharedHint")} className="flex min-w-0 items-center gap-2 rounded-lg border border-hairline/40 px-2.5 py-2">
                 <FileText size={14} className="shrink-0 text-ink-secondary" aria-hidden="true" />
-                <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{fileName(path)}</span>
-                <span className="shrink-0 text-[11px] text-ink-tertiary">{t("computer.files.notShared")}</span>
+                <span className="min-w-0 flex-1 truncate text-ui text-ink">{fileName(path)}</span>
+                <span className="shrink-0 text-meta text-ink-tertiary">{t("computer.files.notShared")}</span>
               </li>
             ))}
           </ul>
         </section>
       )}
-      <p className="mt-3 text-center text-[12px] text-ink-tertiary">{t("botPanel.library.scope")}</p>
+      <p className="mt-3 text-center text-note text-ink-tertiary">{t("botPanel.library.scope")}</p>
       {keeps}
     </div>
   );

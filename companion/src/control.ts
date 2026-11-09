@@ -372,7 +372,8 @@ function render(s) {
     "<h2>Where to connect</h2>" +
     (reach
       ? "<p>Enter <code>" + esc(reach) + ":" + s.port + "</code> on your phone." +
-        (s.tailnetName ? " That works from any network." : "") + "</p>"
+        (s.tailnetName ? " That works from any network." : "") +
+        "<br>Or open the phone workbench in its browser: <code>http://" + esc(reach) + ":" + s.port + "/app</code>.</p>"
       : "<p class=dim>No network address yet.</p>") +
     (s.tailnetName && s.lan ? "<p class=dim>On this network only: <code>" + esc(s.lan) + ":" + s.port + "</code></p>" : "") +
     (s.tailscale && !s.tailnetName
@@ -398,7 +399,7 @@ function render(s) {
           "<li><div class='grow'><div class=name>" + esc(d.name) + "</div>" +
           "<div class=dim>Last seen " + ago(d.lastSeenAt) + "</div>" +
           "<button data-cloud='" + esc(d.id) + "' data-allowed='" + (d.cloudDesktopAccess ? "1" : "0") + "'>" +
-          (d.cloudDesktopAccess ? "Cloud desktop on" : "Allow cloud desktop") + "</button>" +
+          (d.cloudDesktopAccess ? "Computer access on" : "Allow computer access") + "</button>" +
           "<button data-browser='" + esc(d.id) + "' data-browser-allowed='" + (d.browserControlAccess ? "1" : "0") + "'>" +
           (d.browserControlAccess ? "Browser control on" : "Allow browser control") + "</button></div>" +
           "<button data-revoke='" + esc(d.id) + "'>Remove</button></li>").join("") + "</ul>"

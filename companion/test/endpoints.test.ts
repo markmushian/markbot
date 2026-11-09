@@ -11,6 +11,7 @@ import { lanAddresses } from "../src/listener.ts";
 describe("hostedCompanionUrl", () => {
   it("normalizes one explicit HTTPS origin", () => {
     expect(hostedCompanionUrl("  https://Maus.Example/  ")).toBe("https://maus.example");
+    expect(hostedCompanionUrl("https://C-Opaque.Mark Bot.Test/")).toBe("https://c-opaque.markbot.test");
     expect(hostedCompanionUrl(undefined)).toBeNull();
     expect(hostedCompanionUrl("  ")).toBeNull();
   });

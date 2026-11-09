@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Check, Loader2, RefreshCw, TriangleAlert } from "lucide-react";
 
 import { api, useStore, type InstanceInfo } from "@/state/store";
+import { AcpRegistryBrowser } from "./AcpRegistryBrowser";
 import { EngineCard, EngineSections, RefreshEngines, engineReady } from "./EngineLibrary";
 import { cn } from "@/lib/cn";
 import { useMenuMotion } from "./MenuMotion";
@@ -11,6 +12,7 @@ import { AppCopyNotice } from "./EngineAppCopy";
 import { forgetAppCopySwitches } from "@/state/engine-install";
 import { AccountsCard, AddAccount, accountGroupOf, accountsReady, type AccountGroup } from "./EngineAccounts";
 import { DEVICE_SIGN_IN_COPY, deviceSignInProvider } from "./DeviceSignIn";
+import { ProviderStatusOverview } from "./ProviderStatusCard";
 import { AntigravityFreeSpace } from "./AntigravityFreeSpace";
 import { CacheKeepWarmSettings } from "./CacheKeepWarmSettings";
 import { ConfirmDialog } from "./ConfirmDialog";
@@ -127,23 +129,23 @@ function CustomPicker({ instance, cliDefault, onClose, onSaved }: {
         aria-label={t("engines.customAria", { name: instance.displayName })}
         spellCheck={false}
         disabled={busy}
-        className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 font-mono text-[12px] text-ink placeholder:font-sans placeholder:text-ink-secondary focus:outline-none disabled:opacity-50"
+        className="w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 font-mono text-note text-ink placeholder:font-sans placeholder:text-ink-secondary focus:outline-none disabled:opacity-50"
       />
       {probe && !probe.ok && probe.message && (
-        <div role="alert" className="flex gap-1.5 rounded-lg border border-warning/25 bg-warning/10 px-2.5 py-2 text-[12px] leading-relaxed text-warning">
+        <div role="alert" className="flex gap-1.5 rounded-lg border border-warning/25 bg-warning/10 px-2.5 py-2 text-note leading-relaxed text-warning">
           <TriangleAlert size={13} className="mt-0.5 shrink-0" />
           <span>{t("engines.testFailed", { message: probe.message })}</span>
         </div>
       )}
       {probe?.ok && probe.version && (
-        <div className="text-[12px] text-success">{t("engines.testPassed", { version: probe.version })}</div>
+        <div className="text-note text-success">{t("engines.testPassed", { version: probe.version })}</div>
       )}
-      {error && <div role="alert" className="text-[12px] text-danger">{error}</div>}
+      {error && <div role="alert" className="text-note text-danger">{error}</div>}
       <div className="flex justify-end gap-2">
         <button
           onClick={onClose}
           disabled={busy}
-          className="rounded-lg px-3 py-1.5 text-[13px] text-ink-secondary hover:bg-raised/50 hover:text-ink disabled:opacity-50"
+          className="rounded-lg px-3 py-1.5 text-ui text-ink-secondary hover:bg-raised/50 hover:text-ink disabled:opacity-50"
         >
           {t("common.cancel")}
         </button>
@@ -152,14 +154,14 @@ function CustomPicker({ instance, cliDefault, onClose, onSaved }: {
             <button
               onClick={() => setProbe(null)}
               disabled={busy}
-              className="rounded-lg px-3 py-1.5 text-[13px] text-ink-secondary hover:bg-raised/50 hover:text-ink disabled:opacity-50"
+              className="rounded-lg px-3 py-1.5 text-ui text-ink-secondary hover:bg-raised/50 hover:text-ink disabled:opacity-50"
             >
               {t("engines.editPath")}
             </button>
             <button
               onClick={() => persist()}
               disabled={busy}
-              className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-[13px] text-danger hover:bg-raised-hover disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-ui text-danger hover:bg-raised-hover disabled:opacity-50"
             >
               {saving ? <Loader2 size={13} className="animate-spin" /> : t("engines.saveAnyway")}
             </button>
@@ -169,7 +171,7 @@ function CustomPicker({ instance, cliDefault, onClose, onSaved }: {
             onClick={save}
             disabled={busy || !value || !dirty}
             className={cn(
-              "flex w-[72px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-[13px]",
+              "flex w-[72px] items-center justify-center gap-1.5 rounded-lg py-1.5 text-ui",
               "bg-raised text-ink hover:bg-raised-hover",
               "disabled:cursor-not-allowed disabled:opacity-50",
             )}
@@ -232,20 +234,20 @@ function EngineAdvanced({ instance }: { instance: InstanceInfo }) {
 
   return (
       <details className="mt-4 border-t border-hairline/40 pt-3">
-        <summary className="cursor-pointer rounded-md py-1 text-[12px] font-medium text-ink-secondary outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-accent">{t("engines.library.advanced")}</summary>
-        <p className="mt-2 text-[12px] leading-relaxed text-ink-secondary">{t("engines.footer")}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-[13px]">
+        <summary className="cursor-pointer rounded-md py-1 text-note font-medium text-ink-secondary outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-accent">{t("engines.library.advanced")}</summary>
+        <p className="mt-2 text-note leading-relaxed text-ink-secondary">{t("engines.footer")}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-ui">
           {instance.cli ? (
-            <span className="w-full break-all font-mono text-[12px] text-ink-secondary" title={instance.cli}>
+            <span className="w-full break-all font-mono text-note text-ink-secondary" title={instance.cli}>
               {instance.cli}
             </span>
           ) : (
             instance.cliDefault && (
-              <span className="break-all font-mono text-[11px] text-ink-secondary">{instance.cliDefault}</span>
+              <span className="break-all font-mono text-meta text-ink-secondary">{instance.cliDefault}</span>
             )
           )}
           {instance.snapshot.version && (
-            <span className="break-all text-[11px] text-ink-secondary" title={instance.snapshot.version}>
+            <span className="break-all text-meta text-ink-secondary" title={instance.snapshot.version}>
               {instance.snapshot.version}
             </span>
           )}
@@ -254,7 +256,7 @@ function EngineAdvanced({ instance }: { instance: InstanceInfo }) {
             <button
               onClick={updateClaude}
               disabled={switching || updating}
-              className="flex shrink-0 items-center gap-1 text-[12px] text-ink-secondary hover:text-ink disabled:opacity-50"
+              className="flex shrink-0 items-center gap-1 text-note text-ink-secondary hover:text-ink disabled:opacity-50"
             >
               {updating ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
               {updating ? t("engines.updating") : t("engines.updateClaude")}
@@ -264,7 +266,7 @@ function EngineAdvanced({ instance }: { instance: InstanceInfo }) {
             <button
               onClick={reset}
               disabled={switching || updating}
-              className="shrink-0 text-[12px] text-ink-secondary hover:text-ink disabled:opacity-50"
+              className="shrink-0 text-note text-ink-secondary hover:text-ink disabled:opacity-50"
             >
               {switching ? t("engines.resetting") : t("engines.reset")}
             </button>
@@ -274,7 +276,7 @@ function EngineAdvanced({ instance }: { instance: InstanceInfo }) {
             disabled={updating}
             aria-expanded={open}
             className={cn(
-              "shrink-0 rounded-lg border border-hairline/40 px-3 py-1 text-[12px]",
+              "shrink-0 rounded-lg border border-hairline/40 px-3 py-1 text-note",
               open ? "bg-accent/15 text-accent" : "text-ink-secondary hover:bg-raised/50 hover:text-ink",
               "disabled:opacity-50",
             )}
@@ -283,9 +285,9 @@ function EngineAdvanced({ instance }: { instance: InstanceInfo }) {
           </button>
         </div>
         {updatedVersion && (
-          <div role="status" className="mt-1 text-[12px] text-success">{t("engines.claudeUpdated", { version: updatedVersion })}</div>
+          <div role="status" className="mt-1 text-note text-success">{t("engines.claudeUpdated", { version: updatedVersion })}</div>
         )}
-        {error && <div role="alert" className="mt-1 text-[12px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-1 text-note text-danger">{error}</div>}
         {cliMotion.shown && (
           <div className={cliMotion.className} {...cliMotion.exitProps}>
             <CustomPicker
@@ -322,29 +324,29 @@ function RemoveAntigravityAccount({ instance }: { instance: InstanceInfo }) {
   };
   return <>
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" disabled={removing || usedBy > 0} onClick={() => setConfirming(true)} className="rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50">
+      <button type="button" disabled={removing || usedBy > 0} onClick={() => setConfirming(true)} className="rounded-lg px-2.5 py-1.5 text-note font-medium text-danger hover:bg-danger/10 disabled:cursor-not-allowed disabled:opacity-50">
         {removing ? <Loader2 size={13} className="animate-spin" /> : t("accounts.remove")}
       </button>
-      {usedBy > 0 && <p className="text-[11px] text-ink-secondary">{t("accounts.inUse", { count: String(usedBy) })}</p>}
+      {usedBy > 0 && <p className="text-meta text-ink-secondary">{t("accounts.inUse", { count: String(usedBy) })}</p>}
     </div>
-    {error && <p role="alert" className="text-[12px] text-danger">{error}</p>}
+    {error && <p role="alert" className="text-note text-danger">{error}</p>}
     <ConfirmDialog open={confirming} title={t("accounts.removeTitle", { name: instance.displayName })} body={t("accounts.removeBodyAntigravity")}
       confirmLabel={t("accounts.remove")} tone="neutral" pending={removing} onCancel={() => { if (!removing) setConfirming(false); }} onConfirm={() => void remove()} />
   </>;
 }
 
 function EngineRow({ instance, bare = false }: { instance: InstanceInfo; bare?: boolean }) {
-  const policyNote = instance.policy && <p className="mb-2 text-[12px] leading-relaxed text-ink-secondary">
+  const policyNote = instance.policy && <p className="mb-2 text-note leading-relaxed text-ink-secondary">
     <span className="font-medium text-ink">{t("policy.managedBy", { organization: instance.policy.organizationName })}</span> · {instance.policy.reason}
   </p>;
   if (instance.trialCredit) return <EngineCard instance={instance} bare={bare}>
-    <p data-trial-credit={instance.trialCredit} className="text-[13px] leading-relaxed text-ink-secondary">{t(instance.trialCredit === "used_up" ? "engines.trialCreditUsedUp"
+    <p data-trial-credit={instance.trialCredit} className="text-ui leading-relaxed text-ink-secondary">{t(instance.trialCredit === "used_up" ? "engines.trialCreditUsedUp"
       : instance.trialCredit === "ended" ? "engines.trialCreditEnded" : engineReady(instance) ? "engines.trialCredit" : "engines.trialCreditOwn")}</p>
   </EngineCard>;
   if (instance.readOnly) return <EngineCard instance={instance} bare={bare}>
     {policyNote}
-    <p className="text-[13px] leading-relaxed text-ink-secondary">{t("organization.managedEngine")}</p>
-    {!engineReady(instance) && <p className="mt-2 text-[12px] text-ink-secondary">{t("organization.engineUnavailable")}</p>}
+    <p className="text-ui leading-relaxed text-ink-secondary">{t("organization.managedEngine")}</p>
+    {!engineReady(instance) && <p className="mt-2 text-note text-ink-secondary">{t("organization.engineUnavailable")}</p>}
   </EngineCard>;
 
   return (
@@ -358,15 +360,15 @@ function EngineRow({ instance, bare = false }: { instance: InstanceInfo; bare?: 
       {instance.snapshot.warning && <EngineWarningNotice warning={instance.snapshot.warning} className="mt-3" />}
       {engineReady(instance) && instance.snapshot.authenticated === true && (
         instance.authentication?.method === "device-code"
-          ? <p className="flex items-center gap-1.5 text-[12px] text-success"><Check size={13} />{t(DEVICE_SIGN_IN_COPY[deviceSignInProvider(instance.driverKind)].connectedAccount)}</p>
+          ? <p className="flex items-center gap-1.5 text-note text-success"><Check size={13} />{t(DEVICE_SIGN_IN_COPY[deviceSignInProvider(instance.driverKind)].connectedAccount)}</p>
           : instance.authentication?.method === "paste-code" && (
-            <p className="flex items-center gap-1.5 text-[12px] text-success"><Check size={13} />{t("engineSetup.claude.connectedAccount")}</p>
+            <p className="flex items-center gap-1.5 text-note text-success"><Check size={13} />{t("engineSetup.claude.connectedAccount")}</p>
           )
       )}
       {instance.freeUpSpace && <AntigravityFreeSpace instance={instance} />}
       {instance.driverKind === "antigravityAgent" && (
         <div className="mt-3 space-y-3">
-          {instance.snapshot.authenticated && <p className="break-words text-[12px] text-ink-secondary">{instance.snapshot.account?.email ?? t("engineSetup.antigravity.emailUnavailable")}</p>}
+          {instance.snapshot.authenticated && <p className="break-words text-note text-ink-secondary">{instance.snapshot.account?.email ?? t("engineSetup.antigravity.emailUnavailable")}</p>}
           <AddAccount label={t("engineSetup.antigravity.addAccount")} endpoint="/api/instances/antigravity-accounts" extra={{ sourceInstanceId: instance.instanceId }} onAdded={() => {}} />
           {instance.instanceId.startsWith("antigravity-") && <RemoveAntigravityAccount instance={instance} />}
         </div>
@@ -402,8 +404,8 @@ function SimpleEngines({ rows, isReady, renderEngine, more }: {
                   <span className="flex min-w-[min(100%,15rem)] flex-1 items-center gap-3">
                     <InstanceProviderMark instance={instance} size={14} subtle />
                     <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="truncate text-[14px] leading-5 text-ink">{instance.displayName}</span>
-                      <span className="truncate text-[13px] leading-[18px] text-ink-secondary">{simpleStatus(instance, ready)}</span>
+                      <span className="truncate text-body leading-5 text-ink">{instance.displayName}</span>
+                      <span className="truncate text-ui leading-[18px] text-ink-secondary">{simpleStatus(instance, ready)}</span>
                     </span>
                   </span>
                   <button type="button" aria-expanded={open} className="ui-button ml-auto shrink-0" onClick={() => setOpened(open ? null : instance.instanceId)}>
@@ -463,12 +465,14 @@ export function EnginesSettings({ simple = false, more }: { simple?: boolean; mo
     <div className="flex min-w-0 flex-col gap-6 pb-2">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1 basis-60 space-y-2 px-4">
-          <h1 className="text-[22px] font-semibold tracking-tight text-ink">{t("settings.engines.title")}</h1>
-          <p className="mt-2 max-w-lg text-[13px] leading-relaxed text-ink-secondary">{t("engines.library.intro")}</p>
+          <h1 className="text-h3 font-semibold tracking-tight text-ink">{t("settings.engines.title")}</h1>
+          <p className="mt-2 max-w-lg text-ui leading-relaxed text-ink-secondary">{t("engines.library.intro")}</p>
         </div>
         <RefreshEngines />
       </div>
+      <ProviderStatusOverview instances={state.instances} />
       <EngineSections instances={rows} isReady={isReady} renderEngine={renderEngine} />
+      <AcpRegistryBrowser />
       <CacheKeepWarmSettings />
     </div>
   );

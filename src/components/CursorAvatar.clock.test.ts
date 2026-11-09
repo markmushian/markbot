@@ -59,7 +59,7 @@ afterEach(() => {
   host.remove();
 });
 
-// The default look is the MarkAvatar PNG, so an animated SVG mascot must name its body explicitly.
+// The mascot is drawn from the body catalogue, so an animated SVG must name its body explicitly.
 const render = (avatars: Array<Partial<MausAvatarProps> & { ref?: React.Ref<MausAvatarHandle> }>) =>
   act(() => root.render(avatars.map((props, key) => createElement(MausAvatar, { key, color: "green", bodyId: "blob" as const, ...props }))));
 const run = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });

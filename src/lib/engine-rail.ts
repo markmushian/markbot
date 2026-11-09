@@ -6,14 +6,25 @@ export function configuredModelInstances(instances: readonly InstanceInfo[], sel
       || (instance.snapshot.state === "available" && (instance.models.options.length > 0 || instance.snapshot.chatgptPlan === true)));
 }
 
-export function isCustomOnly(instance: { access?: InstanceInfo["access"] } | undefined): boolean {
-  return instance?.access === "custom";
+/**
+ * True only when the engine has nothing but user-entered models. A custom-access engine that
+ * ships its own catalogue (WorkBuddy · CodeBuddy, ACP extensions) keeps access "custom" so the
+ * rail can group it, but judging by that flag alone hid every model it actually supports.
+ */
+export function isCustomOnly(instance: {
+  access?: InstanceInfo["access"];
+  models?: Pick<InstanceInfo["models"], "options">;
+} | undefined): boolean {
+  if (instance?.access !== "custom") return false;
+  const options = instance.models?.options;
+  if (!options || options.length === 0) return true;
+  return options.every((option) => option.custom === true);
 }
 
 export type SignInFamily = "claude" | "openai";
 
 export function signInFamily(instance: { driverKind: string; access?: InstanceInfo["access"] } | undefined): SignInFamily | undefined {
-  if (!instance || instance.access === "api") return undefined;
+  if (!instance || instance.access === "api" || instance.access === "custom") return undefined;
   if (instance.driverKind === "claudeAgent") return "claude";
   if (instance.driverKind === "codex") return "openai";
   return undefined;

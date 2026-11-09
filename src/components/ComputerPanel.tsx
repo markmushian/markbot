@@ -1078,8 +1078,8 @@ export function ComputerPanel({
     <div data-testid="browser-switch-row" className="mb-3 flex items-center gap-3 rounded-xl bg-card px-3 py-2.5">
       <Globe size={15} className="shrink-0 text-ink-secondary" aria-hidden="true" />
       <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-medium text-ink">{t("computer.browserSwitch.title", { name: bot.name })}</div>
-        {!browserCanTurnOn && <div className="text-[12px] text-ink-secondary">{browserUnavailableReason(state.config)}</div>}
+        <div className="text-ui font-medium text-ink">{t("computer.browserSwitch.title", { name: bot.name })}</div>
+        {!browserCanTurnOn && <div className="text-note text-ink-secondary">{browserUnavailableReason(state.config)}</div>}
       </div>
       <Switch
         checked={browserEnabled}
@@ -1138,7 +1138,7 @@ export function ComputerPanel({
   };
   const panelOffers = (id: PlaceActionId | undefined): id is PlaceActionId => Boolean(id) && id !== "watch" && id !== "open-computer-panel"
     && ((id !== "start" && id !== "wake") || (canManageCloud && !profileBot.busy));
-  const placeActionButton = (view: PlaceView, className = "mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover") =>
+  const placeActionButton = (view: PlaceView, className = "mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover") =>
     view.action && panelOffers(view.action.id) ? (
       <button type="button" data-testid="place-action" onClick={() => runPlaceAction(view.action!.id)} className={className}>
         {view.action.label}
@@ -1156,7 +1156,7 @@ export function ComputerPanel({
     && liveTask.surface !== profileBot.computer ? liveTask.surface : undefined;
 
   const tabClass = (active: boolean) => cn(
-    "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-[13px] transition-colors @max-[28rem]/paneltabs:[&>svg]:hidden @max-[22rem]/paneltabs:px-2",
+    "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-ui transition-colors @max-[28rem]/paneltabs:[&>svg]:hidden @max-[22rem]/paneltabs:px-2",
     active ? "bg-raised text-ink shadow-sm" : "text-ink-secondary hover:text-ink",
   );
 
@@ -1269,7 +1269,7 @@ export function ComputerPanel({
           {signInHelp?.place === "browser" && <div className="-mt-1 mb-3">{signInBanner()}</div>}
           <BrowserPanel bot={bot} signIn={signInRequest} page={pageRequest} />
           {errorText && (
-            <div role="alert" className="mt-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger">
+            <div role="alert" className="mt-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-note text-danger">
               {errorText}
             </div>
           )}
@@ -1279,12 +1279,12 @@ export function ComputerPanel({
           {browserSwitchRow}
           <div className="mt-2 flex flex-col items-center gap-3 rounded-xl bg-card px-6 py-8 text-center">
             <Globe size={22} className="text-ink-secondary" aria-hidden="true" />
-            <div className="text-[14px] font-medium text-ink">{t("computer.browserOff.title")}</div>
-            <p className="text-[12px] leading-5 text-ink-secondary">
+            <div className="text-body font-medium text-ink">{t("computer.browserOff.title")}</div>
+            <p className="text-note leading-5 text-ink-secondary">
               {browserCanTurnOn ? t("computer.browserOff.body", { name: bot.name }) : browserUnavailableReason(state.config)}
             </p>
             {errorText && (
-              <div role="alert" className="w-full rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger">
+              <div role="alert" className="w-full rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-note text-danger">
                 {errorText}
               </div>
             )}
@@ -1292,7 +1292,7 @@ export function ComputerPanel({
         </div>
       ) : panelView === "data" ? (
         <div {...tabPanelProps("data")} className={cn("flex min-h-0 flex-1 flex-col overflow-hidden", TAB_PANEL_FOCUS)}>
-          <Suspense fallback={<div className="flex flex-1 items-center justify-center text-[13px] text-ink-secondary" role="status">{t("data.loading")}</div>}>
+          <Suspense fallback={<div className="flex flex-1 items-center justify-center text-ui text-ink-secondary" role="status">{t("data.loading")}</div>}>
             <DataPanel key={bot.id} bot={bot} requestedCard={dataRequest} />
           </Suspense>
         </div>
@@ -1306,16 +1306,16 @@ export function ComputerPanel({
         </div>
       ) : (
       <div {...tabPanelProps("computer")} className={cn("flex-1 overflow-y-auto px-5 pb-5", TAB_PANEL_FOCUS)}>
-          <div className="mb-1.5 mt-2 flex items-center justify-between text-[13px] text-ink-secondary">
+          <div className="mb-1.5 mt-2 flex items-center justify-between text-ui text-ink-secondary">
             <span>{t("computer.screenOf", { name: bot.name })}</span>
-            {currentTeamComputer && <span className="text-[11px]">{autoView.short}</span>}
-            {phase === "local" && <span className="text-[11px]">{t("computer.badge.local")}</span>}
-            {liveHere && <span className="flex items-center gap-1.5 text-[11px] font-medium text-ink"><span className="size-1.5 rounded-full bg-success" />{t("computer.inControl")}</span>}
-            {phase === "vm" && !liveHere && <span className="text-[11px]">{t("vm.dest.vm")}</span>}
+            {currentTeamComputer && <span className="text-meta">{autoView.short}</span>}
+            {phase === "local" && <span className="text-meta">{t("computer.badge.local")}</span>}
+            {liveHere && <span className="flex items-center gap-1.5 text-meta font-medium text-ink"><span className="size-1.5 rounded-full bg-success" />{t("computer.inControl")}</span>}
+            {phase === "vm" && !liveHere && <span className="text-meta">{t("vm.dest.vm")}</span>}
             {(phase === "show-ready-boat" || phase === "show-sleeping-boat" || phase === "show-pending-boat") && (
-              <span className="text-[11px]">{t("computer.badge.autoBoat")}</span>
+              <span className="text-meta">{t("computer.badge.autoBoat")}</span>
             )}
-            {computerStatusCurrent && bot.computer === "cloud" && cloudBackend === "vps" && (phase === "ready" || phase === "starting") && !liveHere && <span className="text-[11px]">{t("computer.badge.vps")}</span>}
+            {computerStatusCurrent && bot.computer === "cloud" && cloudBackend === "vps" && (phase === "ready" || phase === "starting") && !liveHere && <span className="text-meta">{t("computer.badge.vps")}</span>}
         </div>
         <div className={cn("relative flex aspect-[16/10] w-full items-center justify-center overflow-hidden rounded-xl bg-card", liveHere && "ring-2 ring-accent")}>
           {liveHere && liveTarget ? (
@@ -1361,7 +1361,7 @@ export function ComputerPanel({
                 alt={t("computer.screenOf", { name: bot.name })}
                 className="h-full w-full object-contain transition group-hover:brightness-75 group-focus-visible:brightness-75"
               />
-              <span className="pointer-events-none absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-[11px] font-medium text-white opacity-80 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
+              <span className="pointer-events-none absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-meta font-medium text-white opacity-80 shadow-sm transition group-hover:opacity-100 group-focus-visible:opacity-100">
                 {pending === "join" ? <Loader2 size={12} className="animate-spin" /> : <Maximize2 size={12} />}
                 {t("computer.open")}
               </span>
@@ -1382,7 +1382,7 @@ export function ComputerPanel({
               ) : (
                 <Monitor size={22} />
               )}
-              <span className="text-[12px]">
+              <span className="text-note">
                 {currentTeamComputer
                   ? autoView.line
                   : cloudPreviewReady
@@ -1406,7 +1406,7 @@ export function ComputerPanel({
               {phase === "local" && !isLinux && localMisses >= 3 && (
                 <button
                   onClick={() => window.ogb?.permOpenSettings?.("screen")}
-                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover"
+                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover"
                 >
                   {t("computer.openSettings")}
                 </button>
@@ -1414,7 +1414,7 @@ export function ComputerPanel({
               {phase === "browser" && browserEnabled && (
                 <button
                   onClick={() => selectPanelView("browser")}
-                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover"
+                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover"
                 >
                   {t("computer.openBrowserTab")}
                 </button>
@@ -1423,7 +1423,7 @@ export function ComputerPanel({
                 <button
                   type="button"
                   onClick={() => updateComputerSelection({ computer: "cloud" })}
-                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover"
+                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover"
                 >
                   {phase === "show-sleeping-boat"
                     ? t("computer.chooseCloudWake")
@@ -1434,7 +1434,7 @@ export function ComputerPanel({
               )}
               {pending === null && (phase === "cloud-new" || phase === "cloud-asleep") && placeActionButton(cloudView)}
               {vmResumable && pending !== "vm-start" && (
-                <p className="text-[12px]">{t(vmStatus?.stop_reason === "idle" ? "vm.stopped.idle" : "vm.stopped.detail")}</p>
+                <p className="text-note">{t(vmStatus?.stop_reason === "idle" ? "vm.stopped.idle" : "vm.stopped.detail")}</p>
               )}
               {phase === "vm-unavailable" && (
                 canManageVm && vmResumable && vmStatus.mode !== "pool" ? (
@@ -1442,7 +1442,7 @@ export function ComputerPanel({
                     onClick={() => void runVmAction("vm-start")}
                     disabled={pending !== null}
                     aria-busy={pending === "vm-start"}
-                    className="mt-1 flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+                    className="mt-1 flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-note font-medium text-white hover:brightness-110 disabled:opacity-50"
                   >
                     {pending === "vm-start" && <Loader2 size={13} className="animate-spin" />}
                     {t(pending === "vm-start" ? "vm.setup.starting" : "vm.setup.start")}
@@ -1451,7 +1451,7 @@ export function ComputerPanel({
                   <button
                     onClick={() => void runVmAction(vmStatus.container === "missing" ? "vm-create" : "vm-recreate")}
                     disabled={pending !== null}
-                    className="mt-1 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+                    className="mt-1 rounded-lg bg-accent px-3 py-1.5 text-note font-medium text-white hover:brightness-110 disabled:opacity-50"
                   >
                     {(pending === "vm-create" || pending === "vm-recreate") && (
                       <Loader2 size={13} className="mr-1.5 inline animate-spin" />
@@ -1463,7 +1463,7 @@ export function ComputerPanel({
                 ) : (
                   <button
                     onClick={openVmSettings}
-                    className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover"
+                    className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover"
                   >
                     {t("computer.openVmSetup")}
                   </button>
@@ -1471,11 +1471,11 @@ export function ComputerPanel({
               )}
               {!advanced && computerStatusCurrent && (phase === "vps-unconfigured" || phase === "vps-stopped" || phase === "vps-incompatible") && (
                 <>
-                  <p className="text-[12px]">{t("computer.simple.needsSetup", { name: bot.name })}</p>
+                  <p className="text-note">{t("computer.simple.needsSetup", { name: bot.name })}</p>
                   <button
                     type="button"
                     onClick={() => setAdvancedMode(true)}
-                    className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover"
+                    className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover"
                   >
                     {t("computer.simple.showAdvanced")}
                   </button>
@@ -1484,7 +1484,7 @@ export function ComputerPanel({
               {advanced && computerStatusCurrent && (phase === "vps-unconfigured" || phase === "vps-stopped") && (
                 <button
                   onClick={openConnectionSettings}
-                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover"
+                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover"
                 >
                   {t("computer.openVpsSettings")}
                 </button>
@@ -1494,7 +1494,7 @@ export function ComputerPanel({
                 <button
                   onClick={() => run("provision")}
                   disabled={pending === "provision"}
-                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-[12px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                  className="mt-1 rounded-lg bg-control px-3 py-1.5 text-note text-ink hover:bg-raised-hover disabled:opacity-50"
                 >
                   {pending === "provision" && <Loader2 size={13} className="mr-1.5 inline animate-spin" />}
                   {phase === "vps-stopped" ? t("computer.startVps") : t("computer.prepareVps")}
@@ -1505,7 +1505,7 @@ export function ComputerPanel({
                 <button
                   onClick={() => void replaceVpsComputer()}
                   disabled={pending === "vps-replace"}
-                  className="mt-1 rounded-lg bg-accent px-3 py-1.5 text-[12px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+                  className="mt-1 rounded-lg bg-accent px-3 py-1.5 text-note font-medium text-white hover:brightness-110 disabled:opacity-50"
                 >
                   {pending === "vps-replace" && <Loader2 size={13} className="mr-1.5 inline animate-spin" />}
                   {t("computer.replaceVps")}
@@ -1516,25 +1516,51 @@ export function ComputerPanel({
         </div>
 
         {errorText && !cloudRefused && (
-          <div className="mt-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-[12px] text-danger">
+          <div className="mt-2 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-note text-danger">
             {errorText}
           </div>
         )}
         {(boatKeyShown || (phase === "unconfigured" && cloudView.action?.id === "add-boat-key")) && (
-          <div data-boat-key className="mt-3 rounded-xl bg-card py-1.5">
-            <KeyRow id="box" via="computer_panel"
-              onSaved={(configured) => { setBoatKeyShown(true); if (configured) setRetry((n) => n + 1); }}
-            />
+          <div className="mt-3 space-y-2">
+            {/* Two cloud-computer choices side by side: the mainland one first, since this
+                build is used from mainland China; Boat stays as the automatic fallback. */}
+            <div data-cloud-providers className="rounded-xl border border-hairline/40 bg-card p-3 text-left">
+              <div className="text-note font-medium text-ink">云电脑：国内优先推荐</div>
+              <a href="https://www.qingjiaocloud.com/" target="_blank" rel="noopener noreferrer"
+                className="mt-2 flex items-start gap-2 rounded-lg bg-accent/10 px-2.5 py-2 hover:bg-accent/15">
+                <span className="mt-px shrink-0 rounded bg-accent px-1.5 py-0.5 text-tiny font-semibold text-accent-ink">国内</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-ui font-medium text-ink">青椒云 · 2 核 4G 约 ¥99/月</span>
+                  <span className="block text-meta leading-4 text-ink-secondary">国内节点，GPU 可选，Windows/Ubuntu 镜像；适合先替换 Boat。</span>
+                </span>
+                <Globe size={13} className="mt-1 shrink-0 text-ink-secondary" />
+              </a>
+              <div className="mt-1.5 flex items-start gap-2 rounded-lg bg-control/50 px-2.5 py-2">
+                <span className="mt-px shrink-0 rounded bg-control px-1.5 py-0.5 text-tiny font-semibold text-ink-secondary">海外</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-ui font-medium text-ink">Boat · 按量计费（当前自动接入）</span>
+                  <span className="block text-meta leading-4 text-ink-secondary">在下面填 API Key 即可自动创建、休眠、唤醒云桌面。</span>
+                </span>
+              </div>
+              <p className="mt-1.5 text-meta leading-4 text-ink-tertiary">
+                青椒云目前需要在官网开通桌面后手动连接；Boat 是唯一能自动创建/休眠的接入方式，国内直连不稳定时可优先用青椒云。
+              </p>
+            </div>
+            <div data-boat-key className="rounded-xl bg-card py-1.5">
+              <KeyRow id="box" via="computer_panel"
+                onSaved={(configured) => { setBoatKeyShown(true); if (configured) setRetry((n) => n + 1); }}
+              />
+            </div>
           </div>
         )}
         {advanced && phase === "vps-unconfigured" && (
           <div className="mt-3 rounded-xl bg-card p-4">
-            <div className="mb-3 text-[13px] text-ink-secondary">
+            <div className="mb-3 text-ui text-ink-secondary">
               {t("computer.vpsAliasHint")}
             </div>
             <button
               onClick={openConnectionSettings}
-              className="rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover"
+              className="rounded-lg bg-control px-3 py-2 text-ui text-ink hover:bg-raised-hover"
             >
               {t("computer.openVpsSettings")}
             </button>
@@ -1550,7 +1576,7 @@ export function ComputerPanel({
               type="button"
               onClick={() => onOpenVmWorkspace(bot.id)}
               disabled={pending !== null}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-2 text-[13px] font-medium text-ink hover:bg-accent/15 disabled:opacity-50"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/10 py-2 text-ui font-medium text-ink hover:bg-accent/15 disabled:opacity-50"
               title={t("computer.twoDesktopsTitle")}
             >
               <Columns2 size={14} />
@@ -1563,14 +1589,14 @@ export function ComputerPanel({
           : undefined)}
         {(cloudPreviewReady || phase === "vm" || currentTeamComputer) && control.held && (
           <div className="mt-3 rounded-xl border border-accent/25 bg-accent/10 p-4">
-            <div className="text-[13px] leading-relaxed text-ink">
+            <div className="text-ui leading-relaxed text-ink">
               {t("computer.youHaveWheel")}
               {cloudPreviewReady && !liveTarget && ` ${t(advanced ? "computer.useOpenDesktop" : "computer.simple.useFullScreen")}`}
             </div>
             <button
               onClick={() => void handBack()}
               disabled={controlPending || takeover.handingBack}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-2 text-[13px] font-medium text-white hover:brightness-110 disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-accent py-2 text-ui font-medium text-white hover:brightness-110 disabled:opacity-50"
             >
               <Hand size={14} />
               {t("computer.handBack")}
@@ -1581,7 +1607,7 @@ export function ComputerPanel({
           <button
             onClick={() => void takeControl(control.held)}
             disabled={controlPending || !liveTarget}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-control py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-control py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
             title={control.held ? t("computer.openLiveDesktop") : t("computer.takeControlTitle")}
           >
             {controlPending ? <Loader2 size={14} className="animate-spin" /> : control.held ? <Maximize2 size={14} /> : <Hand size={14} />}
@@ -1592,7 +1618,7 @@ export function ComputerPanel({
           <button
             onClick={() => void runVmAction("vm-delete")}
             disabled={pending !== null || profileBot.busy}
-            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-danger/30 py-2 text-[13px] text-danger hover:bg-danger/10 disabled:opacity-50"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-danger/30 py-2 text-ui text-danger hover:bg-danger/10 disabled:opacity-50"
             title={profileBot.busy ? t("computer.deleteVmBlocked") : t("computer.deleteVmTitle", { name: bot.name })}
           >
             {pending === "vm-delete" ? <Loader2 size={14} className="animate-spin" /> : <Power size={14} />}
@@ -1606,7 +1632,7 @@ export function ComputerPanel({
                 type="button"
                 onClick={() => void takeControl()}
                 disabled={controlPending || pending === "join" || (phase === "vm" && !liveTarget)}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent py-2 text-[13px] font-medium text-accent-ink hover:brightness-110 disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-accent py-2 text-ui font-medium text-accent-ink hover:brightness-110 disabled:opacity-50"
                 title={t("computer.takeControlTitle")}
               >
                 {pending === "join" ? <Loader2 size={14} className="animate-spin" /> : <Hand size={14} />}
@@ -1617,7 +1643,7 @@ export function ComputerPanel({
               type="button"
               onClick={() => void takeControl(true)}
               disabled={pending === "join" || (!control.held && controlPending) || (phase === "vm" && !liveTarget)}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
               title={t("computer.openLiveDesktop")}
             >
               <Maximize2 size={14} />
@@ -1628,7 +1654,7 @@ export function ComputerPanel({
                 type="button"
                 onClick={() => run("sleep")}
                 disabled={pending === "sleep" || profileBot.busy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control px-3 py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
                 title={t("computer.sleepTitle")}
               >
                 {pending === "sleep" ? <Loader2 size={14} className="animate-spin" /> : <Moon size={14} />}
@@ -1643,7 +1669,7 @@ export function ComputerPanel({
               <button
                 onClick={() => void takeControl()}
                 disabled={controlPending || pending === "join"}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
                 title={t("computer.takeControlTitle")}
               >
                 {pending === "join" ? <Loader2 size={14} className="animate-spin" /> : <Hand size={14} />}
@@ -1654,7 +1680,7 @@ export function ComputerPanel({
               <button
                 onClick={() => void takeControl(true)}
                 disabled={pending === "join"}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
               >
                 {pending === "join" ? <Loader2 size={14} className="animate-spin" /> : liveTarget ? <Maximize2 size={14} /> : <Monitor size={14} />}
                 {t(liveTarget ? "computer.fullScreen" : "computer.openLiveDesktop")}
@@ -1664,7 +1690,7 @@ export function ComputerPanel({
               <button
                 onClick={() => run("sleep")}
                 disabled={pending === "sleep" || profileBot.busy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control px-3 py-2 text-[13px] text-ink hover:bg-raised-hover disabled:opacity-50"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-control px-3 py-2 text-ui text-ink hover:bg-raised-hover disabled:opacity-50"
                 title={t("computer.sleepTitle")}
               >
                 {pending === "sleep" ? <Loader2 size={14} className="animate-spin" /> : <Moon size={14} />}
@@ -1682,8 +1708,8 @@ export function ComputerPanel({
 
         {advanced ? <>
           <div className="mt-4 rounded-xl bg-card p-4">
-            <div className="text-[15px] font-medium text-ink">{t("computer.worksOn")}</div>
-            <p className="mt-1 text-[12px] leading-5 text-ink-secondary">
+            <div className="text-lead font-medium text-ink">{t("computer.worksOn")}</div>
+            <p className="mt-1 text-note leading-5 text-ink-secondary">
               {t(state.config?.cloudHome ? "computer.worksOnHintCloudHome" : "computer.worksOnHint")}
             </p>
           <div role="group" aria-label={t("computer.destinationAria")} className="mt-3 grid auto-rows-fr grid-cols-2 gap-2">
@@ -1705,22 +1731,22 @@ export function ComputerPanel({
                     : "hover:border-accent/40 hover:bg-control/60",
                 )}
               >
-                <span className="flex items-center gap-2 text-[12px] font-medium leading-4">
+                <span className="flex items-center gap-2 text-note font-medium leading-4">
                   {selected ? <Check size={14} className="shrink-0 text-accent" /> : <Icon size={14} className="shrink-0 text-ink-secondary" />}
                   <span>{t(labelKey)}</span>
                 </span>
-                <span className="mt-1.5 block text-[11px] leading-4 text-ink-secondary">
+                <span className="mt-1.5 block text-meta leading-4 text-ink-secondary">
                   {managedBy ?? (issue ? view.short : t(descriptionKey))}
                 </span>
               </button>
             ))}
           </div>
           {liveTask?.surface && (
-            <p className="mt-2 text-[12px] leading-5 text-ink-secondary" data-testid="place-pinned-note">
+            <p className="mt-2 text-note leading-5 text-ink-secondary" data-testid="place-pinned-note">
               {t("place.pinnedNote", { place: t(placeLabelKey(liveTask.surface)) })}
             </p>
           )}
-          <div className="mt-3 border-t border-hairline/40 pt-3 text-[12px] leading-5 text-ink-secondary" aria-live="polite" data-testid="place-line">
+          <div className="mt-3 border-t border-hairline/40 pt-3 text-note leading-5 text-ink-secondary" aria-live="polite" data-testid="place-line">
             {worksOnView.line}
             {placeActionButton(worksOnView, "mt-1 block font-medium text-accent hover:underline")}
           </div>
@@ -1736,14 +1762,14 @@ export function ComputerPanel({
         <button type="button" onClick={() => selectPanelView("routines")} className="mt-4 flex w-full items-start gap-3 rounded-xl bg-card p-4 text-left hover:bg-raised">
           <CalendarClock size={17} className="mt-0.5 shrink-0 text-accent" />
           <span className="min-w-0 flex-1">
-            <span className="block text-[14px] font-medium text-ink">{t("computer.tab.routines")} <span className="ml-1 text-[11px] text-ink-secondary">{botRoutines.length}</span></span>
-            <span className={cn("mt-1 block truncate text-[12px]", activeRoutineRun ? routineRunTone(activeRoutineRun) : "text-ink-secondary")}>{activeRoutineRun ? `${activeRoutineRun.routineName} · ${routineRunLabel(activeRoutineRun)}` : t("computer.routines.openTitle")}</span>
+            <span className="block text-body font-medium text-ink">{t("computer.tab.routines")} <span className="ml-1 text-meta text-ink-secondary">{botRoutines.length}</span></span>
+            <span className={cn("mt-1 block truncate text-note", activeRoutineRun ? routineRunTone(activeRoutineRun) : "text-ink-secondary")}>{activeRoutineRun ? `${activeRoutineRun.routineName} · ${routineRunLabel(activeRoutineRun)}` : t("computer.routines.openTitle")}</span>
           </span>
           <ChevronRight size={14} className="shrink-0 text-ink-secondary rtl:-scale-x-100" aria-hidden="true" />
         </button>
         </> : (
           <div className="mt-4 rounded-xl bg-card p-4" data-testid="where-works">
-            <div className="text-[15px] font-medium text-ink">{t("computer.simple.whereWorks", { name: bot.name })}</div>
+            <div className="text-lead font-medium text-ink">{t("computer.simple.whereWorks", { name: bot.name })}</div>
             <div role="group" aria-label={t("computer.destinationAria")} className="mt-3 grid grid-cols-3 gap-2">
               {placeOptions.map(({ mode, Icon, selected, disabled, unavailableTitle, simpleLabel, issue, view }) => (
                 <button
@@ -1762,18 +1788,18 @@ export function ComputerPanel({
                   )}
                 >
                   <Icon size={16} className={cn("shrink-0", selected ? "text-accent" : "text-ink-secondary")} aria-hidden="true" />
-                  <span className="w-full truncate text-[12px] font-medium leading-4">{simpleLabel}</span>
-                  {issue && <span className="w-full truncate text-[11px] leading-3 text-ink-secondary">{view.short}</span>}
+                  <span className="w-full truncate text-note font-medium leading-4">{simpleLabel}</span>
+                  {issue && <span className="w-full truncate text-meta leading-3 text-ink-secondary">{view.short}</span>}
                 </button>
               ))}
             </div>
-            <div className="mt-3 text-[12px] leading-5 text-ink-secondary" data-testid="place-line">
+            <div className="mt-3 text-note leading-5 text-ink-secondary" data-testid="place-line">
               {worksOnView.line}
               {placeActionButton(worksOnView, "mt-1 block font-medium text-accent hover:underline")}
             </div>
             {heldPin && (
               <div className="mt-2 flex items-center gap-2">
-                <p className="min-w-0 flex-1 text-[12px] leading-5 text-ink-secondary" data-testid="place-pinned-note">
+                <p className="min-w-0 flex-1 text-note leading-5 text-ink-secondary" data-testid="place-pinned-note">
                   {t("place.pinnedNoteSimple", {
                     place: placeOptions.find(({ mode }) => mode === heldPin)?.simpleLabel ?? t(placeLabelKey(heldPin)),
                   })}
@@ -1783,7 +1809,7 @@ export function ComputerPanel({
                   disabled={Boolean(bot.busy)}
                   title={bot.busy ? t("place.busy") : undefined}
                   onClick={() => dispatch({ type: "updateTask", botId: profileBot.id, threadId: profileBot.threadId, patch: { surface: null } })}
-                  className="shrink-0 rounded-md px-2 py-0.5 text-[12px] font-medium leading-5 text-accent-text transition-colors hover:bg-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
+                  className="shrink-0 rounded-md px-2 py-0.5 text-note font-medium leading-5 text-accent-text transition-colors hover:bg-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:bg-transparent"
                   data-testid="place-unpin"
                 >
                   {t("place.unpinSimple", {

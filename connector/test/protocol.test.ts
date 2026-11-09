@@ -5,7 +5,7 @@ import { cloudRequestSignature, summarizeHealth } from "../src/home-health.ts";
 import { checkEnrollCode, checkEnrollResponse, checkHomeEnv, checkJob, checkTransferUrl, JOB_TYPES, REQUIRED_HOME_ENV } from "../src/protocol.ts";
 
 const HOME = `ghcr.io/milind-soni/markbot-cloud-home@sha256:${"a".repeat(64)}`;
-const CONNECTOR = `ghcr.io/milind-soni/mausbot-connector@sha256:${"b".repeat(64)}`;
+const CONNECTOR = `ghcr.io/milind-soni/markbot-connector@sha256:${"b".repeat(64)}`;
 const env = {
   OMB_CLOUD_ROLE: "home", OMB_CLOUD_MACHINE_ID: "3f9c2a4e-8b1d-4c6e-9a7f-2d5e8c1b0a93", OMB_CLOUD_ADMIN_URL: "https://cloud.example.test",
   OMB_PUBLIC_URL: "https://acme.example.test", OMB_CLOUD_BOOTSTRAP_SECRET: "S".repeat(43),

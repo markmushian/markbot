@@ -25,7 +25,7 @@ type Gesture = {
 } & ({ kind: "pan" } | { kind: "team"; key: string; origin: Point } | { kind: "bot"; bot: Bot });
 
 const iconButton = "flex size-9 shrink-0 items-center justify-center rounded-lg text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent";
-const menuButton = "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[12px] text-ink-secondary hover:bg-control hover:text-ink";
+const menuButton = "flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-note text-ink-secondary hover:bg-control hover:text-ink";
 
 function BotCard({ bot, selected, moving, connected, tagged = false, sent, onComputer, onArrange }: {
   bot: Bot;
@@ -57,15 +57,15 @@ function BotCard({ bot, selected, moving, connected, tagged = false, sent, onCom
       className="flex h-[82px] w-full cursor-grab items-center gap-3 rounded-t-xl px-4 text-left active:cursor-grabbing focus-visible:outline-2 focus-visible:outline-accent">
       <BotAvatar bot={bot} size={38} motion="none" motionKey={0} animated={false} />
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5"><span className="truncate text-[14px] font-semibold">{bot.name}</span>
+        <span className="flex items-center gap-1.5"><span className="truncate text-body font-semibold">{bot.name}</span>
           {bot.chiefOfStaff && <Crown size={12} className="shrink-0 text-warning" aria-label={t("chat.chiefOfStaff")} />}</span>
-        <span className="mt-1 block truncate text-[11px] text-ink-secondary">{bot.title || (bot.chiefOfStaff ? t("chat.chiefOfStaff") : t("canvas.bot"))}</span>
+        <span className="mt-1 block truncate text-meta text-ink-secondary">{bot.title || (bot.chiefOfStaff ? t("chat.chiefOfStaff") : t("canvas.bot"))}</span>
       </span>
     </button>
     <div className="flex h-[43px] items-center gap-1 border-t border-hairline/30 px-2">
       <button className={cn(iconButton, "size-8")} aria-label={t("canvas.openBotChat", { name: bot.name })} title={t("canvas.openChat")}
         onClick={() => openBot(dispatch, bot, showThreads)}><MessageCircle size={13} /></button>
-      {status.tone !== "idle" && <span className="flex items-center gap-1.5 text-[10px] text-ink-secondary" title={status.label}>
+      {status.tone !== "idle" && <span className="flex items-center gap-1.5 text-tiny text-ink-secondary" title={status.label}>
         <span className={cn("size-1.5 rounded-full", status.tone === "success" ? "bg-success" : status.tone === "warning" ? "bg-warning" : status.tone === "danger" ? "bg-danger" : "bg-ink-secondary/35")} />
         {status.label}
       </span>}
@@ -73,7 +73,7 @@ function BotCard({ bot, selected, moving, connected, tagged = false, sent, onCom
         onClick={() => onComputer(bot)}><Monitor size={13} /></button>}
       <button aria-label={t("canvas.changeModel", { name: bot.name })} title={`${t("canvas.defaultModel")}: ${model}`}
         onClick={() => openBotSettings(dispatch, "model", { botId: bot.id })}
-        className="ml-auto flex h-8 min-w-0 max-w-[130px] items-center gap-1.5 rounded-md px-2 text-[10px] text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
+        className="ml-auto flex h-8 min-w-0 max-w-[130px] items-center gap-1.5 rounded-md px-2 text-tiny text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent">
         <span className="flex size-3.5 shrink-0 items-center justify-center">{instance
           ? <InstanceProviderMark instance={instance} size={13} />
           : <ProviderMark driverKind="" size={13} />}</span>
@@ -340,6 +340,9 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
     if (bounds) setView(zoomAt(view, Math.max(0.3, Math.min(1.5, view.scale * factor)), { x: bounds.width / 2, y: bounds.height / 2 }));
   };
   const botById = new Map(sections.flatMap((section) => [...section.chiefs, ...section.members]).map((bot) => [bot.id, bot] as const));
+  const visibleBots = [...botById.values()];
+  const workingCount = visibleBots.filter((bot) => bot.busy || bot.activity === "working").length;
+  const waitingCount = visibleBots.filter((bot) => bot.activity === "waiting-on-you").length;
   const computerById = new Map(computers.map((computer) => [computer.id, computer] as const));
   const shownState = (computer: MapComputer): MapComputerState => {
     const users = computer.botIds.flatMap((id) => botById.get(id) ?? []);
@@ -406,6 +409,13 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
       if (event.key === "-") { event.preventDefault(); zoom(1 / 1.2); }
       if (event.key === "0") { event.preventDefault(); fit(); }
     }}>
+    <div className="pointer-events-none absolute left-5 top-5 z-20 flex flex-wrap items-center gap-2 rounded-xl border border-hairline/50 bg-panel/95 px-3 py-2 text-meta text-ink-secondary shadow-sm backdrop-blur-sm" aria-label={t("canvas.region")}>
+      <span className="font-semibold text-ink">{t("canvas.title")}</span>
+      <span aria-hidden="true" className="h-3 w-px bg-hairline/60" />
+      <span>{t("canvas.botCount", { count: visibleBots.length })}</span>
+      {workingCount > 0 && <span className="rounded-[4px] bg-success/10 px-1.5 py-0.5 text-success">{t("chat.activity.working")} {workingCount}</span>}
+      {waitingCount > 0 && <span className="rounded-[4px] bg-warning/10 px-1.5 py-0.5 text-warning">{t("teamMemory.waiting")} {waitingCount}</span>}
+    </div>
     <div data-canvas-world className="absolute left-0 top-0 origin-top-left" style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}>
       {sections.map((section, index) => {
         const tile = tiles[index];
@@ -431,14 +441,14 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
                 const step = event.shiftKey ? 40 : 10;
                 savePositions({ ...positions, [section.key]: { x: tile.x + delta[0] * step, y: tile.y + delta[1] * step } });
               }}>
-              <h2 className="truncate text-[13px] font-semibold tracking-tight">{section.name}</h2>
+              <h2 className="truncate text-ui font-semibold tracking-tight">{section.name}</h2>
             </button>
             {computer && <button aria-label={t("canvas.teamComputer", { team: section.name, name: computer.name })} title={`${computer.name}${computer.state ? ` · ${computer.state}` : ""}`}
               disabled={!onTeamComputer} onClick={() => onTeamComputer?.(section.key)}
-              className="flex min-w-0 max-w-[120px] shrink items-center gap-1.5 rounded-md px-1.5 py-2 text-[10px] text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none">
+              className="flex min-w-0 max-w-[120px] shrink items-center gap-1.5 rounded-md px-1.5 py-2 text-tiny text-ink-secondary hover:bg-control hover:text-ink focus-visible:outline-2 focus-visible:outline-accent disabled:pointer-events-none">
               <Monitor size={12} className="shrink-0" /><span className="truncate">{computer.name}</span>
             </button>}
-            <span className="text-[11px] tabular-nums text-ink-secondary">{section.chiefs.length + section.members.length}</span>
+            <span className="text-meta tabular-nums text-ink-secondary">{section.chiefs.length + section.members.length}</span>
             {canManage && <details className="relative" onToggle={(event) => {
               if (event.currentTarget.open) {
                 const bounds = viewport.current?.getBoundingClientRect();
@@ -460,7 +470,7 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
               </div>
             </details>}
           </header>
-          {dropping && <div className="pointer-events-none absolute -top-7 left-2 z-30 max-w-[calc(100%-16px)] truncate rounded-md bg-accent px-2 py-1 text-[10px] text-white shadow-sm">{dropHint}</div>}
+          {dropping && <div className="pointer-events-none absolute -top-7 left-2 z-30 max-w-[calc(100%-16px)] truncate rounded-md bg-accent px-2 py-1 text-tiny text-white shadow-sm">{dropHint}</div>}
           {geometry ? <>
             <svg aria-hidden className="pointer-events-none absolute inset-0 overflow-visible" width={tile.width} height={tile.height}>
               {geometry.tree.map((line, lineIndex) => <path key={`tree-${lineIndex}`} d={polylinePath(line)} fill="none" strokeWidth={1.5} className="stroke-ink-secondary/25" />)}
@@ -488,23 +498,23 @@ export function TeamCanvas({ sections, canManage, onMove, onInstructions, onMemo
             {section.chiefs.length > 0 && <div className="flex flex-col gap-4">{orderBots(section.chiefs, personalOrder(section.key)).map(renderBot)}</div>}
             {hierarchy && <div className="flex w-10 shrink-0 justify-center text-ink-secondary/35" aria-hidden="true"><ArrowRight size={22} strokeWidth={1} /></div>}
             {section.members.length > 0 && <div className="flex flex-col gap-4">{orderBots(section.members, personalOrder(section.key)).map(renderBot)}</div>}
-            {section.chiefs.length + section.members.length === 0 && <p className="flex h-[126px] w-[236px] items-center justify-center rounded-xl border border-dashed border-hairline/70 px-6 text-center text-[12px] leading-relaxed text-ink-secondary">{t("canvas.dropHere")}</p>}
+            {section.chiefs.length + section.members.length === 0 && <p className="flex h-[126px] w-[236px] items-center justify-center rounded-xl border border-dashed border-hairline/70 px-6 text-center text-note leading-relaxed text-ink-secondary">{t("canvas.dropHere")}</p>}
           </div>}
         </section>;
       })}
     </div>
-    {dragged && <div className="pointer-events-none absolute z-40 rounded-xl border border-accent/40 bg-card px-4 py-3 text-[13px] shadow-lg" style={{ left: dragged.point.x + 16, top: dragged.point.y + 16 }}>
+    {dragged && <div className="pointer-events-none absolute z-40 rounded-xl border border-accent/40 bg-card px-4 py-3 text-ui shadow-lg" style={{ left: dragged.point.x + 16, top: dragged.point.y + 16 }}>
       <span className="flex items-center gap-2"><BotAvatar bot={dragged.bot} size={24} animated={false} />{dragged.bot.name}</span>
-      {dropHint && <p className="mt-1 text-[10px] text-ink-secondary">{dropHint}</p>}
+      {dropHint && <p className="mt-1 text-tiny text-ink-secondary">{dropHint}</p>}
     </div>}
     <div className="pointer-events-none absolute inset-x-5 bottom-5 flex items-end justify-between gap-3">
-      <div className="min-w-0 rounded-lg bg-app/90 px-2 py-1.5 text-[11px] text-ink-secondary">
+      <div className="min-w-0 rounded-lg bg-app/90 px-2 py-1.5 text-meta text-ink-secondary">
         {!bottomInset && <p className="max-sm:hidden">{t("canvas.hint")}</p>}
         <p role="status" aria-live="polite" className="max-w-[440px]">{dropHint ?? announcement}</p>
       </div>
       <div className="pointer-events-auto flex shrink-0 items-center gap-0.5 rounded-xl border border-hairline/60 bg-panel p-1 shadow-sm">
         <button className={iconButton} aria-label={t("canvas.zoomOut")} onClick={() => zoom(1 / 1.2)}><Minus size={15} /></button>
-        <button className="min-w-12 rounded-md px-1 py-2 text-[11px] tabular-nums text-ink-secondary hover:bg-control" aria-label={t("canvas.fit")} title={t("canvas.fitHint")} onClick={fit}>{Math.round(view.scale * 100)}%</button>
+        <button className="min-w-12 rounded-md px-1 py-2 text-meta tabular-nums text-ink-secondary hover:bg-control" aria-label={t("canvas.fit")} title={t("canvas.fitHint")} onClick={fit}>{Math.round(view.scale * 100)}%</button>
         <button className={iconButton} aria-label={t("canvas.zoomIn")} onClick={() => zoom(1.2)}><Plus size={15} /></button>
       </div>
     </div>

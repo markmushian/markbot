@@ -87,6 +87,8 @@ describe("parseBotProfilePatch (both modes)", () => {
     });
     expect(parseBotProfilePatch({ avatarZoom: 4 }, true).ok).toBe(false);
     expect(parseBotProfilePatch({ avatarFocusX: -0.1 }, true).ok).toBe(false);
+    expect(parseBotProfilePatch({ avatarHue: 180 }, true)).toEqual({ ok: true, patch: { avatarHue: 180 } });
+    expect(parseBotProfilePatch({ avatarHue: 361 }, true).ok).toBe(false);
   });
 
   it("maps an avatarCrop issue to the readable message", () => {

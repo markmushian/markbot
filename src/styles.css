@@ -194,6 +194,45 @@
   --color-danger: #ff5667;
   --color-warning: #ff9800;
 
+  /* Type scale. Named by the job rather than the pixel, so a page heading and a
+     table label cannot drift apart over time. `design-ratchet.test.ts` keeps new
+     raw `text-[Npx]` out of the tree; everything here is one of these sizes.
+     Sizes only: line height stays on `leading-*`, because half the app pairs a
+     size with a deliberate leading and a bundled one would silently win. */
+  --text-micro: 9px;
+  --text-tiny: 10px;
+  --text-meta: 11px;
+  --text-note: 12px;
+  --text-ui: 13px;
+  --text-body: 14px;
+  --text-lead: 15px;
+  --text-title: 17px;
+  --text-page: 20px;
+  --text-subtitle: 18px;
+  --text-h3: 22px;
+  --text-h2: 24px;
+  --text-h1: 28px;
+  --text-display: 32px;
+  --text-hero: 40px;
+  /* The long tail: sizes too rare to name by the job. Named by the pixel so a
+     future size is either added here deliberately or kept out by the ratchet. */
+  --text-8: 8px;
+  --text-16: 16px;
+  --text-19: 19px;
+  --text-21: 21px;
+  --text-26: 26px;
+  --text-48: 48px;
+
+  /* Three radii: a control, a card, a panel. A nested radius is the outer one
+     minus the padding, never below 4px. */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 16px;
+
+  /* One easing curve for the whole app. Feedback 120–180ms, menus 160–220ms,
+     entrances 300–500ms; nothing animates width, height or margins. */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+
   --font-sans: "Geist Variable", -apple-system, BlinkMacSystemFont,
     "Segoe UI", system-ui, var(--font-cn), sans-serif;
   /* Some engines map `ui-monospace` to a proportional face, so concrete names come first. */

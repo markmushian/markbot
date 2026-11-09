@@ -2,7 +2,9 @@ import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import { useStore, type ConfigStatus } from "@/state/store";
 import { cn } from "@/lib/cn";
+import { openExternalLink } from "@/lib/app-links";
 import { scrollParent, scrollWithin } from "@/lib/scroll-within";
+import { EmptyState } from "../states";
 import { t } from "@/lib/i18n";
 import { LmStudioServer, OtherOpenAiCompatServers } from "../OpenAiCompatServers";
 import { KEY_CATALOG, KEY_SECTIONS, keyMatches, savedState, type KeyEntry, type KeyId, type KeySectionId } from "./key-catalog";
@@ -23,6 +25,50 @@ const EXTRAS: Partial<Record<KeyId, () => ReactNode>> = {
   anthropic: () => <AnthropicEveryClaudeBot />,
   openaiCompat: () => <><OpenAiCompatUrl /><OtherOpenAiCompatServers /></>,
 };
+
+/** Where a cloud desktop can come from. The person asked for both, with the mainland one first:
+ * Boat is the only vendor the app can create and sleep by itself, so the two are not equals. */
+const CLOUD_DESKTOPS = [
+  {
+    id: "qingjiao",
+    tag: "国内 · 推荐",
+    name: "青椒云",
+    note: "国内节点，2 核 4G 约 ¥99/月，可选 GPU。先在青椒云开通一台云桌面，再把它的 SSH 地址填到下面「自建 VPS」。",
+    url: "https://www.qingjiaocloud.com/",
+    link: "打开官网",
+    mainland: true,
+  },
+  {
+    id: "boat",
+    tag: "海外",
+    name: "Boat",
+    note: "按量计费，能自动创建和休眠；在下面填 API 密钥，机器人需要时自己开机。",
+    url: "https://docs.boat.dev/api-keys",
+    link: "获取密钥",
+    mainland: false,
+  },
+] as const;
+
+function CloudDesktopHint() {
+  return (
+    <div data-cloud-desktops className="mx-3 mb-2 mt-3 rounded-lg bg-inset/60 p-2">
+      <div className="px-1.5 pb-1 text-note text-ink-tertiary">云桌面从哪来：国内优先，海外按量</div>
+      {CLOUD_DESKTOPS.map((row) => (
+        <div key={row.id} data-cloud-desktop={row.id} className="flex items-start gap-2 rounded-md px-1.5 py-1.5">
+          <span className={cn("shrink-0 rounded-[4px] border border-hairline/60 px-1.5 py-0.5 text-meta text-ink-secondary",
+            row.mainland && "border-accent/40 text-accent-text")}>{row.tag}</span>
+          <div className="min-w-0 flex-1">
+            <div className="text-ui text-ink">{row.name}</div>
+            <div className="text-note leading-4 text-ink-secondary">{row.note}</div>
+          </div>
+          <button type="button" onClick={() => void openExternalLink(row.url)} className="shrink-0 text-note font-medium text-accent-text hover:underline">
+            {row.link}
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function connected(entry: KeyEntry, config: ConfigStatus | null | undefined): boolean {
   if (entry.kind === "uses") return false;
@@ -55,7 +101,7 @@ function ElsewhereRow({ entry }: { entry: KeyEntry }) {
       <div className="flex flex-col gap-2 pl-8">
         {saved.configured && <div className="flex"><MaskedKey saved={saved} label={t(entry.labelKey)} /></div>}
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          {entry.whereKey && <span className="min-w-0 flex-1 text-[12px] leading-4 text-ink-secondary">{t(entry.whereKey)}</span>}
+          {entry.whereKey && <span className="min-w-0 flex-1 text-note leading-4 text-ink-secondary">{t(entry.whereKey)}</span>}
           {opens && (
             <button type="button" data-key-open className="ui-button shrink-0" onClick={() => dispatch({ type: "toggleAppSettings", open: true, section: opens })}>
               {t("keys.row.open")}
@@ -90,13 +136,14 @@ function KeySection({ id, rows, open, onToggle }: { id: KeySectionId; rows: KeyE
         className="flex w-full cursor-pointer items-center gap-3 rounded-[inherit] px-4 py-2.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/60"
       >
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span id={headId} className="text-[14px] font-medium leading-5 text-ink">{t(section.titleKey)}</span>
-          <span className="text-[13px] leading-[18px] text-ink-secondary">{t(section.purposeKey)}</span>
+          <span id={headId} className="text-body font-medium leading-5 text-ink">{t(section.titleKey)}</span>
+          <span className="text-ui leading-[18px] text-ink-secondary">{t(section.purposeKey)}</span>
         </span>
-        {count > 0 && <span className="shrink-0 text-[12px] leading-4 text-ink-secondary">{t("keys.section.connected", { count })}</span>}
+        {count > 0 && <span className="shrink-0 text-note leading-4 text-ink-secondary">{t("keys.section.connected", { count })}</span>}
         <ChevronRight size={14} aria-hidden="true" className={cn("shrink-0 text-ink-secondary transition-transform motion-reduce:transition-none", open && "rotate-90")} />
       </button>
       <div id={bodyId} hidden={!open} className="flex flex-col gap-0.5 border-t border-hairline/40 px-1 py-1.5 in-data-[settings-look=simple]:border-t-[0.5px] in-data-[settings-look=simple]:border-(--settings-edge)">
+        {id === "computers" && <CloudDesktopHint />}
         {rows.map((entry) => <KeyCatalogRow key={entry.id} entry={entry} />)}
       </div>
     </section>
@@ -149,7 +196,7 @@ export function KeysPage() {
 
   return (
     <div ref={pageRef} data-keys-page className="flex flex-col gap-4">
-      <p className="text-[13px] leading-[18px] text-ink-secondary">{t("settings.connections.subtitle")}</p>
+      <p className="text-ui leading-[18px] text-ink-secondary">{t("settings.connections.subtitle")}</p>
       <div className="flex h-8 items-center gap-2 rounded-lg bg-ink/[0.05] px-[9px] focus-within:ring-2 focus-within:ring-focus/60">
         <Search size={15} aria-hidden="true" className="shrink-0 text-ink-secondary" />
         <input
@@ -167,11 +214,11 @@ export function KeysPage() {
           aria-label={t("keys.search.aria")}
           autoComplete="off"
           spellCheck={false}
-          className="w-full min-w-0 bg-transparent text-[13px] text-ink placeholder:text-ink-secondary focus:outline-none"
+          className="w-full min-w-0 bg-transparent text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
         />
       </div>
       {sections.length === 0 ? (
-        <p data-keys-empty className="px-1 text-[13px] leading-[18px] text-ink-secondary">{t("keys.search.none", { query: query.trim() })}</p>
+        <EmptyState data-keys-empty title={t("keys.search.none", { query: query.trim() })} hint="换个词试试，或清空搜索看全部连接。" />
       ) : sections.map(({ id, rows: sectionRows }) => (
         <KeySection
           key={id}

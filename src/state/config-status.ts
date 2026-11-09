@@ -16,6 +16,7 @@ export interface ConfigStatus {
   mistral?: SavedKey;
   cerebras?: SavedKey;
   groq?: SavedKey;
+  doubao?: SavedKey;
   deepseek?: SavedKey;
   meta?: SavedKey;
   /** X research comes with Mark Bot Cloud plans: `included` while this server holds the plan's relay credential;

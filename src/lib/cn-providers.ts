@@ -1,5 +1,6 @@
 /**
- * OpenAI-compatible providers people in mainland China actually buy keys from.
+ * OpenAI-compatible providers people actually buy keys from — mainland China first, plus the two
+ * global endpoints (Google AI Studio, xAI) that people ask for by name.
  *
  * Every base URL here is the one its maker documents for OpenAI-compatible clients, and every
  * model id exists in the bundled models.dev snapshot — a picked preset must chat on the first try,
@@ -75,6 +76,22 @@ export const CN_PROVIDERS: readonly CnProvider[] = [
     api: "https://api.hunyuan.cloud.tencent.com/v1",
     keys: "https://console.cloud.tencent.com/hunyuan/api-key",
     model: "hunyuan-turbos-latest",
+  },
+  {
+    id: "gemini",
+    label: "Google Gemini",
+    alias: "Gemini",
+    api: "https://generativelanguage.googleapis.com/v1beta/openai",
+    keys: "https://aistudio.google.com/apikey",
+    model: "gemini-2.5-flash",
+  },
+  {
+    id: "grok",
+    label: "Grok (xAI)",
+    alias: "Grok",
+    api: "https://api.x.ai/v1",
+    keys: "https://console.x.ai/",
+    model: "grok-4.7",
   },
   {
     id: "qianfan",

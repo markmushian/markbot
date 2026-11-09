@@ -39,19 +39,19 @@ export function ProSettingsCard() {
     return <section aria-label={t("pro.name")} data-cloud-offer={trial ? "trial" : offer ? "plans" : "none"} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-hairline/50 p-3">
       <div className="flex items-center gap-3">
         <Crown className="text-ink-secondary" size={18} aria-hidden="true" />
-        <div><h3 className="text-[14px] font-semibold text-ink">{t("pro.name")}</h3>
-          <p className="mt-1 text-[12px] text-ink-secondary">{t("pro.settingsSummary")}</p>
-          {cheapest !== null && <p className="mt-1 text-[12px] text-ink-secondary">{t("pro.fromPrice", { price: usd(cheapest / 100) })}</p>}
-          {moneyBack && <p className="mt-1 text-[12px] text-ink-secondary">{moneyBack}</p>}
-          <p className="mt-1 text-[12px] text-ink-secondary">{t("pro.disclaimer")}</p></div>
+        <div><h3 className="text-body font-semibold text-ink">{t("pro.name")}</h3>
+          <p className="mt-1 text-note text-ink-secondary">{t("pro.settingsSummary")}</p>
+          {cheapest !== null && <p className="mt-1 text-note text-ink-secondary">{t("pro.fromPrice", { price: usd(cheapest / 100) })}</p>}
+          {moneyBack && <p className="mt-1 text-note text-ink-secondary">{moneyBack}</p>}
+          <p className="mt-1 text-note text-ink-secondary">{t("pro.disclaimer")}</p></div>
       </div>
       <div className="flex flex-col items-end gap-1">
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className="cursor-pointer text-[13px] text-ink-secondary underline underline-offset-2 hover:text-ink"
+          <button type="button" className="cursor-pointer text-ui text-ink-secondary underline underline-offset-2 hover:text-ink"
             onClick={() => dispatch({ type: "openCloudAdd", source: "app_settings" })}>{t("pro.seePlans")}</button>
           <button type="button" className="ui-button ui-button-primary" onClick={() => dispatch({ type: "openCloudAdd", source: "app_settings" })}>{t(trial ? "cloudIntro.start" : "cloudAccount.upgrade")}</button>
         </div>
-        {view.kind === "signed-out" && <button type="button" className="cursor-pointer text-[13px] font-medium text-accent-text underline underline-offset-2 hover:text-ink"
+        {view.kind === "signed-out" && <button type="button" className="cursor-pointer text-ui font-medium text-accent-text underline underline-offset-2 hover:text-ink"
           onClick={() => dispatch({ type: "openCloudAdd", source: "app_settings", signIn: true })}>{t("cloudAccount.signIn")}</button>}
       </div>
     </section>;
@@ -61,8 +61,8 @@ export function ProSettingsCard() {
   return <section aria-label={t("settings.section.cloudAccount")} data-cloud-plan={view.kind} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-hairline/50 p-3">
     <div className="flex items-center gap-3">
       <Cloud className="text-ink-secondary" size={18} aria-hidden="true" />
-      <div><h3 className="text-[14px] font-semibold text-ink">{t("settings.section.cloudAccount")}</h3>
-        <p className="mt-1 text-[12px] text-ink-secondary">{view.kind === "reauth" ? t("pro.reauthShort") : line}</p></div>
+      <div><h3 className="text-body font-semibold text-ink">{t("settings.section.cloudAccount")}</h3>
+        <p className="mt-1 text-note text-ink-secondary">{view.kind === "reauth" ? t("pro.reauthShort") : line}</p></div>
     </div>
     <button type="button" className="ui-button" onClick={() => dispatch({ type: "toggleAppSettings", open: true, section: "cloudAccount" })}>{t("pro.openCloudSettings")}</button>
   </section>;
@@ -81,7 +81,7 @@ export function CloudPlanRow({ place, usage = null, upgrade }: { place: "account
       <SettingRow title={t("pro.name")} subtitle={place === "plan" && cheapest !== null ? t("pro.fromPrice", { price: usd(cheapest / 100) }) : t("pro.settingsSummary")}>
         <div className="flex items-center gap-3">
           {place === "plan" && plan.view.kind === "signed-out" && (
-            <button type="button" className="cursor-pointer text-[13px] text-ink-secondary hover:text-ink"
+            <button type="button" className="cursor-pointer text-ui text-ink-secondary hover:text-ink"
               onClick={() => dispatch({ type: "openCloudAdd", source: "app_settings", signIn: true })}>{t("cloudAccount.signIn")}</button>
           )}
           <button type="button" data-cloud-offer={trial ? "trial" : "plans"} className="ui-button ui-button-primary"

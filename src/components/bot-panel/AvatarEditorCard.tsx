@@ -4,7 +4,7 @@ import { ChevronDown, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
-import { colorSwatch, MAUS_COLOR_LABEL, MAUS_COLOR_NAMES, PICKABLE_STATES, type MausState } from "@/lib/mascot";
+import { colorSwatch, MAUS_COLOR_LABEL, MAUS_COLOR_NAMES, type MausState } from "@/lib/mascot";
 import type { Bot } from "@/state/store";
 import { MASCOT_BODIES, MASCOT_BODY_IDS } from "../../../shared/mascot-bodies";
 import { HALLOWEEN_BODIES, HALLOWEEN_BODY_IDS } from "../../../shared/halloween-bodies";
@@ -13,7 +13,6 @@ import { useHalloweenDressed, wornBody } from "@/lib/halloween-dress";
 import { MausAvatar } from "../Avatar";
 import { AvatarImageGenerator } from "../AvatarImageGenerator";
 import { AvatarFraming, OrganizationAvatarIcons, RESET_MASCOT_PATCH, useAvatarImage, type AvatarPatch } from "../avatar-editing";
-import { Segmented } from "./rows";
 import { MascotFaceColorPicker } from "../MascotFaceColorPicker";
 
 export type AvatarEditorTab = "bot" | "generate" | "upload";
@@ -24,32 +23,7 @@ const TABS: ReadonlyArray<readonly [AvatarEditorTab, LocaleKey]> = [
   ["upload", "botPanel.avatar.tabUpload"],
 ];
 
-const IMAGE_CROPS = ["circle", "rounded", "square"] as const;
-const CROP_KEY: Record<(typeof IMAGE_CROPS)[number], LocaleKey> = {
-  circle: "botPanel.avatar.circle",
-  rounded: "botPanel.avatar.rounded",
-  square: "botPanel.avatar.square",
-};
-
-const FACE_KEY: Partial<Record<MausState, LocaleKey>> = {
-  idle: "botPanel.face.idle",
-  happy: "botPanel.face.happy",
-  curious: "botPanel.face.curious",
-  drowsy: "botPanel.face.drowsy",
-  working: "botPanel.face.working",
-  thinking: "botPanel.face.thinking",
-  listening: "botPanel.face.listening",
-  sleeping: "botPanel.face.sleeping",
-  suspicious: "botPanel.face.suspicious",
-  proud: "botPanel.face.proud",
-};
-
-const faceLabel = (state: MausState) => {
-  const key = FACE_KEY[state];
-  return key ? t(key) : state;
-};
-
-export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
+export function AvatarEditorCard({ bot, onPatch, onClose }: {
   bot: Bot;
   activeState: MausState;
   onPatch: (patch: AvatarPatch) => void;
@@ -68,7 +42,7 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
   const body = bot.mascotBody ?? "cursor";
   const dressed = useHalloweenDressed();
   const costume = wornBody(bot.mascotBody, bot.color, dressed);
-  const [moreLooks, setMoreLooks] = useState(() => dressed || isHalloweenBody(body) || Boolean(bot.mascotExpression && bot.mascotExpression !== "idle"));
+  const [moreLooks, setMoreLooks] = useState(() => dressed || isHalloweenBody(body));
   const dressedAs = costume !== body && isHalloweenBody(costume) ? HALLOWEEN_BODIES[costume].name : null;
   const bodyButton = (id: BotBodyId, name: string) => (
     <button
@@ -113,7 +87,7 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
             data-avatar-tab={id}
             onClick={() => setTab(id)}
             className={cn(
-              "rounded-lg px-[11px] py-[5px] text-[13px]",
+              "rounded-lg px-[11px] py-[5px] text-ui",
               tab === id ? "bg-ink/[0.08] font-medium text-ink" : "text-ink-secondary hover:text-ink",
             )}
           >
@@ -125,7 +99,7 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
           data-avatar-reset
           disabled={busy}
           onClick={() => onPatch(RESET_MASCOT_PATCH)}
-          className="ml-auto rounded-lg px-[11px] py-[5px] text-[13px] text-ink-secondary hover:text-ink disabled:opacity-50"
+          className="ml-auto rounded-lg px-[11px] py-[5px] text-ui text-ink-secondary hover:text-ink disabled:opacity-50"
         >
           {t("botPanel.avatar.reset")}
         </button>
@@ -133,7 +107,11 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
 
       <div className="p-3">
         {tab === "bot" && (
-          <>
+          showsImage ? <>
+            <OrganizationAvatarIcons busy={busy} onUpload={upload} />
+            <AvatarFraming bot={bot} disabled={busy} onPatch={onPatch} />
+            <p className="mt-2 text-note text-ink-secondary">当前是图片头像。下方可调整图片整体色相；切换预设不会变成默认机器人。</p>
+          </> : <>
             <div className="grid grid-cols-5 gap-1.5">
               {MASCOT_BODY_IDS.map((id) => bodyButton(id, MASCOT_BODIES[id].name))}
             </div>
@@ -161,38 +139,19 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
               data-avatar-more
               aria-expanded={moreLooks}
               onClick={() => setMoreLooks((open) => !open)}
-              className="mx-auto mt-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-[12px] text-ink-secondary hover:bg-ink/[0.04] hover:text-ink"
+              className="mx-auto mt-2.5 flex items-center gap-1 rounded-full px-2.5 py-1 text-note text-ink-secondary hover:bg-ink/[0.04] hover:text-ink"
             >
               {t("botPanel.avatar.more")}
               <ChevronDown size={13} aria-hidden="true" className={cn("transition-transform", moreLooks && "rotate-180")} />
             </button>
             {moreLooks && (
               <div data-avatar-more-looks>
-                <div className="flex flex-wrap items-baseline gap-x-2 px-1 pb-1.5 pt-2 text-[12px] text-ink-tertiary">
+                <div className="flex flex-wrap items-baseline gap-x-2 px-1 pb-1.5 pt-2 text-note text-ink-tertiary">
                   <span>{t("botPanel.avatar.halloween")}</span>
                   {dressedAs && <span data-avatar-costume>{t("botPanel.avatar.costume", { name: dressedAs })}</span>}
                 </div>
                 <div className="grid grid-cols-5 gap-1.5" data-halloween-bodies>
                   {HALLOWEEN_BODY_IDS.map((id) => bodyButton(id, HALLOWEEN_BODIES[id].name))}
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2.5" role="group" aria-label={t("botPanel.avatar.face")}>
-                  <span className="mr-0.5 text-[12px] text-ink-tertiary">{t("botPanel.avatar.face")}</span>
-                  {PICKABLE_STATES.map((expression) => (
-                    <button
-                      key={expression}
-                      type="button"
-                      disabled={busy}
-                      data-avatar-face={expression}
-                      aria-pressed={activeState === expression}
-                      onClick={() => pickMascot({ mascotExpression: expression })}
-                      className={cn(
-                        "rounded-full px-2.5 py-1 text-[12px] disabled:opacity-50",
-                        activeState === expression ? "bg-ink/[0.15] text-ink" : "bg-ink/[0.04] text-ink-secondary hover:text-ink",
-                      )}
-                    >
-                      {faceLabel(expression)}
-                    </button>
-                  ))}
                 </div>
               </div>
             )}
@@ -213,7 +172,7 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
 
         {tab === "upload" && (
           <>
-            <OrganizationAvatarIcons busy={busy} onUpload={(file) => void upload(file)} />
+            <OrganizationAvatarIcons busy={busy} onUpload={upload} />
             {showsImage && <AvatarFraming bot={bot} disabled={busy} onPatch={onPatch} />}
             <input
               ref={fileRef}
@@ -232,21 +191,13 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
                 event.preventDefault();
                 void upload(event.dataTransfer.files?.[0]);
               }}
-              className="flex w-full flex-col items-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-ink/15 px-3 py-6 text-center text-[13px] text-ink-secondary hover:border-ink/25 hover:text-ink disabled:opacity-50"
+              className="flex w-full flex-col items-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-ink/15 px-3 py-6 text-center text-ui text-ink-secondary hover:border-ink/25 hover:text-ink disabled:opacity-50"
             >
               {uploading ? <Loader2 size={22} className="animate-spin" /> : <ImagePlus size={22} />}
               <span>{t("botPanel.avatar.drop")}</span>
-              <span className="text-[12px] text-ink-tertiary">{t("botPanel.avatar.types")}</span>
+              <span className="text-note text-ink-tertiary">{t("botPanel.avatar.types")}</span>
             </button>
-            <div className="mt-2.5 flex items-center gap-2.5">
-              <span className="shrink-0 text-[12px] text-ink-secondary">{t("botPanel.avatar.shape")}</span>
-              <Segmented
-                attr="data-avatar-crop"
-                label={t("botPanel.avatar.shape")}
-                value={showsImage ? crop : null}
-                onChange={(next) => onPatch({ avatarCrop: next })}
-                options={IMAGE_CROPS.map((value) => ({ value, label: t(CROP_KEY[value]), disabled: busy || !bot.avatarUrl }))}
-              />
+            <div className="mt-2.5 flex justify-end">
               {bot.avatarUrl && (
                 <button
                   type="button"
@@ -260,11 +211,11 @@ export function AvatarEditorCard({ bot, activeState, onPatch, onClose }: {
                 </button>
               )}
             </div>
-            {!showsImage && <p className="mt-2 text-[12px] text-ink-tertiary">{t("botPanel.avatar.uploadHint")}</p>}
+            {!showsImage && <p className="mt-2 text-note text-ink-tertiary">{t("botPanel.avatar.uploadHint")}</p>}
           </>
         )}
 
-        {error && <div role="alert" className="mt-3 text-[12px] text-danger">{error}</div>}
+        {error && <div role="alert" className="mt-3 text-note text-danger">{error}</div>}
       </div>
     </div>
   );

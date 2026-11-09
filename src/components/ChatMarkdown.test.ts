@@ -628,7 +628,7 @@ describe("application and rejected Markdown links", () => {
 });
 
 describe("a bot's link to a page it published", () => {
-  const PAGE = "https://abcdefghijklmnopqrstuvwxyz.mausbot.page/";
+  const PAGE = "https://abcdefghijklmnopqrstuvwxyz.markbot.page/";
   const text = `Here is your dashboard: [Sales dashboard](${PAGE})`;
   async function clickPage(store?: Parameters<typeof BotEditorStore>[0]["value"]) {
     const host = document.createElement("div");
@@ -1199,7 +1199,7 @@ describe("bidi: message content carries its own direction", () => {
       ].join("\n"),
     }));
 
-    expect(html).toContain('<div dir="rtl" class="mt-3 text-[18px] font-semibold">');
+    expect(html).toContain('<div dir="rtl" class="mt-3 text-subtitle font-semibold">');
     expect(html).toContain('<p dir="rtl">');
     expect(html).toContain('<p dir="ltr">An English paragraph');
     expect(html).toContain('<blockquote dir="rtl"');

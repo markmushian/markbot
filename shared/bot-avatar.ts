@@ -46,16 +46,31 @@ export function clampAvatarFocus(value: unknown): number {
 }
 
 /**
- * Custom avatars are deliberately limited to this app's attachment server.
- * Besides making persisted profiles portable across desktop/browser clients,
- * this prevents a bot profile from becoming an external tracking pixel or a
- * script-capable SVG.
+ * Built-in Mark Bot portraits ship with the UI. Allowing them by an exact id
+ * keeps the same guarantee as attachments: no remote URL can become a bot
+ * profile's tracking pixel or a script-capable SVG.
+ */
+export const MARK_AVATAR_IDS = [
+  "guide", "coder", "planner", "researcher", "writer",
+  "analyst", "operator", "designer", "communicator", "reviewer",
+] as const;
+
+export type MarkAvatarId = (typeof MARK_AVATAR_IDS)[number];
+
+const MARK_AVATAR_URL = new RegExp(`^/mark-avatars/(?:${MARK_AVATAR_IDS.join("|")})\\.png$`);
+
+/**
+ * Custom avatars are deliberately limited to this app's attachment server and
+ * its bundled portraits. Besides making persisted profiles portable across
+ * desktop/browser clients, this prevents a bot profile from becoming an
+ * external tracking pixel or a script-capable SVG.
  */
 export const botAvatarUrlSchema = z
   .string()
-  .regex(
-    /^\/api\/attachments\/[A-Za-z0-9-]+\.(?:png|jpg|gif|webp)$/,
-    "must be a stored PNG, JPEG, GIF, or WebP attachment",
+  .refine(
+    (value) => /^\/api\/attachments\/[A-Za-z0-9-]+\.(?:png|jpg|gif|webp)$/.test(value)
+      || MARK_AVATAR_URL.test(value),
+    "must be a stored PNG, JPEG, GIF, or WebP attachment, or a built-in Mark Bot portrait",
   );
 
 export function botAvatarUrlFromStoredPath(path: string): string | null {

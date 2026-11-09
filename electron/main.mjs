@@ -33,8 +33,8 @@ import { chatLinkFrom, chatLinkFromCommandLine } from "./chat-link.mjs";
 import { createOrganizationEntry, isOrganizationDeepLink, ORGANIZATION_DEEP_LINK, takeOrganizationDeepLink, organizationRestartIntent, withOrganizationRestartIntent, withoutOrganizationRestartIntent } from "./organization-entry.mjs";
 import { windowBackground, windowChromeOptions } from "./window-chrome.mjs";
 import { createAllWindowsClosedQuit } from "./window-all-closed.mjs";
-import { createStartupScreen } from "./startup-screen.mjs";
-import { createSystemTray } from "./system-tray.mjs";
+import { createStartupScreen, startupLabels } from "./startup-screen.mjs";
+import { createSystemTray, trayLabels } from "./system-tray.mjs";
 import { createLendingIndicator } from "./lending-indicator.mjs";
 import { createLendingDialogs } from "./lending-dialogs.mjs";
 import { createActivityWindow } from "./lending-activity-window.mjs";
@@ -137,9 +137,45 @@ process.env.OMB_DATA_DIR ||= path.join(app.getPath("home"), ".markbot-oss");
 // vite binds IPv4; a bare "localhost" can resolve to ::1.
 const DEV_URL = process.env.ELECTRON_START_URL ?? "http://127.0.0.1:5199";
 let SERVER_PORT = 8799;
+// Chromium answers "en-US" for navigator.language and app.getLocale() on a Chinese Windows unless it is told the
+// system language up front. Node's ICU reads the operating system's regional settings, and this switch must be
+// appended before the app is ready. The renderer then opens in Chinese too, not just the splash and the tray.
+try {
+  const systemLocale = new Intl.DateTimeFormat().resolvedOptions().locale;
+  if (/^zh/i.test(systemLocale)) app.commandLine.appendSwitch("lang", "zh-CN");
+  else if (systemLocale) app.commandLine.appendSwitch("lang", systemLocale);
+} catch {}
+
+/** The language this machine actually runs in. `getLocale()` reports Chromium's accept-languages, which falls back to
+ *  en-US on Windows unless a --lang switch is passed, so the operating system's own answer wins when it has one. */
+function uiLocale() {
+  try { return app.getSystemLocale() || app.getLocale(); } catch { return app.getLocale(); }
+}
+
+/** The language the interface is actually in: the one picked in Settings wins, then the same locale the startup
+ *  `--lang` switch uses. `app.getLocale()` alone is Chromium's accept-languages and `getSystemLocale()` is the
+ *  Windows display language; on a machine set up with an English Windows but Chinese formats both answer en-US while
+ *  the app itself opens in Chinese, which is how a Chinese interface ended up with an English "This computer" menu. */
+function preferredLocale() {
+  try {
+    const saved = jsonFile(path.join(app.getPath("userData"), "desktop-prefs.json")).read()?.language;
+    if (typeof saved === "string" && saved.trim()) return saved.trim();
+  } catch {}
+  try {
+    const resolved = new Intl.DateTimeFormat().resolvedOptions().locale;
+    if (resolved) return resolved;
+  } catch {}
+  return uiLocale();
+}
+
 const APP_ICON = app.isPackaged
   ? path.join(process.resourcesPath, "ui", "mark-avatars", "guide.png")
   : path.join(__dirname, "../public/mark-avatars/guide.png");
+/** The notification area is small and usually dark: the blue tile reads there, the dark grey mascot does not. A
+ *  multi-size .ico is what the Windows shell wants; a downscaled PNG has painted nothing on some machines. */
+const TRAY_ICON = app.isPackaged
+  ? path.join(process.resourcesPath, "ui", "tray-icon.ico")
+  : path.join(__dirname, "../public/tray-icon.ico");
 let desktopViewerWindow = null;
 let desktopViewerOwner = null;
 let desktopViewerContextId = null;
@@ -2056,6 +2092,23 @@ function createWindow({ deferNavigation = false } = {}) {
       desktopTray.hide(win);
     }
   });
+  // A dead renderer leaves an invisible window behind: the close button has nothing to act on, and
+  // the shell may have dropped the tray icon, so the process stays alive with no way out. Reload a
+  // couple of times, then leave rather than hang.
+  let rendererRecoveries = 0;
+  win.webContents.on("render-process-gone", (_event, details) => {
+    if (desktopShutdownStarted) return;
+    slog(`main window renderer gone (${details?.reason ?? "unknown"}); recovery ${rendererRecoveries + 1}`);
+    if (rendererRecoveries >= 2) {
+      desktopShutdownStarted = true;
+      app.quit();
+      return;
+    }
+    rendererRecoveries += 1;
+    setTimeout(() => {
+      if (!win.isDestroyed() && !desktopShutdownStarted) win.reload();
+    }, 400);
+  });
   const title = () => workspaceWindowTitle(environmentsState, desktopRemoteAccess, homeWindow.cloudOrigin());
   win.setTitle(title());
   win.webContents.on("page-title-updated", event => {
@@ -2799,6 +2852,7 @@ ipcMain.handle("workspaces:menu", workspaceOnly(async (_event, from) => {
   try {
     await cloudOffersReady();
     const menu = Menu.buildFromTemplate(workspaceMenuTemplate(environmentsState, {
+      locale: preferredLocale(),
       onSwitch: (id) => void workspaceMenuAction(() => switchEnvironment(id)),
       onConnect: () => void workspaceMenuAction(openWorkspaceSettings),
       onForget: (id) => void workspaceMenuAction(() => forgetEnvironment(id)),
@@ -2904,8 +2958,11 @@ app.whenReady().then(async () => {
   });
   if (process.platform === "win32") {
     try {
+      const trayImage = nativeImage.createFromPath(TRAY_ICON);
+      slog(`tray icon ${TRAY_ICON}: empty=${trayImage.isEmpty()} ${trayImage.getSize().width}x${trayImage.getSize().height}`);
+      slog(`locales: system=${app.getSystemLocale()} app=${app.getLocale()}`);
       desktopTray = createSystemTray({
-        Tray, Menu, nativeImage, iconPath: APP_ICON,
+        Tray, Menu, nativeImage, iconPath: TRAY_ICON, labels: trayLabels(preferredLocale()),
         getWindow: () => startupScreen?.window ?? mainWindow ?? (openWindowForLink?.(), mainWindow),
         onQuit: () => app.quit(),
       });
@@ -2915,7 +2972,8 @@ app.whenReady().then(async () => {
   }
   hiddenStart = loginItem.startedHidden() || reopenedOutOfSight();
   startupScreen = hiddenStart ? null : createStartupScreen({
-    BrowserWindow, iconPath: APP_ICON, isQuitting: () => desktopShutdownStarted,
+    BrowserWindow, iconPath: APP_ICON, labels: startupLabels(uiLocale()),
+    isQuitting: () => desktopShutdownStarted,
     onQuit: () => app.quit(),
     onHide: desktopTray ? (win) => desktopTray.hide(win) : undefined,
     isHidden: () => desktopTray?.isHidden() ?? false,

@@ -1,4 +1,4 @@
-// mausbot-connector: `run` (the service), `enroll` (the code on stdin), `status`, `probe`, `version`.
+// markbot-connector: `run` (the service), `enroll` (the code on stdin), `status`, `probe`, `version`.
 import { readFileSync, statfsSync } from "node:fs";
 import { join } from "node:path";
 
@@ -221,7 +221,7 @@ const commands: Record<string, () => Promise<void> | void> = {
 
 const command = commands[process.argv[2] ?? "run"];
 if (!command) {
-  console.error("usage: mausbot-connector run | enroll | status | probe | version");
+  console.error("usage: markbot-connector run | enroll | status | probe | version");
   process.exitCode = 2;
 } else {
   Promise.resolve().then(command).catch((error) => {

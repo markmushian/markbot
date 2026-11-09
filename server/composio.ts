@@ -686,6 +686,11 @@ async function collectConnectorTools(cfg: AppConfig): Promise<Record<string, Con
 }
 
 async function responseErrorFromBytes(status: number, bytes: Uint8Array): Promise<string> {
+  const text = new TextDecoder().decode(bytes).trimStart();
+  // A login wall or proxy page is an HTML document, not a model-tool answer.
+  if (text.startsWith("<") || text.slice(0, 200).toLowerCase().includes("<html")) {
+    return `Composio tools/list: HTTP ${status} — the service answered with a web page instead of tools.`;
+  }
   try {
     const body: unknown = JSON.parse(new TextDecoder().decode(bytes));
     const message = body && typeof body === "object" && !Array.isArray(body)
@@ -912,6 +917,9 @@ export function toolkitCategories(raw: unknown): string[] | undefined {
   return unique.length ? unique : undefined;
 }
 
+/** Overseas entries kept on purpose: usable from mainland China and legitimately connectable. */
+const KEPT_CURATED = new Set<string>(["gmail", "github"]);
+
 const CURATED: Array<ToolkitCard & { slug: CuratedConnectorSlug }> = [
   { slug: "slack", label: "Slack", blurb: "Post updates and read channels", domain: "slack.com", logo: null, categories: ["Communication"] },
   { slug: "github", label: "GitHub", blurb: "Issues, pull requests, and code", domain: "github.com", logo: null, categories: ["Developer tools"] },
@@ -1071,7 +1079,9 @@ export async function listToolkits(cfg: AppConfig): Promise<{ cards: ToolkitCard
       }
     } catch {}
   }
-  return { cards: CURATED, source: "curated" };
+  // Mainland installs cannot reach most of the curated SaaS catalog, so only the two that stay
+  // reachable and legally usable are offered; the rest were dead "connect" buttons.
+  return { cards: CURATED.filter((card) => KEPT_CURATED.has(card.slug)), source: "curated" };
 }
 
 export async function toolkitCard(cfg: AppConfig, slug: string): Promise<ToolkitCard> {
@@ -1089,3 +1099,16 @@ export async function toolkitCard(cfg: AppConfig, slug: string): Promise<Toolkit
 }
 
 export const CURATED_SLUGS = CURATED.map((c) => c.slug);
+
+/**
+ * The marketplace the app can show with no overseas connection at all. Gmail and
+ * GitHub are left out: they connect through their own local MCP presets now, so
+ * a second row here would be a dead "Connect" button. The remaining cards stay
+ * visible and honestly say they need the connection service.
+ */
+export function offlineCatalog(): ToolkitCard[] {
+  return CURATED.filter((card) => !KEPT_CURATED.has(card.slug))
+    .map(({ slug, label, blurb, domain, logo, categories }) => ({
+      slug, label, blurb, domain, logo, ...(categories ? { categories } : {}),
+    }));
+}

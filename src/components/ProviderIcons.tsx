@@ -6,6 +6,7 @@ import { GrokBotMark } from "./GrokBotMark";
 import type { InstanceInfo } from "@/state/store";
 import type { ProviderIconPreset } from "../../shared/provider-icon";
 import { FADED_PROVIDER_MARK, providerMarkTone } from "./provider-mark-fade";
+import { engineBrandIcon, engineBrandIconForDriver } from "./engine-brand-icons";
 
 export { HermesMark, CursorMark, GrokBotMark };
 
@@ -163,7 +164,7 @@ export function ProviderMark({ driverKind, size, className }: IconProps & { driv
       return <CopilotMark size={size} className={className} />;
     default:
       return (
-        <span className={cn("flex size-full items-center justify-center text-[10px] font-semibold tracking-tight text-ink-secondary", className)}>
+        <span className={cn("flex size-full items-center justify-center text-tiny font-semibold tracking-tight text-ink-secondary", className)}>
           {(driverKind.replace(/Agent$/i, "").slice(0, 1) || "?").toUpperCase()}
         </span>
       );
@@ -206,7 +207,7 @@ export function PresetProviderMark({ preset, size = 16, className }: IconProps &
 }
 
 export function InstanceProviderMark({ instance, size = 16, className, subtle = false }: IconProps & {
-  instance: Pick<InstanceInfo, "driverKind" | "icon">;
+  instance: Pick<InstanceInfo, "driverKind" | "icon"> & Partial<Pick<InstanceInfo, "displayName">>;
   subtle?: boolean;
 }) {
   if (subtle) {
@@ -221,7 +222,16 @@ export function InstanceProviderMark({ instance, size = 16, className, subtle = 
     return <CustomProviderMark key={instance.icon.dataUrl} dataUrl={instance.icon.dataUrl} driverKind={instance.driverKind} size={size} className={className} />;
   }
   if (instance.icon?.kind === "preset") {
+    // A preset renders as an inline mark that follows --color-ink, so it stays legible on
+    // every skin. Never shadow it with a baked-in bitmap: a dark mark on the dark theme is
+    // exactly the "why is this icon not white" bug.
     return <PresetProviderMark preset={instance.icon.preset} size={size} className={className} />;
+  }
+  // No preset and no component: fall back to the product's own mark (cerebras, groq, cline …),
+  // matched by the name shown in the UI, then to a plain letter.
+  const brand = engineBrandIcon(instance.displayName) ?? engineBrandIconForDriver(instance.driverKind);
+  if (brand) {
+    return <img src={brand} alt="" width={size} height={size} className={cn("shrink-0 rounded-[22%] object-contain", className)} />;
   }
   return <ProviderMark driverKind={instance.driverKind} size={size} className={className} />;
 }

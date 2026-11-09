@@ -20,9 +20,14 @@ export function hostedCompanionUrl(value: string | undefined): string | null {
   const configured = value?.trim();
   if (!configured) return null;
 
+  // Pasted from a browser bar, a host can arrive with stray spaces inside it
+  // ("C-Opaque.Mark Bot.Test"). WHATWG URL refuses those outright. Strip the
+  // whitespace first, then validate the result as a bare origin, so no path,
+  // query, credentials or fragment can be smuggled through with a space.
+  const candidate = configured.replace(/\s+/g, "");
   let parsed: URL;
   try {
-    parsed = new URL(configured);
+    parsed = new URL(candidate);
   } catch {
     throw new Error("OMB_COMPANION_HOSTED_URL must be an absolute HTTPS origin");
   }

@@ -1,11 +1,14 @@
 import { parseJson, type JsonValue } from "./schema.ts";
 import { isBotPackage, parseBotPackage, parsePackageDocument, upgradeV1, type PackageDocument, type ParsedBotPackage } from "./bot-package.ts";
 import { PACKAGE_V1_VERSION } from "../shared/package-format.ts";
-import { parseTeamManifest, type ParsedTeamManifest } from "./team-manifest.ts";
+import { parseTeamManifest, type ParsedTeamManifest, type TeamManifestV2 } from "./team-manifest.ts";
 import { grokMarketplaceSlugFrom, grokMarketplaceUrl, grokShareIdFrom, grokShareUrl, type GrokTemplateCard } from "../shared/grok-import.ts";
 
-export const TEAM_LIBRARY_REPOSITORY = process.env.MARKBOT_TEAM_LIBRARY_REPOSITORY?.trim() || "https://markbot.app/teams";
-export const TEAM_LIBRARY_RAW_ROOT = process.env.MARKBOT_TEAM_LIBRARY_RAW_ROOT?.trim() || "https://markbot.app/teams/raw";
+/** The community repo belongs to the person who owns this installation. Sign in on
+ * github.com with the markmushian account to publish templates;
+ * MARKBOT_TEAM_LIBRARY_* still lets another repo be used. */
+export const TEAM_LIBRARY_REPOSITORY = process.env.MARKBOT_TEAM_LIBRARY_REPOSITORY?.trim() || "https://github.com/markmushian/markbot";
+export const TEAM_LIBRARY_RAW_ROOT = process.env.MARKBOT_TEAM_LIBRARY_RAW_ROOT?.trim() || "https://raw.githubusercontent.com/markmushian/markbot/main/teams";
 export const TEAM_LIBRARY_CATALOG_URL = `${TEAM_LIBRARY_RAW_ROOT.replace(/\/$/, "")}/catalog.json`;
 
 const MAX_CATALOG_BYTES = 256_000;
@@ -119,11 +122,64 @@ export function parseTeamCatalog(value: unknown): TeamCatalog {
   };
 }
 
-async function fetchJson(url: string, maxBytes: number, fetcher: Fetcher): Promise<JsonValue> {
+/** Teams that work with no network at all. The overseas/GitHub directory may be
+ * slow or unreachable on a mainland connection; these keep Templates usable. */
+interface BundledTeam { entry: TeamCatalogEntry; manifest: TeamManifestV2 }
+
+const bundled = (slug: string, name: string, summary: string, category: string,
+  members: TeamManifestV2["team"]["members"]): BundledTeam => ({
+  entry: {
+    slug, name, summary, category, setupMinutes: 3, featured: true,
+    manifest: `teams/${slug}/team.mausteam.json`, readme: `teams/${slug}/README.md`,
+    members: members.length, skills: [], requires: { apps: [] },
+  },
+  manifest: {
+    format: "openmaus.team", version: 2,
+    team: { name, description: summary, members },
+  },
+});
+
+const BUNDLED_TEAMS: BundledTeam[] = [
+  bundled("daily-brief", "每日简报组", "每天汇总邮件、日程与待办，给你一份可执行的晨报", "日常", [
+    { key: "mail", name: "邮件整理", title: "收件箱助手", description: "挑出需要回复的邮件并起草回复", soul: "每天早上列出未读邮件，分成需要回复、知会、可忽略三类，需要回复的先起草但绝不自动发送。", appearance: { color: "blue" } },
+    { key: "calendar", name: "日程规划", title: "日程助手", description: "核对当天安排与冲突", soul: "列出今天的会议与到期事项，标出冲突和逾期，并给出每项下一步动作。不要替用户改日历。", appearance: { color: "yellow" } },
+    { key: "lead", name: "晨报汇总", title: "组长", description: "把三份结果拼成一页简报", soul: "把邮件、日程、待办汇总成一页：三行摘要，然后待办清单，最重要的排最前。不确定的信息要标注。", appearance: { color: "green" } },
+  ]),
+  bundled("content-studio", "内容创作组", "从选题、成稿到审核，一条龙产出公众号/短视频文案", "写作", [
+    { key: "topic", name: "选题策划", title: "选题助手", description: "找角度、列提纲", soul: "根据给定主题提出 3 个角度，各写一句卖点和目标读者，再由用户选一个。不要凭空编造数据。", appearance: { color: "purple" } },
+    { key: "writer", name: "撰稿", title: "写作助手", description: "按用户语气成稿", soul: "用平实具体的中文写初稿，短句为主，去掉套话。写完列出三处主要修改建议。", appearance: { color: "pink" } },
+    { key: "review", name: "审核", title: "质量审核员", description: "事实、语气、格式校对", soul: "逐条核对稿件里的事实、数字和引用，标出无法核实的内容；再检查语气与错别字，最后给可否发布的结论。", appearance: { color: "coral" } },
+  ]),
+  bundled("dev-squad", "研发小组", "读代码、改实现、跑测试并解释变更", "工作", [
+    { key: "dev", name: "开发", title: "编程搭档", description: "在项目目录里改代码", soul: "先读再改，跟随项目既有风格，保持改动小而聚焦。改完运行测试并如实汇报输出，包括失败。", appearance: { color: "cyan" } },
+    { key: "reviewer", name: "代码审查", title: "审查助手", description: "找问题、给建议", soul: "按影响从大到小列出问题：正确性、边界条件、可读性、测试覆盖。每条给出具体改法，不自己动手改代码。", appearance: { color: "teal" } },
+    { key: "qa", name: "测试", title: "测试助手", description: "设计用例并跑回归", soul: "根据改动设计最小回归用例，执行并报告真实结果；失败时给出复现步骤和可能原因。", appearance: { color: "orange" } },
+  ]),
+  bundled("meeting-crew", "会议协作组", "把录音稿变成决定、负责人和会后跟进", "工作", [
+    { key: "minutes", name: "会议纪要", title: "纪要助手", description: "整理决定与待办", soul: "输出两行摘要、决定、行动项（负责人/任务/截止）、未解决问题。引语必须来自原文，不确定的标注（不清楚）。", appearance: { color: "blue" } },
+    { key: "followup", name: "跟进", title: "跟进助手", description: "起草会后消息", soul: "根据纪要起草会后消息，先给用户确认，绝不自动发送；提醒哪些事项临近截止。", appearance: { color: "green" } },
+    { key: "archive", name: "资料归档", title: "资料助手", description: "整理链接与附件", soul: "把会议相关的文件、链接和引用整理成清单，注明来源，缺的标出来。", appearance: { color: "purple" } },
+  ]),
+];
+
+export function bundledTeamCatalog(): TeamCatalog {
+  return {
+    format: "openmaus.catalog", version: 1,
+    repositoryUrl: TEAM_LIBRARY_REPOSITORY,
+    teams: BUNDLED_TEAMS.map((team) => team.entry),
+  };
+}
+
+const bundledManifest = (slug: string): ParsedTeamManifest | null => {
+  const team = BUNDLED_TEAMS.find((candidate) => candidate.entry.slug === slug);
+  return team ? parseTeamManifest(team.manifest) : null;
+};
+
+async function fetchJson(url: string, maxBytes: number, fetcher: Fetcher, timeoutMs = 10_000): Promise<JsonValue> {
   const response = await fetcher(url, {
     headers: { accept: "application/json, text/plain;q=0.9" },
     redirect: "error",
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(timeoutMs),
   });
   if (!response.ok) {
     const error = Object.assign(new Error(`GitHub returned HTTP ${response.status}`), { status: response.status });
@@ -155,7 +211,14 @@ async function fetchText(url: string, maxBytes: number, fetcher: Fetcher): Promi
 }
 
 export async function fetchTeamCatalog(fetcher: Fetcher = fetch): Promise<TeamCatalog> {
-  return parseTeamCatalog(await fetchJson(TEAM_LIBRARY_CATALOG_URL, MAX_CATALOG_BYTES, fetcher));
+  try {
+    // A short budget: a slow overseas host must not hold the Templates dialog hostage.
+    return parseTeamCatalog(await fetchJson(TEAM_LIBRARY_CATALOG_URL, MAX_CATALOG_BYTES, fetcher, 4_000));
+  } catch (error) {
+    // Only the real network path degrades; an injected fetcher still sees the exact failure.
+    if (fetcher === fetch) return bundledTeamCatalog();
+    throw error;
+  }
 }
 
 export type ParsedShareableTeam = ParsedTeamManifest | ParsedBotPackage | PackageDocument;
@@ -175,6 +238,8 @@ async function fetchShareable(url: string, fetcher: Fetcher): Promise<ParsedShar
 
 export async function fetchLibraryTeam(slug: string, fetcher: Fetcher = fetch): Promise<ParsedShareableTeam> {
   if (!/^[a-z0-9][a-z0-9-]*$/.test(slug)) throw new Error("That team name is invalid");
+  const builtIn = bundledManifest(slug);
+  if (builtIn) return builtIn;
   const catalog = await fetchTeamCatalog(fetcher);
   const entry = catalog.teams.find((team) => team.slug === slug);
   if (!entry) throw Object.assign(new Error("That library team was not found"), { status: 404 });
@@ -207,11 +272,13 @@ function libraryRoles(team: ParsedShareableTeam): LibraryRole[] {
  * time. A team whose file cannot be read keeps its name and summary with no roles. */
 export async function libraryTeamRoles(fetcher: Fetcher = fetch): Promise<LibraryTeamRoles[]> {
   const catalog = await fetchTeamCatalog(fetcher);
-  return Promise.all(catalog.teams.slice(0, MAX_CHIEF_TEAMS).map(async (entry) => ({
-    name: entry.name,
-    summary: entry.summary,
-    roles: await fetchShareable(`${TEAM_LIBRARY_RAW_ROOT}/${entry.package ?? entry.manifest}`, fetcher).then(libraryRoles, () => []),
-  })));
+  return Promise.all(catalog.teams.slice(0, MAX_CHIEF_TEAMS).map(async (entry) => {
+    const builtIn = bundledManifest(entry.slug);
+    const roles = builtIn
+      ? libraryRoles(builtIn)
+      : await fetchShareable(`${TEAM_LIBRARY_RAW_ROOT}/${entry.package ?? entry.manifest}`, fetcher).then(libraryRoles, () => []);
+    return { name: entry.name, summary: entry.summary, roles };
+  }));
 }
 
 function safeSegment(value: string): boolean {

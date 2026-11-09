@@ -39,7 +39,7 @@ export interface KeyTarget {
 }
 
 export type KeyId =
-  | "openai" | "anthropic" | "xai" | "openrouter" | "mistral" | "cerebras" | "groq" | "meta" | "deepseek" | "opencodeGo" | "opencodeProviders"
+  | "openai" | "anthropic" | "xai" | "openrouter" | "mistral" | "cerebras" | "groq" | "doubao" | "meta" | "deepseek" | "opencodeGo" | "opencodeProviders"
   | "lmStudio" | "openaiCompat" | "liveCalls" | "liveKey" | "elevenlabs" | "fishAudio" | "box" | "vps" | "onePassword" | "composio" | "treg" | "postiz"
   | "jev" | "openrouterHelper" | "workersAi" | "imageOpenai" | "imageCustom";
 
@@ -66,7 +66,7 @@ function flag(saved: SavedKey | undefined): SavedState {
   return { configured: saved?.configured === true, ...(saved?.configured && saved.last4 ? { last4: saved.last4 } : {}) };
 }
 
-type TopLevelKey = "openai" | "openrouter" | "xai" | "mistral" | "cerebras" | "groq" | "meta" | "deepseek" | "treg";
+type TopLevelKey = "openai" | "openrouter" | "xai" | "mistral" | "cerebras" | "groq" | "doubao" | "meta" | "deepseek" | "treg";
 
 function providerKey(name: TopLevelKey, rest: Omit<KeyTarget, "patch" | "saved">): KeyTarget {
   return { patch: (value) => ({ [name]: { key: value } }), saved: (config) => flag(config[name]), ...rest };
@@ -86,6 +86,9 @@ export const KEY_CATALOG: readonly KeyEntry[] = [
   { id: "xai", section: "ai", labelKey: "keys.xai.label", purposeKey: "keys.purpose.xai", name: "xAI", env: ["XAI_API_KEY"],
     words: ["xai", "grok", "pictures", "images"], mark: provider("grok", "xai"), kind: "key",
     target: providerKey("xai", { slot: "xaiApiKey", placeholder: "xai-…", href: "https://console.x.ai", test: "xai", analytics: "xai", shape: /^xai-/ }) },
+  { id: "doubao", section: "ai", labelKey: "keys.doubao.label", purposeKey: "keys.purpose.doubao", name: "豆包", env: ["OMB_DOUBAO_API_KEY"],
+    words: ["doubao", "豆包", "volcengine", "ark", "火山"], mark: provider("openai-compat"), kind: "key",
+    target: providerKey("doubao", { placeholder: "…", href: "https://console.volcengine.com/ark", test: "openai", analytics: "doubao" }) },
   { id: "openrouter", section: "ai", labelKey: "keys.openrouter.label", purposeKey: "keys.purpose.openrouter", name: "OpenRouter", env: ["OMB_OPENROUTER_API_KEY"],
     words: ["openrouter", "router", "models"], mark: provider("openai-compat", "openrouter"), kind: "key",
     target: providerKey("openrouter", { placeholder: "sk-or-v1-…", href: "https://openrouter.ai/keys", test: "openrouter", analytics: "openrouter", shape: /^sk-or-/ }) },
@@ -215,7 +218,7 @@ export function looksLikeOtherKey(entry: KeyEntry, value: string): KeyEntry | nu
 
 const INSTANCE_KEYS: Readonly<Record<string, KeyId>> = {
   openai: "openai", claudeApi: "anthropic", xaiApi: "xai", grok: "xai", openrouter: "openrouter", mistral: "mistral", cerebras: "cerebras",
-  groq: "groq", meta: "meta", deepseek: "deepseek", opencodeGo: "opencodeGo", openaiCompat: "openaiCompat",
+  groq: "groq", doubaoApi: "doubao", meta: "meta", deepseek: "deepseek", opencodeGo: "opencodeGo", openaiCompat: "openaiCompat",
 };
 
 export function keyForInstance(instanceId: string | undefined): KeyId | undefined {

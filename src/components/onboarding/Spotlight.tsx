@@ -156,7 +156,7 @@ export function Spotlight({
       aria-live="polite"
     >
       <div
-        className="absolute inset-0 bg-black/55 transition-[clip-path] duration-[320ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        className="absolute inset-0 bg-black/55 transition-[clip-path] duration-[320ms] ease-standard motion-reduce:transition-none"
         style={{ clipPath: cutout(settled ? rect : null) }}
         aria-hidden="true"
       />
@@ -179,7 +179,7 @@ export function Spotlight({
       {/* Outer layer positions (transition), inner layer enters (keyframes): the two never fight over transform. */}
       <div
         data-tour-card
-        className="pointer-events-auto absolute left-0 top-0 w-[320px] transition-transform duration-[320ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        className="pointer-events-auto absolute left-0 top-0 w-[320px] transition-transform duration-[320ms] ease-standard motion-reduce:transition-none"
         style={{ transform, width: cardWidth }}
       >
         <div
@@ -208,7 +208,7 @@ export function Spotlight({
             key={anchor ?? "centre"}
             className="min-w-0 flex-1 animate-rise motion-reduce:animate-none"
           >
-            <div className="text-[14px] leading-relaxed text-ink">
+            <div className="text-body leading-relaxed text-ink">
               {children}
             </div>
             <div className="mt-2.5 flex items-center gap-3">
@@ -217,13 +217,13 @@ export function Spotlight({
                   type="button"
                   autoFocus
                   onClick={primary.onClick}
-                  className="rounded-lg bg-accent px-3 py-1.5 text-[13px] font-medium text-white transition-transform duration-150 active:scale-[0.98]"
+                  className="rounded-lg bg-accent px-3 py-1.5 text-ui font-medium text-white transition-transform duration-150 active:scale-[0.98]"
                 >
                   {primary.label}
                 </button>
               )}
               {progress && (
-                <span className="text-[12px] tabular-nums text-ink-secondary">
+                <span className="text-note tabular-nums text-ink-secondary">
                   {progress}
                 </span>
               )}
@@ -231,7 +231,7 @@ export function Spotlight({
                 <button
                   type="button"
                   onClick={secondary.onClick}
-                  className="ml-auto text-[12px] text-ink-secondary transition-colors hover:text-ink"
+                  className="ml-auto text-note text-ink-secondary transition-colors hover:text-ink"
                 >
                   {secondary.label}
                 </button>

@@ -123,7 +123,7 @@ export function ExportTranscriptMenu({
           </div>
 
           {!hasMessages ? (
-            <div className="px-2 py-1.5 text-[12px] text-ink-secondary">
+            <div className="px-2 py-1.5 text-note text-ink-secondary">
               {t("export.empty")}
             </div>
           ) : (
@@ -145,7 +145,7 @@ export function ExportTranscriptMenu({
               </button>
 
               {copyFailed && (
-                <div role="status" className="px-2 py-1.5 text-[12px] text-ink-secondary">
+                <div role="status" className="px-2 py-1.5 text-note text-ink-secondary">
                   {t("export.clipboardFailed")}
                 </div>
               )}

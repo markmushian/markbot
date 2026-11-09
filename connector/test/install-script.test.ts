@@ -42,7 +42,7 @@ esac`);
     encoding: "utf8",
     env: {
       PATH: `${bin}:/usr/bin:/bin`, MAUSBOT_ETC_DIR: etc, MAUSBOT_APPARMOR_DIR: apparmor,
-      MARKBOT_ADMIN_URL: "https://cloud.example.test", MARKBOT_CONNECTOR_IMAGE: `ghcr.io/milind-soni/mausbot-connector@sha256:${"1".repeat(64)}`,
+      MARKBOT_ADMIN_URL: "https://cloud.example.test", MARKBOT_CONNECTOR_IMAGE: `ghcr.io/milind-soni/markbot-connector@sha256:${"1".repeat(64)}`,
       ...options.env,
     },
     timeout: 30_000,

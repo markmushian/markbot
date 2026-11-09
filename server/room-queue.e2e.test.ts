@@ -14,9 +14,12 @@ it("tells the requester and the room that three same-room jobs run in turn", asy
   const session = await launchVerificationServer(process.env, undefined, undefined, undefined, undefined, { scripted: true });
   const env = { MARKBOT_URL: session.info.url };
   const cli = (...args: string[]) => runControlOmb(args, { env }) as Promise<any>;
+  const api = (path: string, body?: unknown, method = "POST") => request(path, body === undefined ? {} : { method, headers: { Origin: session.info.url }, body: JSON.stringify(body) }, session.info.url) as Promise<any>;
   const tool = (name: string, args: Record<string, unknown>) => handleToolCall(name, args, (path, options) => request(path, options, session.info.url)) as Promise<any>;
   const events = await openSse(`${session.info.url}/api/events`, { Origin: session.info.url });
   try {
+    // Parallel room jobs are the default now; this case pins the sequential path.
+    expect((await api("/api/config", { features: { parallelRoomJobs: false } }, "PATCH")).features.parallelRoomJobs).toBe(false);
     const lead = (await cli("new-bot", "--name", "Lead", "--section", "A")).bot;
     const workers: any[] = [];
     for (const name of ["First", "Second", "Third"]) workers.push((await cli("new-bot", "--name", name, "--section", "A")).bot);
@@ -135,7 +138,8 @@ it("with parallel room jobs on, runs each member's job in its own thread at once
     const lines = () => readFileSync(`${planPath}.evidence.jsonl`, "utf8").trim().split("\n").map(line => JSON.parse(line));
     const leadTurn = lines().find((t: any) => t.botId === lead.id && !t.resumed);
     const answer = JSON.parse(leadTurn.evidence.find((e: any) => e.step).response.result.content[0].text);
-    expect(answer.message).toContain("These run in parallel, each in a thread of its own beside this room");
+    expect(answer.message).toContain("These run in parallel right now, each in a thread of its own beside this room");
+    expect(answer.message).not.toContain("one at a time");
     expect(answer.receipts.every((r: any) => r.detail.includes("in parallel with the other room jobs") && r.threadId && !r.queue)).toBe(true);
 
     writeFileSync(file("first.gate"), "release");

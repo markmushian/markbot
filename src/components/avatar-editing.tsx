@@ -16,9 +16,10 @@ import {
 import { BotAvatar } from "./Avatar";
 import { useBotEditor } from "./bot-settings/BotEditorContext";
 import { MARK_AVATARS, markAvatarFile } from "@/lib/mark-avatars";
+import { MODEL_AVATARS } from "@/lib/model-avatars";
 
 export type AvatarPatch = Partial<
-  Pick<Bot, "avatarCrop" | "avatarUrl" | "avatarZoom" | "avatarFocusX" | "avatarFocusY" | "color" | "mascotExpression" | "mascotBody" | "mascotFaceColor">
+  Pick<Bot, "avatarCrop" | "avatarUrl" | "avatarZoom" | "avatarHue" | "avatarFocusX" | "avatarFocusY" | "color" | "mascotExpression" | "mascotBody" | "mascotFaceColor">
 >;
 
 export const RESET_MASCOT_PATCH: AvatarPatch = { avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotFaceColor: null };
@@ -79,11 +80,11 @@ export function AvatarFraming({
         onPointerCancel={endDrag}
         onWheel={onWheel}
       >
-        <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={t("avatarEditor.preview", { name: bot.name })} />
+        <BotAvatar bot={bot} size={FRAME_SIZE} animated={false} label={t("avatarEditor.preview", { name: bot.name })} previewUrl={bot.id.startsWith("draft-") ? bot.avatarUrl ?? undefined : undefined} />
       </div>
       <div className="mb-1.5 mt-4 flex items-baseline justify-between">
-        <span className="text-[12px] font-medium uppercase tracking-[0.08em] text-ink-secondary">{t("avatarEditor.zoom")}</span>
-        <span className="tabular-nums text-[12px] text-ink-secondary">{Math.round(zoom * 100)}%</span>
+        <span className="text-note font-mediumtext-ink-secondary">{t("avatarEditor.zoom")}</span>
+        <span className="tabular-nums text-note text-ink-secondary">{Math.round(zoom * 100)}%</span>
       </div>
       <input
         type="range"
@@ -100,7 +101,7 @@ export function AvatarFraming({
         onChange={(event) => onPatch({ avatarZoom: clampAvatarZoom(Number(event.target.value)) })}
         className="w-full accent-accent"
       />
-      <div className="mt-1.5 flex items-center justify-between gap-3 text-[12px] text-ink-secondary">
+      <div className="mt-1.5 flex items-center justify-between gap-3 text-note text-ink-secondary">
         <span>{t("avatarEditor.hint")}</span>
         {framed && (
           <button
@@ -113,32 +114,77 @@ export function AvatarFraming({
           </button>
         )}
       </div>
+      <div className="mb-1.5 mt-4 flex items-center justify-between text-note text-ink-secondary"><span>图片配色</span><span>{Math.round(bot.avatarHue ?? 0)}°</span></div>
+      <input type="range" min="0" max="360" step="5" value={bot.avatarHue ?? 0} disabled={disabled} aria-label="图片配色" onChange={(event) => onPatch({ avatarHue: Number(event.target.value) })} className="w-full accent-accent" />
+      <button type="button" disabled={disabled || !bot.avatarHue} onClick={() => onPatch({ avatarHue: 0 })} className="mt-1 rounded-md px-2 py-1 text-note text-ink-secondary hover:bg-control disabled:opacity-40">恢复原色</button>
     </div>
   );
 }
 
-export function OrganizationAvatarIcons({ busy, onUpload }: { busy: boolean; onUpload: (file: File) => void }) {
+export function OrganizationAvatarIcons({ busy, onUpload }: { busy: boolean; onUpload: (file: File) => Promise<boolean> }) {
   const organization = useOrganizationBranding();
   const [presetError, setPresetError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const choose = async (image: string, id: string) => {
     if (busy || loading) return;
-    setLoading(true);
+    setLoading(id);
     setPresetError(null);
-    try { onUpload(await markAvatarFile(image, id)); }
+    try { if (await onUpload(await markAvatarFile(image, id)) !== false) setSelected(id); }
     catch (error) { setPresetError(error instanceof Error ? error.message : String(error)); }
-    finally { setLoading(false); }
+    finally { setLoading(null); }
   };
   return (
     <div className="mb-3 border-b border-hairline/40 pb-3">
-      <div className="mb-2 text-[13px] font-medium text-ink-secondary">{t("avatarEditor.presets")}</div>
-      <div className="mb-3 grid grid-cols-5 gap-2">{MARK_AVATARS.map(icon => <button key={icon.id} type="button" disabled={busy || loading} aria-label={t("avatarEditor.usePreset", { name: icon.name })} title={icon.name} className="mark-avatar-preset flex min-w-0 flex-col items-center gap-1 disabled:opacity-50" onClick={() => void choose(icon.image, icon.id)}><img src={icon.image} alt="" className="size-14 object-contain" /><span className="w-full truncate text-center text-[11px]">{icon.name}</span></button>)}</div>
-      {presetError && <p role="alert" className="text-[12px] text-danger">{presetError}</p>}
-      {organization?.icons.length ? <div className="mb-2 text-[13px] font-medium text-ink-secondary">{t("avatarEditor.icons", { name: organization.name })}</div> : null}
-      <div className="flex flex-wrap gap-2">{organization?.icons.map(icon => <button key={icon.id} type="button" disabled={busy} title={icon.name} aria-label={`Use ${icon.name} icon`} className="flex size-12 items-center justify-center rounded-lg border border-hairline/40 hover:bg-control disabled:opacity-50" onClick={() => {
+      <div className="mb-2 text-ui font-medium text-ink-secondary">{t("avatarEditor.presets")}</div>
+      <div className="mb-3 grid grid-cols-5 gap-2">{MARK_AVATARS.map(icon => <button key={icon.id} type="button" disabled={busy || loading !== null} aria-pressed={selected === icon.id} aria-label={t("avatarEditor.usePreset", { name: icon.name })} title={icon.name} className="mark-avatar-preset flex min-w-0 flex-col items-center gap-1 disabled:opacity-50 aria-pressed:border-accent aria-pressed:ring-2 aria-pressed:ring-accent/30" onClick={() => void choose(icon.image, icon.id)}><img src={icon.image} alt="" className="size-14 object-contain" /><span className="w-full truncate text-center text-meta">{icon.name}</span></button>)}</div>
+      {loading && <p role="status" className="mb-2 text-note text-ink-secondary">{t("avatarEditor.usePreset", { name: MARK_AVATARS.find(icon => icon.id === loading)?.name ?? "" })}…</p>}
+      {presetError && <p role="alert" className="text-note text-danger">{presetError}</p>}
+      {organization?.icons.length ? <div className="mb-2 text-ui font-medium text-ink-secondary">{t("avatarEditor.icons", { name: organization.name })}</div> : null}
+      <div className="flex flex-wrap gap-2">{organization?.icons.map(icon => <button key={icon.id} type="button" disabled={busy} title={icon.name} aria-label={t("avatarEditor.usePreset", { name: icon.name })} className="flex size-12 items-center justify-center rounded-lg border border-hairline/40 hover:bg-control disabled:opacity-50" onClick={() => {
         const bytes = Uint8Array.from(atob(icon.image.slice(22)), byte => byte.charCodeAt(0));
-        onUpload(new File([bytes], `${icon.id}.png`, { type: "image/png" }));
+        void onUpload(new File([bytes], `${icon.id}.png`, { type: "image/png" }));
       }}><img src={icon.image} alt="" className="size-10 rounded-md object-contain" /></button>)}</div>
+    </div>
+  );
+}
+
+/** Vendor marks, offered where the upload button is: the same shape of a preset as the drawings above. */
+export function ModelAvatarIcons({ busy, onUpload }: { busy: boolean; onUpload: (file: File) => Promise<boolean> }) {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const choose = async (image: string, id: string) => {
+    if (busy || loading) return;
+    setLoading(id);
+    setError(null);
+    try { if (await onUpload(await markAvatarFile(image, id)) !== false) setSelected(id); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { setLoading(null); }
+  };
+  return (
+    <div className="mt-3 border-t border-hairline/40 pt-3">
+      <div className="mb-2 flex items-center justify-between text-ui font-medium text-ink-secondary">
+        <span>模型图标</span>
+        {loading && <span role="status" className="text-note font-normal">正在使用…</span>}
+      </div>
+      <div className="grid grid-cols-8 gap-1.5">
+        {MODEL_AVATARS.map((icon) => (
+          <button
+            key={icon.id}
+            type="button"
+            disabled={busy || loading !== null}
+            aria-pressed={selected === icon.id}
+            aria-label={`用 ${icon.name} 图标作为头像`}
+            title={icon.name}
+            onClick={() => void choose(icon.image, icon.id)}
+            className="flex aspect-square items-center justify-center overflow-hidden rounded-lg border border-hairline/40 bg-control/40 hover:bg-control disabled:opacity-50 aria-pressed:border-accent aria-pressed:ring-2 aria-pressed:ring-accent/30"
+          >
+            <img src={icon.image} alt="" className="size-7 object-contain" />
+          </button>
+        ))}
+      </div>
+      {error && <p role="alert" className="mt-1.5 text-note text-danger">{error}</p>}
     </div>
   );
 }
@@ -157,7 +203,7 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
   const busy = uploading || generating || savingConnection;
 
   const upload = async (file: File | undefined) => {
-    if (!file || busy) return;
+    if (!file || busy) return false;
     setUploading(true);
     setError(null);
     try {
@@ -168,12 +214,16 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
       onPatch({
         avatarUrl,
         avatarCrop: latestCrop === "mascot" ? "circle" : latestCrop,
+        avatarHue: 0,
+        mascotExpression: null,
         avatarZoom: AVATAR_ZOOM_MIN,
         avatarFocusX: AVATAR_FOCUS_CENTER,
         avatarFocusY: AVATAR_FOCUS_CENTER,
       });
+      return true;
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : String(uploadError));
+      return false;
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -185,6 +235,7 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
     onPatch({
       avatarUrl: null,
       avatarCrop: "mascot",
+      avatarHue: 0,
       avatarZoom: AVATAR_ZOOM_MIN,
       avatarFocusX: AVATAR_FOCUS_CENTER,
       avatarFocusY: AVATAR_FOCUS_CENTER,
@@ -207,6 +258,8 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
       const latestCrop = cropRef.current;
       onPatch({
         avatarUrl: result.avatarUrl,
+        avatarHue: 0,
+        mascotExpression: null,
         avatarCrop:
           latestCrop === cropAtStart
             ? (result.bot.avatarCrop ?? "circle")

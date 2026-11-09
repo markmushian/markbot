@@ -126,7 +126,7 @@ describe("bot draft dialog", () => {
     }
     fixture.advanced = false;
     const simple = render().html;
-    expect(simple, "Simple mode picks no model: new bots use the default").not.toContain(">Model<");
+    expect(simple).toContain(">Model<");
     expect(simple).toContain(">Permissions<");
     fixture.effects[0]();
     expect(fixture.api).toHaveBeenCalledExactlyOnceWith("/api/bot-defaults");

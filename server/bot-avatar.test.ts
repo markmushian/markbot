@@ -18,10 +18,12 @@ describe("bot avatar profile schema", () => {
     expect(botAvatarCropSchema.safeParse("hexagon").success).toBe(false);
   });
 
-  it("only accepts app-owned raster attachments", () => {
+  it("only accepts app-owned raster attachments and built-in Mark Bot portraits", () => {
     expect(botAvatarUrlSchema.parse("/api/attachments/123e4567-e89b-12d3-a456-426614174000.webp"))
       .toContain("/api/attachments/");
+    expect(botAvatarUrlSchema.parse("/mark-avatars/guide.png")).toBe("/mark-avatars/guide.png");
     for (const value of [
+      "/mark-avatars/../../config.json",
       "https://tracker.example/avatar.png",
       "/api/attachments/avatar.svg",
       "/api/attachments/../../config.json",

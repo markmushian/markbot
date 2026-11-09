@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AlertTriangle, Check, Copy, Download, ExternalLink, KeyRound, Loader2, LogIn, TerminalSquare, X } from "lucide-react";
+import { AlertTriangle, Cpu, Check, Copy, Download, ExternalLink, KeyRound, Loader2, LogIn, TerminalSquare, X } from "lucide-react";
 import { api, type EngineInstall, type InstanceInfo, useStore } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
@@ -10,8 +10,11 @@ import { RefreshEngines } from "./EngineLibrary";
 import { AppCopyNotice, AppCopySetup } from "./EngineAppCopy";
 import { noteAppCopySwitch } from "@/state/engine-install";
 import { keyEntry, keyForInstance, type KeyId } from "./keys/key-catalog";
+import { NO_AUTO_EXECUTE } from "./ProposedCommandCard";
 import { openKeySettings } from "./keys/key-focus";
-import { KeyRow, SavedKeyLine } from "./keys/KeyRow";
+import { KEY_FIELD, KeyRow, SavedKeyLine } from "./keys/KeyRow";
+import { Select } from "./Select";
+import { isAgentCliDriver } from "@/lib/built-in-instances";
 
 type Platform = "darwin" | "win32" | "linux";
 
@@ -54,11 +57,14 @@ export function CommandRow({
   actionLabel,
   compact = false,
   allowTerminal = true,
+  proposal = false,
 }: {
   command: string;
   actionLabel: string;
   compact?: boolean;
   allowTerminal?: boolean;
+  /** An agent-proposed command: say out loud that we only copy it, never run it. */
+  proposal?: boolean;
 }) {
   const [status, setStatus] = useState<"copied" | "failed" | "opened" | null>(null);
   const canOpen = typeof window !== "undefined" && allowTerminal && serverTerminal(false);
@@ -82,8 +88,8 @@ export function CommandRow({
 
   if (compact) {
     return (
-      <div className="mt-2 flex min-w-0 items-center gap-1.5 rounded-lg border border-hairline/50 bg-app px-2 py-1.5">
-        <code className="min-w-0 flex-1 truncate font-mono text-[11px] text-ink-secondary" title={command}>
+      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-1.5 rounded-lg border border-hairline/50 bg-app px-2 py-1.5">
+        <code className="min-w-0 flex-1 truncate font-mono text-meta text-ink-secondary" title={command}>
           {command}
         </code>
         <button
@@ -91,7 +97,7 @@ export function CommandRow({
           onClick={() => void copy()}
           aria-label={t("engineSetup.copyCommand")}
           title={t("engineSetup.copyCommand")}
-          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-ink-secondary hover:bg-control hover:text-ink"
+          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-meta font-medium text-ink-secondary hover:bg-control hover:text-ink"
         >
           {copyIcon(12)}
           {t(status === "copied" ? "engineSetup.copied" : status === "failed" ? "common.copyFailed" : "engineSetup.copy")}
@@ -102,7 +108,7 @@ export function CommandRow({
             onClick={() => void openTerminal()}
             aria-label={actionLabel}
             title={actionLabel}
-            className="flex shrink-0 items-center gap-1 rounded-md bg-accent px-2 py-1 text-[11px] font-semibold text-white hover:brightness-110"
+            className="flex shrink-0 items-center gap-1 rounded-md bg-accent px-2 py-1 text-meta font-semibold text-white hover:brightness-110"
           >
             {status === "opened" ? <Check size={12} /> : <TerminalSquare size={12} />}
             {status === "opened" ? t("engineSetup.opened") : t("engineSetup.terminal")}
@@ -111,6 +117,7 @@ export function CommandRow({
         <span aria-live="polite" className="sr-only">
           {status === "opened" ? t("engineSetup.openedHint") : ""}
         </span>
+        {proposal && <span className="w-full basis-full text-tiny leading-relaxed text-success">{NO_AUTO_EXECUTE}</span>}
       </div>
     );
   }
@@ -118,7 +125,7 @@ export function CommandRow({
   return (
     <div className="mt-3">
       <div className="flex min-w-0 items-center gap-2 rounded-lg border border-hairline/50 bg-app px-2.5 py-2">
-        <code className="min-w-0 flex-1 truncate font-mono text-[12px] text-ink-secondary" title={command}>
+        <code className="min-w-0 flex-1 truncate font-mono text-note text-ink-secondary" title={command}>
           {command}
         </code>
         {canOpen && (
@@ -127,7 +134,7 @@ export function CommandRow({
             onClick={() => void copy()}
             aria-label={t("engineSetup.copyCommand")}
             title={t("engineSetup.copyCommand")}
-            className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[12px] font-medium text-ink-secondary hover:bg-control hover:text-ink"
+            className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-note font-medium text-ink-secondary hover:bg-control hover:text-ink"
           >
             {copyIcon(12)}
             {t(status === "copied" ? "engineSetup.copied" : status === "failed" ? "common.copyFailed" : "engineSetup.copy")}
@@ -140,25 +147,27 @@ export function CommandRow({
           <button
             type="button"
             onClick={() => void openTerminal()}
-            className="mt-2 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-[13px] font-semibold text-white hover:brightness-110"
+            className="mt-2 flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-accent px-3 py-2 text-ui font-semibold text-white hover:brightness-110"
           >
             {status === "opened" ? <Check size={14} /> : <TerminalSquare size={14} />}
             {status === "opened" ? t("engineSetup.terminalOpened") : actionLabel}
           </button>
-          <p aria-live="polite" className="mt-1.5 text-center text-[11px] text-ink-tertiary">
+          <p aria-live="polite" className="mt-1.5 text-center text-meta text-ink-tertiary">
             {status === "opened" ? t("engineSetup.pasteHint") : t("engineSetup.copyOnOpenHint")}
           </p>
+          {proposal && <p className="mt-1.5 text-center text-meta font-medium text-success">{NO_AUTO_EXECUTE}</p>}
         </>
       ) : (
         <button
           type="button"
           onClick={() => void copy()}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-control px-3 py-2 text-[13px] font-semibold text-ink hover:bg-raised-hover"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-control px-3 py-2 text-ui font-semibold text-ink hover:bg-raised-hover"
         >
           {copyIcon(14)}
           {t(status === "copied" ? "engineSetup.commandCopied" : status === "failed" ? "common.copyFailed" : "engineSetup.copyCommand")}
         </button>
       )}
+      {proposal && !canOpen && <p className="mt-1.5 text-center text-meta font-medium text-success">{NO_AUTO_EXECUTE}</p>}
     </div>
   );
 }
@@ -200,8 +209,8 @@ function ServerEngineInstall({ instance, mode, command, quiet = false }: { insta
         type="button"
         disabled={busy}
         onClick={() => void run()}
-        className={cn("flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold disabled:cursor-wait disabled:opacity-70",
-          quiet ? "bg-control text-ink hover:bg-raised-hover" : "ui-button-primary bg-accent text-white hover:brightness-110")}
+        className={cn("flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-ui font-semibold disabled:cursor-wait disabled:opacity-70",
+          quiet ? "bg-control text-ink hover:bg-raised-hover" : "bg-accent text-accent-ink hover:brightness-110")}
       >
         {busy ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
         {busy
@@ -209,18 +218,18 @@ function ServerEngineInstall({ instance, mode, command, quiet = false }: { insta
           : t(mode === "update" ? "engineSetup.serverUpdate" : "engineSetup.serverInstall", { name: instance.displayName })}
       </button>
       {standalone && mode === "install" && !busy && !done && (
-        <p className="text-center text-[11px] text-ink-tertiary">
+        <p className="text-center text-meta text-ink-tertiary">
           {/* Decimal megabytes, as macOS and Windows show file sizes. */}
           {t("engineSetup.standaloneDownloadNote", { mb: Math.max(1, Math.round(standalone.downloadBytes / 1_000_000)) })}
         </p>
       )}
-      {done && !busy && <p role="status" className="text-center text-[11px] text-success">{t("engineSetup.installVerified")}</p>}
+      {done && !busy && <p role="status" className="text-center text-meta text-success">{t("engineSetup.installVerified")}</p>}
       {!busy && <AppCopyNotice instance={instance} />}
-      {error && <p role="alert" className="whitespace-pre-wrap text-[12px] leading-relaxed text-danger">{error}</p>}
+      {error && <p role="alert" className="whitespace-pre-wrap break-all text-note leading-relaxed text-danger">{error}</p>}
       {terminalCommand && (
-        <details className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-[12px] text-ink-secondary">
+        <details className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-note text-ink-secondary">
           <summary className="cursor-pointer select-none">{t("engineSetup.preferTerminal")}</summary>
-          <CommandRow command={terminalCommand} actionLabel={t(mode === "update" ? "engineSetup.openUpdate" : "engineSetup.openInstall")} compact allowTerminal={state.config?.cloudHome !== true} />
+          <CommandRow command={terminalCommand} actionLabel={t(mode === "update" ? "engineSetup.openUpdate" : "engineSetup.openInstall")} compact allowTerminal={state.config?.cloudHome !== true} proposal />
         </details>
       )}
     </div>
@@ -247,8 +256,8 @@ export function EngineUpdateNotice({
       <div className="flex items-start gap-2">
         <AlertTriangle size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold text-ink">{update.title}</div>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{update.message}</p>
+          <div className="text-ui font-semibold text-ink">{update.title}</div>
+          <p className="mt-0.5 text-note leading-relaxed text-ink-secondary">{update.message}</p>
         </div>
       </div>
       {instance?.install?.server
@@ -273,8 +282,8 @@ export function EngineWarningNotice({
       <div className="flex items-start gap-2">
         <AlertTriangle size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden="true" />
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold text-ink">{warning.title}</div>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{warning.message}</p>
+          <div className="text-ui font-semibold text-ink">{warning.title}</div>
+          <p className="mt-0.5 text-note leading-relaxed text-ink-secondary">{warning.message}</p>
         </div>
       </div>
     </div>
@@ -347,15 +356,15 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
           type="button"
           disabled={busy !== null}
           onClick={() => void install()}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-ui font-semibold text-white hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
         >
           {busy === "install" ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
           {busy === "install" ? t("engineSetup.installing") : managed.label}
         </button>
-        <p className="mt-1.5 text-center text-[11px] text-ink-tertiary">
+        <p className="mt-1.5 text-center text-meta text-ink-tertiary">
           {t("engineSetup.downloadNote", { mb: Math.ceil(managed.downloadBytes / 1024 / 1024) })}
         </p>
-        {error && <p className="mt-2 text-[12px] text-danger">{error}</p>}
+        {error && <p className="mt-2 text-note text-danger">{error}</p>}
       </div>
     );
   }
@@ -366,7 +375,7 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
         type="button"
         disabled={busy !== null}
         onClick={() => void signIn()}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-[13px] font-semibold text-white hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-ui font-semibold text-white hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
       >
         {busy === "signin" ? <Loader2 size={14} className="animate-spin" /> : <LogIn size={14} />}
         {busy === "signin"
@@ -375,13 +384,13 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
             ? t("engineSetup.openGoogleAgain")
             : t("engineSetup.signInGoogle")}
       </button>
-      {busy === "signin" && <p role="status" className="text-[12px] text-ink-secondary">{t("engineSetup.antigravitySlow")}</p>}
+      {busy === "signin" && <p role="status" className="text-note text-ink-secondary">{t("engineSetup.antigravitySlow")}</p>}
       {flow && (
         <>
-          <button type="button" onClick={() => void check()} className="w-full rounded-lg bg-control px-3 py-2 text-[12px] font-semibold text-ink hover:bg-raised-hover">
+          <button type="button" onClick={() => void check()} className="w-full rounded-lg bg-control px-3 py-2 text-note font-semibold text-ink hover:bg-raised-hover">
             {busy === "check" ? t("common.checking") : t("engineSetup.finishedSignIn")}
           </button>
-          <details className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-[12px] text-ink-secondary">
+          <details className="rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-note text-ink-secondary">
             <summary className="cursor-pointer select-none">{t("engineSetup.otherComputer")}</summary>
             <p className="mt-2 leading-relaxed">{t("engineSetup.otherComputerHint")}</p>
             <input
@@ -389,7 +398,7 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
               onChange={(event) => setCallbackUrl(event.target.value)}
               aria-label={t("engineSetup.otherComputerUrl")}
               placeholder="http://127.0.0.1:…/?code=…"
-              className="mt-2 w-full rounded-md border border-hairline bg-inset px-2 py-1.5 text-[11px] text-ink outline-none focus:border-accent"
+              className="mt-2 w-full rounded-md border border-hairline bg-inset px-2 py-1.5 text-meta text-ink outline-none focus:border-accent"
             />
             <button
               type="button"
@@ -402,7 +411,7 @@ function ManagedEngineSetup({ instance, signInOnly }: { instance: InstanceInfo; 
           </details>
         </>
       )}
-      {error && <p className="text-[12px] text-danger">{error}</p>}
+      {error && <p className="text-note text-danger">{error}</p>}
     </div>
   );
 }
@@ -435,7 +444,7 @@ export function ApiKeyHint({ instance }: { instance: InstanceInfo }) {
   const key = window.ogb?.remoteClient?.active === true ? undefined : inlineKey(instance);
   return (
     <>
-      <div className="mt-0.5 text-[12px] leading-4 text-ink-tertiary">{t("model.apiKeyHint")}</div>
+      <div className="mt-0.5 text-note leading-4 text-ink-tertiary">{t("model.apiKeyHint")}</div>
       {key && <SavedKeyLine id={key} />}
     </>
   );
@@ -449,7 +458,7 @@ function GrokKeyInstead({ className, unframed }: { className?: string; unframed:
         <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-inset text-ink-secondary">
           <KeyRound size={14} />
         </span>
-        <p className="min-w-0 text-[13px] leading-relaxed text-ink">{t("engineSetup.grok.notInstalled")}</p>
+        <p className="min-w-0 text-ui leading-relaxed text-ink">{t("engineSetup.grok.notInstalled")}</p>
       </div>
       {!remote && <KeyRow id="xai" bare via="model_picker" className="mt-2 px-0 pb-0" />}
     </div>
@@ -470,20 +479,20 @@ function ApiKeyEngineSetup({ instance, className, unframed, configured = false }
           <KeyRound size={14} />
         </span>
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold text-ink">{t(copy.title, { name: instance.displayName })}</div>
-          {copy.description && <p className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{t(copy.description)}</p>}
+          <div className="text-ui font-semibold text-ink">{t(copy.title, { name: instance.displayName })}</div>
+          {copy.description && <p className="mt-0.5 text-note leading-relaxed text-ink-secondary">{t(copy.description)}</p>}
         </div>
       </div>
       {/* An API-only engine is available only with a saved key, so unauthenticated means rejected.
           A key engine with its own CLI (DeepSeek Harness) is unauthenticated simply when no key is saved yet. */}
       {!inline && isApiKeyEngine(instance) && needsSignIn(instance) && (
-        <p role="alert" className="mt-2 text-[12px] leading-relaxed text-danger">{t("engineSetup.apiKey.rejected")}</p>
+        <p role="alert" className="mt-2 text-note leading-relaxed text-danger">{t("engineSetup.apiKey.rejected")}</p>
       )}
       {inline ? <KeyRow id={inline} bare via="model_picker" rejected={isApiKeyEngine(instance) && needsSignIn(instance)} className="mt-2 px-0 pb-0" /> : !remote && (
         <button
           type="button"
           onClick={() => dispatch(openKeysFor(instance))}
-          className="mt-3 flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-[13px] font-medium text-ink hover:bg-raised-hover"
+          className="mt-3 flex items-center gap-1.5 rounded-lg bg-raised px-3 py-1.5 text-ui font-medium text-ink hover:bg-raised-hover"
         >
           <KeyRound size={13} aria-hidden="true" />
           {t(copy.action)}
@@ -498,21 +507,267 @@ export function ApiKeyEngineManage({ instance, className }: { instance: Instance
   return <ApiKeyEngineSetup instance={instance} className={className} unframed={false} configured />;
 }
 
-export function EngineSetup({
-  instance,
-  className,
-  intent = "cloud",
-  unframed = false,
-  description: descriptionOverride,
-  quiet = false,
-}: {
+/** The built-in Claude (API key) engine before it is linked to a local Claude Code CLI. */
+export function isClaudeApiKeyInstance(instance: InstanceInfo): boolean {
+  return instance.instanceId === "claudeApi" && instance.driverKind === "claudeAgent" && instance.access === "api";
+}
+
+/**
+ * Claude Code is a CLI with its own subscription sign-in. The API-key variant is a billing
+ * option, not the way most people use it, so this card links a local binary first and keeps
+ * the key as a fallback. A linked instance goes back through the normal subscription setup
+ * (ClaudeSignIn) on the next render.
+ */
+function ClaudeCliLinkSetup({ instance, className, unframed }: { instance: InstanceInfo; className?: string; unframed: boolean }) {
+  const { dispatch, refreshInstances } = useStore();
+  const [candidates, setCandidates] = useState<string[] | null>(instance.cliCandidates ?? null);
+  const [selected, setSelected] = useState("");
+  const [manual, setManual] = useState(instance.cli && !(instance.cliCandidates ?? []).includes(instance.cli) ? instance.cli : "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [useApiKey, setUseApiKey] = useState(false);
+
+  useEffect(() => {
+    let live = true;
+    api(`/api/cli-candidates?name=${encodeURIComponent(instance.cliDefault ?? "claude")}`)
+      .then(({ candidates: found }: { candidates: string[] }) => { if (live) setCandidates(found); })
+      .catch(() => { if (live) setCandidates((prev) => prev ?? []); });
+    return () => { live = false; };
+  }, [instance.cliDefault]);
+
+  if (useApiKey) return <ApiKeyEngineSetup instance={instance} className={className} unframed={unframed} />;
+
+  const value = manual.trim() || selected;
+
+  const link = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (value) {
+        const probe = await api("/api/cli-test", {
+          method: "POST",
+          body: JSON.stringify({ cli: value, driver: instance.driverKind }),
+        }) as { ok?: boolean; message?: string };
+        if (!probe.ok) throw new Error(probe.message || t("engineSetup.claudeLink.probeFailed"));
+      }
+      const { instances } = await api(`/api/instances/${encodeURIComponent(instance.instanceId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ ...(value ? { cli: value } : {}), linkCli: true }),
+      });
+      if (Array.isArray(instances)) dispatch({ type: "instances", instances });
+      await refreshInstances().catch(() => {});
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div data-engine-claude-link className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-inset text-ink-secondary">
+          <TerminalSquare size={14} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-ui font-semibold text-ink">{t("engineSetup.claudeLink.title")}</div>
+          <p className="mt-0.5 text-note leading-relaxed text-ink-secondary">{t("engineSetup.claudeLink.desc")}</p>
+        </div>
+      </div>
+
+      {candidates !== null && candidates.length > 0 && (
+        <Select
+          className="mt-2.5 w-full font-mono"
+          value={manual.trim() ? "" : selected}
+          onChange={(event) => { setSelected(event.target.value); setManual(""); }}
+          aria-label={t("engines.detectedAria", { name: instance.displayName })}
+          disabled={busy}
+        >
+          <option value="">{t("engines.selectBinary")}</option>
+          {candidates.map((path) => <option key={path} value={path}>{path}</option>)}
+        </Select>
+      )}
+      <input
+        type="text"
+        value={manual}
+        onChange={(event) => setManual(event.target.value)}
+        placeholder={t("engines.manualPath")}
+        aria-label={t("engines.manualPath")}
+        spellCheck={false}
+        disabled={busy}
+        className={cn(KEY_FIELD, "mt-2")}
+      />
+
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => void link()}
+        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-3 py-2 text-ui font-semibold text-accent-ink hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+      >
+        {busy ? <Loader2 size={14} className="animate-spin" /> : <TerminalSquare size={14} />}
+        {busy ? t("engineSetup.claudeLink.linking") : t("engineSetup.claudeLink.action")}
+      </button>
+      {error && <p role="alert" className="mt-2 whitespace-pre-wrap break-all text-note leading-relaxed text-danger">{error}</p>}
+      <p className="mt-2 text-meta leading-relaxed text-ink-tertiary">{t("engineSetup.claudeLink.note")}</p>
+      <button type="button" onClick={() => setUseApiKey(true)} className="mt-2 text-note font-medium text-accent hover:underline">
+        {t("engineSetup.claudeLink.apiKey")}
+      </button>
+    </div>
+  );
+}
+
+interface EngineSetupProps {
   instance: InstanceInfo;
   className?: string;
   intent?: "cloud" | "inject";
   unframed?: boolean;
   description?: string;
   quiet?: boolean;
-}) {
+}
+
+/**
+ * The same local-binary control for every agent CLI. ACP engines from the extension
+ * registry ship no installer metadata, so their card used to show only an error string
+ * and no button. This gives all of them a path picker, a probe and a re-check.
+ */
+/** ZCode's CLI takes a Coding Plan key, not the desktop app's account session. */
+function ZcodePlanSignIn() {
+  const command = "npx acp-extension-zcode setup --provider zai";
+  const [copied, setCopied] = useState(false);
+  return (
+    <div data-zcode-plan className="mb-2.5 rounded-lg border border-hairline/40 bg-app/60 p-2.5">
+      <p className="text-note font-semibold text-ink">{t("engineSetup.zcode.title")}</p>
+      <p className="mt-1 text-note leading-relaxed text-ink-secondary">{t("engineSetup.zcode.body")}</p>
+      <div className="mt-1.5 flex items-center gap-2">
+        <code className="min-w-0 flex-1 truncate rounded bg-inset px-2 py-1 font-mono text-meta text-ink-secondary">{command}</code>
+        <button type="button" onClick={() => { void navigator.clipboard?.writeText(command).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1500); }).catch(() => {}); }}
+          className="shrink-0 rounded-md border border-hairline/50 px-2 py-1 text-meta font-medium text-ink hover:bg-control">
+          {copied ? t("engineSetup.zcode.copied") : t("engineSetup.zcode.copy")}
+        </button>
+      </div>
+      <p className="mt-1 text-meta leading-relaxed text-ink-tertiary">{t("engineSetup.zcode.hint")}</p>
+    </div>
+  );
+}
+
+function AgentCliSetup({ instance }: { instance: InstanceInfo }) {
+  const { dispatch, refreshInstances } = useStore();
+  const [candidates, setCandidates] = useState<string[] | null>(instance.cliCandidates ?? null);
+  const [selected, setSelected] = useState("");
+  const [manual, setManual] = useState("");
+  const [busy, setBusy] = useState<"test" | "save" | "reset" | null>(null);
+  const [tested, setTested] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let live = true;
+    api(`/api/cli-candidates?name=${encodeURIComponent(instance.cliDefault ?? instance.displayName)}`)
+      .then(({ candidates: found }: { candidates: string[] }) => { if (live) setCandidates(found); })
+      .catch(() => { if (live) setCandidates((prev) => prev ?? []); });
+    return () => { live = false; };
+  }, [instance.cliDefault, instance.displayName]);
+
+  const value = manual.trim() || selected;
+  const current = instance.cli?.trim() ?? "";
+
+  const patch = async (cli: string, linkCli: boolean) => {
+    const { instances } = await api(`/api/instances/${encodeURIComponent(instance.instanceId)}`, {
+      method: "PATCH", body: JSON.stringify({ cli, linkCli }),
+    });
+    if (Array.isArray(instances)) dispatch({ type: "instances", instances });
+    await refreshInstances().catch(() => {});
+  };
+
+  const run = async (kind: "test" | "save" | "reset", work: () => Promise<void>) => {
+    if (busy) return;
+    setBusy(kind); setError(null); setSaved(false); setTested(null);
+    try { await work(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
+    finally { setBusy(null); }
+  };
+
+  return (
+    <div data-engine-agent-cli className="mt-2 rounded-xl border border-hairline/40 bg-control/30 p-3">
+      {instance.instanceId === "zcode" && <ZcodePlanSignIn />}
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-lg bg-inset text-ink-secondary">
+          <Cpu size={14} />
+        </span>
+        <div className="min-w-0">
+          <div className="text-ui font-semibold text-ink">{t("engineSetup.agentCli.title")}</div>
+          <p className="mt-0.5 text-note leading-relaxed text-ink-secondary">{t("engineSetup.agentCli.desc")}</p>
+        </div>
+      </div>
+
+      {current && (
+        <p className="mt-2 break-all font-mono text-meta text-ink-tertiary">
+          {t("engineSetup.agentCli.current")}：{current}
+        </p>
+      )}
+      {candidates !== null && candidates.length > 0 && (
+        <Select
+          className="mt-2 w-full font-mono"
+          value={manual.trim() ? "" : selected}
+          onChange={(event) => { setSelected(event.target.value); setManual(""); }}
+          aria-label={t("engines.detectedAria", { name: instance.displayName })}
+          disabled={busy !== null}
+        >
+          <option value="">{t("engines.selectBinary")}</option>
+          {candidates.map((path) => <option key={path} value={path}>{path}</option>)}
+        </Select>
+      )}
+      <input
+        type="text" value={manual}
+        onChange={(event) => setManual(event.target.value)}
+        placeholder={t("engines.manualPath")}
+        aria-label={t("engines.manualPath")}
+        spellCheck={false} disabled={busy !== null}
+        className={cn(KEY_FIELD, "mt-2")}
+      />
+
+      <div className="mt-2.5 flex flex-wrap gap-2">
+        <button type="button" disabled={busy !== null || !value}
+          onClick={() => void run("test", async () => {
+            const probe = await api("/api/cli-test", {
+              method: "POST", body: JSON.stringify({ cli: value, driver: instance.driverKind }),
+            }) as { ok?: boolean; message?: string; version?: string };
+            if (!probe.ok) throw new Error(probe.message || t("engineSetup.agentCli.probeFailed"));
+            setTested(probe.version || "ok");
+          })}
+          className="rounded-lg border border-hairline/50 px-3 py-2 text-note font-medium text-ink hover:bg-control disabled:opacity-50">
+          {busy === "test" ? t("engineSetup.agentCli.testing") : t("engineSetup.agentCli.test")}
+        </button>
+        <button type="button" disabled={busy !== null || !value}
+          onClick={() => void run("save", async () => { await patch(value, true); setSaved(true); })}
+          className="flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-note font-semibold text-accent-ink hover:brightness-110 disabled:opacity-50">
+          {busy === "save" ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+          {busy === "save" ? t("engineSetup.agentCli.saving") : t("engineSetup.agentCli.save")}
+        </button>
+        {current && (
+          <button type="button" disabled={busy !== null}
+            onClick={() => void run("reset", async () => { await patch("", false); setSaved(true); })}
+            className="rounded-lg px-2 py-2 text-note font-medium text-ink-secondary hover:bg-control hover:text-ink disabled:opacity-50">
+            {busy === "reset" ? t("engineSetup.agentCli.saving") : t("engineSetup.agentCli.reset")}
+          </button>
+        )}
+      </div>
+      {tested && <p role="status" className="mt-2 text-meta text-success">{t("engineSetup.agentCli.testOk", { version: tested })}</p>}
+      {saved && <p role="status" className="mt-2 text-meta text-success">{t("engineSetup.agentCli.saved")}</p>}
+      {error && <p role="alert" className="mt-2 whitespace-pre-wrap break-all text-note leading-relaxed text-danger">{error}</p>}
+    </div>
+  );
+}
+
+function EngineSetupBody({
+  instance,
+  className,
+  intent = "cloud",
+  unframed = false,
+  description: descriptionOverride,
+  quiet = false,
+}: EngineSetupProps) {
   const { state } = useStore();
   const cloudHome = state.config?.cloudHome === true;
   const install = instance.install;
@@ -547,6 +802,11 @@ export function EngineSetup({
         ? t("engineSetup.installDescSignIn")
         : t("engineSetup.installDesc"));
 
+  // Claude Code links to a local CLI and signs in with a subscription before it ever needs a key.
+  if (isClaudeApiKeyInstance(instance)) {
+    return <ClaudeCliLinkSetup instance={instance} className={className} unframed={unframed} />;
+  }
+
   if (apiKeySetup(instance)) {
     return <ApiKeyEngineSetup instance={instance} className={className} unframed={unframed} />;
   }
@@ -558,8 +818,8 @@ export function EngineSetup({
   if (!install || instance.snapshot.authenticationUnavailableReason) {
     return (
       <div className={cn(!unframed && "rounded-xl border border-hairline/40 bg-control/30 p-3", className)}>
-        <div className="text-[13px] font-semibold text-ink">{t("engineSetup.notReady", { name: instance.displayName })}</div>
-        <p className="mt-1 text-[12px] leading-relaxed text-ink-secondary">
+        <div className="text-ui font-semibold text-ink">{t("engineSetup.notReady", { name: instance.displayName })}</div>
+        <p className="mt-1 text-note leading-relaxed text-ink-secondary">
           {instance.snapshot.authenticationUnavailableReason ?? instance.snapshot.reason ?? t("engineSetup.noReason")}
         </p>
       </div>
@@ -578,18 +838,18 @@ export function EngineSetup({
           {signInOnly ? <LogIn size={14} /> : <Download size={14} />}
         </span>
         <div className="min-w-0">
-          <div className="text-[13px] font-semibold text-ink">{title}</div>
-          <p className="mt-0.5 text-[12px] leading-relaxed text-ink-secondary">{description}</p>
+          <div className="text-ui font-semibold text-ink">{title}</div>
+          <p className="mt-0.5 text-note leading-relaxed text-ink-secondary">{description}</p>
         </div>
       </div>
 
       {instance.snapshot.state === "unavailable" && instance.snapshot.reason && (quiet ? (
-        <details data-engine-setup-reason className="mt-2 text-[12px] leading-4 text-ink-tertiary">
+        <details data-engine-setup-reason className="mt-2 text-note leading-4 text-ink-tertiary">
           <summary className="cursor-pointer select-none hover:text-ink-secondary">{t("engineSetup.details")}</summary>
           <p className="mt-1 whitespace-pre-wrap">{instance.snapshot.reason}</p>
         </details>
       ) : (
-        <p role="alert" className="mt-2 text-[12px] leading-relaxed text-danger">
+        <p role="alert" className="mt-2 text-note leading-relaxed text-danger">
           {instance.snapshot.reason}
         </p>
       ))}
@@ -598,7 +858,7 @@ export function EngineSetup({
         <>
           <DeviceSignIn key={instance.instanceId} instanceId={instance.instanceId} browserPkce={browserSignIn} provider={provider} />
           {deviceSignIn && provider === "grok" && signInCommand && serverTerminal(cloudHome) && (
-            <details className="mt-2 rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-[12px] text-ink-secondary">
+            <details className="mt-2 rounded-lg border border-hairline/50 bg-app px-2.5 py-2 text-note text-ink-secondary">
               <summary className="cursor-pointer select-none">{t("engineSetup.preferTerminal")}</summary>
               <CommandRow command={signInCommand} actionLabel={t("engineSetup.openSignIn")} compact />
             </details>
@@ -617,13 +877,13 @@ export function EngineSetup({
           allowTerminal={!cloudHome}
         />
       ) : (
-        <p className="mt-3 rounded-lg bg-inset px-2.5 py-2 text-[12px] leading-relaxed text-ink-secondary">
+        <p className="mt-3 rounded-lg bg-inset px-2.5 py-2 text-note leading-relaxed text-ink-secondary">
           {t("engineSetup.noInstaller")}
         </p>
       )}
 
       {!signInOnly && install.needsNode && !install.server && (
-        <p className="mt-2 text-[11px] leading-relaxed text-ink-tertiary">
+        <p className="mt-2 text-meta leading-relaxed text-ink-tertiary">
           {t("engineSetup.needsNode").split("{npm}").flatMap((part, index) =>
             index === 0
               ? [part]
@@ -634,8 +894,8 @@ export function EngineSetup({
 
       {(install.command || signInCommand) && !deviceSignIn && !browserSignIn && !pasteSignIn && !install.managed && (
         <div className="mt-3 border-t border-hairline/40 pt-2">
-          <p className="mb-1 text-[12px] leading-relaxed text-ink-secondary">{t("engineSetup.sameMachine")}</p>
-          {needsCli(instance) && <p className="mb-1 text-[12px] leading-relaxed text-ink-secondary">{t("engineSetup.pathHint")}</p>}
+          <p className="mb-1 text-note leading-relaxed text-ink-secondary">{t("engineSetup.sameMachine")}</p>
+          {needsCli(instance) && <p className="mb-1 text-note leading-relaxed text-ink-secondary">{t("engineSetup.pathHint")}</p>}
           <RefreshEngines key={instance.instanceId} />
         </div>
       )}
@@ -645,11 +905,22 @@ export function EngineSetup({
           href={install.docsUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-2.5 inline-flex items-center gap-1.5 text-[12px] font-medium text-accent hover:underline"
+          className="mt-2.5 inline-flex items-center gap-1.5 text-note font-medium text-accent hover:underline"
         >
           <ExternalLink size={12} /> {t("engineSetup.viewGuide")}
         </a>
       )}
     </div>
+  );
+}
+
+/** Keep the original setup flow, then give every agent CLI the local-binary control. */
+export function EngineSetup(props: EngineSetupProps) {
+  const showAgentCli = isAgentCliDriver(props.instance.driverKind) && !isClaudeApiKeyInstance(props.instance);
+  return (
+    <>
+      <EngineSetupBody {...props} />
+      {showAgentCli && <AgentCliSetup instance={props.instance} />}
+    </>
   );
 }

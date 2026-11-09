@@ -7,11 +7,11 @@ export const CONNECTOR_VERSION = "1.0.0";
 
 /** Docker objects the connector owns. */
 export const NAMES = {
-  connector: "mausbot-connector",
-  connectorNext: "mausbot-connector-next",
+  connector: "markbot-connector",
+  connectorNext: "markbot-connector-next",
   home: "mausbot-home",
   dataVolume: "mausbot-data",
-  stateVolume: "mausbot-connector",
+  stateVolume: "markbot-connector",
   snapshotVolume: "mausbot-snapshot",
   backupPrefix: "mausbot-backup-",
 } as const;

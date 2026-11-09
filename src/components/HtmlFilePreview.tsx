@@ -57,9 +57,9 @@ function HtmlFileContent({ path, name, message }: { path: string; name: string; 
       <button type="button" className="table-action" aria-label={t("html.reload")} title={t("html.reload")} onClick={() => setAttempt(attempt + 1)}><RotateCcw size={14} /></button>
       <button type="button" className="table-action" aria-label={t("attach.saveAria", { name })} title={t("attach.saveAria", { name })} disabled={save.state === "saving"} onClick={() => void save.save()}><Download size={14} /></button>
     </div>
-    {save.state === "failed" && <p role="alert" className="text-end text-[12px] text-danger">{save.reason}</p>}
+    {save.state === "failed" && <p role="alert" className="text-end text-note text-danger">{save.reason}</p>}
     {showSource
-      ? <pre className="h-[72dvh] overflow-auto rounded-lg border border-hairline/40 bg-inset p-3 text-[12px] leading-5 whitespace-pre-wrap break-words text-ink">{source}</pre>
+      ? <pre className="h-[72dvh] overflow-auto rounded-lg border border-hairline/40 bg-inset p-3 text-note leading-5 whitespace-pre-wrap break-words text-ink">{source}</pre>
       : <HtmlPreviewFrame source={source} name={name} />}
   </div>;
 }

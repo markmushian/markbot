@@ -30,7 +30,7 @@ import type { RoutineManager } from "../routines.ts";
 import { readSectionContext } from "../section-context.ts";
 import { sectionKey, type BotRecord, type GroupRecord, type Store } from "../store.ts";
 import { createTeamBackup, importTeamBackup } from "../team-backup.ts";
-import { fetchGithubTeam, fetchGrokTemplateCard, fetchLibraryTeam, fetchTeamCatalog } from "../team-library.ts";
+import { bundledTeamCatalog, fetchGithubTeam, fetchGrokTemplateCard, fetchLibraryTeam, fetchTeamCatalog } from "../team-library.ts";
 import { createTeamManifest, parseTeamManifest } from "../team-manifest.ts";
 import { CursorFallback, defaultCursorSession, type CursorSession } from "../cursor-session.ts";
 import type { RequestAuth } from "../request-auth.ts";
@@ -201,8 +201,9 @@ export function createTeamRoutes(deps: TeamRouteDeps): RouteHandler {
     if (method === "GET" && path === "/api/team-library/catalog") {
       try {
         return json(res, 200, await fetchTeamCatalog());
-      } catch (error) {
-        return json(res, 502, { error: error instanceof Error ? error.message : "The team library is unavailable" });
+      } catch {
+        // Never leave Templates with a red timeout box: bundled teams work offline.
+        return json(res, 200, bundledTeamCatalog());
       }
     }
     m = path.match(/^\/api\/team-library\/teams\/([a-z0-9][a-z0-9-]*)$/);

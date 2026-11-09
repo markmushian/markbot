@@ -13,14 +13,14 @@ export const WEIGHT: Record<string, string> = { normal: "font-normal", medium: "
 export const TEXT_ALIGN: Record<string, string> = { start: "text-start", center: "text-center", end: "text-end" };
 
 export const TEXT_SIZE: Record<string, readonly [string, number]> = {
-  xs: ["text-[12px] leading-4", 16], sm: ["text-[13px] leading-[18px]", 18], md: ["text-[14px] leading-5", 20], lg: ["text-[16px] leading-[22px]", 22], xl: ["text-[18px] leading-[26px]", 26],
+  xs: ["text-note leading-4", 16], sm: ["text-ui leading-[18px]", 18], md: ["text-body leading-5", 20], lg: ["text-16 leading-[22px]", 22], xl: ["text-subtitle leading-[26px]", 26],
 };
 export const TITLE_SIZE: Record<string, readonly [string, number]> = {
-  sm: ["text-[15px] leading-[22px] tracking-[-0.01em]", 22], md: ["text-[17px] leading-6 tracking-[-0.01em]", 24], lg: ["text-[20px] leading-7 tracking-[-0.01em]", 28],
-  xl: ["text-[24px] leading-8 tracking-[-0.02em]", 32], "2xl": ["text-[28px] leading-9 tracking-[-0.02em]", 36], "3xl": ["text-[32px] leading-10 tracking-[-0.02em]", 40],
-  "4xl": ["text-[40px] leading-[44px] tracking-[-0.02em]", 44], "5xl": ["text-[48px] leading-[52px] tracking-[-0.02em]", 52],
+  sm: ["text-lead leading-[22px] tracking-[-0.01em]", 22], md: ["text-title leading-6 tracking-[-0.01em]", 24], lg: ["text-page leading-7 tracking-[-0.01em]", 28],
+  xl: ["text-h2 leading-8 tracking-[-0.02em]", 32], "2xl": ["text-h1 leading-9 tracking-[-0.02em]", 36], "3xl": ["text-display leading-10 tracking-[-0.02em]", 40],
+  "4xl": ["text-hero leading-[44px] tracking-[-0.02em]", 44], "5xl": ["text-48 leading-[52px] tracking-[-0.02em]", 52],
 };
-export const CAPTION_SIZE: Record<string, readonly [string, number]> = { sm: ["text-[12px] leading-4", 16], md: ["text-[13px] leading-[18px]", 18], lg: ["text-[14px] leading-5", 20] };
+export const CAPTION_SIZE: Record<string, readonly [string, number]> = { sm: ["text-note leading-4", 16], md: ["text-ui leading-[18px]", 18], lg: ["text-body leading-5", 20] };
 export const ICON_SIZE: Record<string, number> = { xs: 12, sm: 14, md: 16, lg: 20, xl: 24, "2xl": 28, "3xl": 32 };
 export const COL_SIZE: Record<string, number> = { xs: 48, sm: 72, md: 120, lg: 180, xl: 240 };
 
@@ -41,7 +41,7 @@ export const BADGE_SOLID: Record<string, string> = {
   info: "bg-accent text-accent-ink", discovery: "bg-[color:var(--identity-purple,var(--color-accent))] text-app",
 };
 export const BADGE_SIZE: Record<string, string> = {
-  sm: "h-5 px-2 text-[11px] leading-5", md: "h-[22px] px-[9px] text-[12px] leading-[22px]", lg: "h-[26px] px-[11px] text-[13px] leading-[26px]",
+  sm: "h-5 px-2 text-meta leading-5", md: "h-[22px] px-[9px] text-note leading-[22px]", lg: "h-[26px] px-[11px] text-ui leading-[26px]",
 };
 
 export function fourSides(value: unknown): [number, number, number, number] | undefined {

@@ -299,6 +299,8 @@ export interface WireBot extends DefaultBotFields {
   avatarCrop?: BotAvatarCrop;
   /** Zoom of a custom image. Absent means 1, the unzoomed cover crop. */
   avatarZoom?: number;
+  /** Hue rotation in degrees for a custom image. Absent means its original colors. */
+  avatarHue?: number;
   /** Horizontal point of the image kept in the crop, 0–1. Absent means center. */
   avatarFocusX?: number;
   /** Vertical point of the image kept in the crop, 0–1. Absent means center. */
