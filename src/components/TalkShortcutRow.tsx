@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { TalkKeyId, TalkShortcutState } from "../../electron/talk-shortcut.mjs";
 import { t } from "@/lib/i18n";
 import { Select } from "./Select";
-import { SettingRow, Switch } from "./SettingsPrimitives";
+import { SettingRow, Switch } from "./SettingsAstryx";
 
 /** Settings search finds the talk shortcut only where its row can show: this Mac app's own page. */
 export function talkShortcutKeywords(ogb: Window["ogb"] = typeof window === "undefined" ? undefined : window.ogb): string[] {

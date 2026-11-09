@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus, InstanceInfo } from "@/state/store";
 import { AutomaticRecoverySettings } from "./AutomaticRecoverySettings";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 
 const fixture = vi.hoisted(() => ({
   values: [] as unknown[], index: 0,

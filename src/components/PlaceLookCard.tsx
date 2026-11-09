@@ -6,7 +6,7 @@ import { choosePlaceColor, usePlaceLook } from "@/lib/place-look";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { useStore } from "@/state/store";
 import { PlacePicture } from "./PlacePicture";
-import { SettingRow, SettingsRows, SIMPLE_BUTTONS } from "./SettingsPrimitives";
+import { SettingRow, SettingsRows, SIMPLE_BUTTONS } from "./SettingsAstryx";
 import { SwatchRadios } from "./SwatchRadios";
 
 /** The sidebar's look, as two rows of Settings: its colour, in the six swatches the rail's circles use, and its picture,

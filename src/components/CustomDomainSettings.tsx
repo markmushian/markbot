@@ -3,7 +3,7 @@ import { Check, ExternalLink, Globe, Loader2 } from "lucide-react";
 import { api } from "@/state/store";
 import { t } from "@/lib/i18n";
 import { DOCS_URL } from "@/lib/app-links";
-import { Card, CommandLine } from "./SettingsPrimitives";
+import { Card, CommandLine } from "./SettingsAstryx";
 
 export interface CustomDomainStatus {
   publicUrl: string | null;

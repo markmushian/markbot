@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLocale } from "@/lib/i18n";
 import type { AppSettingsSection } from "@/state/store";
-import type { Switch } from "./SettingsPrimitives";
+import type { Switch } from "./SettingsAstryx";
 import { SECTIONS, SETTINGS_GROUPS, SettingsModal } from "./SettingsModal";
 
 const fixture = vi.hoisted(() => ({
@@ -57,8 +57,8 @@ vi.mock("@/lib/interface-mode", () => ({
   setAdvancedMode: fixture.setAdvancedMode,
 }));
 vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn() }));
-vi.mock("./SettingsPrimitives", async (importOriginal) => {
-  const original = await importOriginal<typeof import("./SettingsPrimitives")>();
+vi.mock("./SettingsAstryx", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./SettingsAstryx")>();
   return {
     ...original,
     Switch: (props: ComponentProps<typeof Switch>) => {

@@ -7,7 +7,7 @@ import { t } from "@/lib/i18n";
 import { setDressUp, useDressUp } from "@/lib/halloween-dress";
 import type { HalloweenBodyId } from "../../shared/halloween-bodies";
 import { MausAvatar } from "./Avatar";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 import { useSkinChoice } from "./ThemeRow";
 
 function Miniature({ skin }: { skin: SkinId }) {

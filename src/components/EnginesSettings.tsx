@@ -17,7 +17,7 @@ import { AntigravityFreeSpace } from "./AntigravityFreeSpace";
 import { CacheKeepWarmSettings } from "./CacheKeepWarmSettings";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Select } from "./Select";
-import { SettingsDisclosureRow, SettingsGroup, SettingsRows } from "./SettingsPrimitives";
+import { SettingsDisclosureRow, SettingsGroup, SettingsRows } from "./SettingsAstryx";
 import { InstanceProviderMark } from "./ProviderIcons";
 
 interface ProbeResult {

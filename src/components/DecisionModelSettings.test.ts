@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ConfigStatus } from "@/state/store";
 import { DecisionModelSettings, deciderFailureText } from "./DecisionModelSettings";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 
 const fixture = vi.hoisted(() => ({
   values: [] as unknown[], index: 0, effects: [] as Array<() => unknown>,

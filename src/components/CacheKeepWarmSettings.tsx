@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { t } from "@/lib/i18n";
-import { Card, Switch } from "./SettingsPrimitives";
+import { Card, Switch } from "./SettingsAstryx";
 import { Select } from "./Select";
 
 type KeepWarm = NonNullable<ConfigStatus["cacheKeepWarm"]>;

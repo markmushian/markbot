@@ -3,7 +3,7 @@ import { useState } from "react";
 import { savedStepsEnabled, savedStepsHere } from "@/lib/feature-flags";
 import { t } from "@/lib/i18n";
 import { api, useStore, type ConfigStatus } from "@/state/store";
-import { SettingRow, Switch } from "./SettingsPrimitives";
+import { SettingRow, Switch } from "./SettingsAstryx";
 
 export function SavedStepsRow() {
   const { state, dispatch } = useStore();

@@ -1,7 +1,7 @@
 import { t } from "@/lib/i18n";
 import { useEffect, useRef, useState } from "react";
 import { Check, Cloud, Laptop, Loader2, Trash2 } from "lucide-react";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 import { ComputerSharingSettings } from "./ComputerSharingSettings";
 import { CloudTile } from "./cloud-buy/parts";
 import { cloudColor } from "@/lib/cloud-look";

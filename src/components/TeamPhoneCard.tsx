@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { t } from "@/lib/i18n";
 import { lastSeen, minutesLeft } from "@/lib/pairing-time";
 import { api } from "@/state/store";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 
 export const TEAM_PHONE_PAIRING = "/api/team/phone-pairing";
 export const TEAM_PHONES = "/api/team/phones";

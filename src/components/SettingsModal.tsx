@@ -31,7 +31,12 @@ import { PlaceLookCard } from "./PlaceLookCard";
 import { ChromeRailRow } from "./ChromeRailToggle";
 import { OrganizationSettings } from "./OrganizationSettings";
 import { CloudAccountSettings } from "./CloudAccountSettings";
-import { Card, SettingsGroup, SIMPLE_BUTTONS } from "./SettingsPrimitives";
+import { Card, SettingsGroup } from "./SettingsAstryx";
+import { SIMPLE_BUTTONS } from "./SettingsPrimitives";
+import { IconButton } from "@astryxdesign/core/IconButton";
+import { TextInput } from "@astryxdesign/core/TextInput";
+import { Theme } from "@astryxdesign/core/theme";
+import { themes, defaultThemeSlug } from "../astryx-themes";
 import { shortcutLabel } from "./ShortcutHint";
 import { UsageSection } from "./UsageSection";
 import { SkillsSection } from "./SkillsSection";
@@ -429,32 +434,35 @@ export function SettingsModal() {
   };
 
   const close = () => dispatch({ type: "toggleAppSettings", open: false });
-  const searchField = (className: string, inputClassName: string) => (
-    <div className={className}>
-      <Search size={15} aria-hidden="true" className="shrink-0 text-ink-secondary" />
-      <input
-        data-settings-search
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key !== "Escape") return;
-          e.stopPropagation();
-          if (query) setQuery("");
-          else close();
-        }}
-        placeholder={t("settings.search")}
-        aria-label={t("settings.searchAria")}
-        className={inputClassName}
-      />
-    </div>
+  const searchField = (className: string) => (
+    <TextInput
+      type="search"
+      label={t("settings.searchAria")}
+      isLabelHidden
+      value={query}
+      onChange={(value) => setQuery(value)}
+      onKeyDown={(e) => {
+        if (e.key !== "Escape") return;
+        e.stopPropagation();
+        if (query) setQuery("");
+        else close();
+      }}
+      placeholder={t("settings.search")}
+      startIcon={<Search size={15} aria-hidden="true" />}
+      size="md"
+      width="100%"
+      data-settings-search=""
+      containerClassName={className}
+    />
   );
 
   if (!advanced) {
     const looksOpen = looks && currentPage?.id === "general";
     const goTo = (id: AppSettingsSection) => { setLooks(false); openSection(id); };
     return (
+      <Theme theme={themes[defaultThemeSlug]}>
       <div
-        className="glass-popup-frame"
+        className="glass-popup-frame font-sans"
         data-settings-sheet
         data-settings-look="simple"
         style={glassPopupFrameStyle()}
@@ -472,10 +480,7 @@ export function SettingsModal() {
         >
           <span id="app-settings-title" className="sr-only">{t("settings.title")}</span>
           <nav aria-label={t("settings.title")} className="glass-rail hidden min-h-0 w-[198px] shrink-0 flex-col gap-0.5 overflow-y-auto px-3 py-4 sm:flex">
-            {searchField(
-              "mb-2 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-ink/[0.05] px-[9px] text-ui focus-within:ring-2 focus-within:ring-focus/60",
-              "w-full min-w-0 bg-transparent text-ui text-ink placeholder:text-ink-secondary focus:outline-none",
-            )}
+            {searchField("mb-2")}
             {visiblePages.length === 0 && advancedMatches.length === 0 && keyResults.length === 0 && (
               <div className="px-[9px] py-3 text-ui leading-[18px] text-ink-secondary">{t("settings.noMatch", { query: query.trim() })}</div>
             )}
@@ -532,15 +537,15 @@ export function SettingsModal() {
                 {looksOpen ? t("settings.simple.page.looks") : currentPage ? t(currentPage.labelKey) : null}
               </h2>
             </header>
-            <button
-              type="button"
+            <IconButton
+              label={t("settings.close")}
+              tooltip={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
+              icon={<X size={16} aria-hidden="true" />}
+              variant="ghost"
+              size="md"
               onClick={close}
-              aria-label={t("settings.close")}
-              title={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
-              className="absolute right-3 top-3 flex size-8 cursor-pointer items-center justify-center rounded-full text-ink-secondary transition-colors hover:bg-ink/[0.06] hover:text-ink motion-reduce:transition-none"
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
+              className="absolute right-3 top-3"
+            />
 
             <div
               ref={scrollRef}
@@ -557,12 +562,14 @@ export function SettingsModal() {
           </div>
         </div>
       </div>
+      </Theme>
     );
   }
 
   return (
+    <Theme theme={themes[defaultThemeSlug]}>
     <div
-      className="glass-popup-frame"
+      className="glass-popup-frame font-sans"
       data-settings-sheet
       data-settings-look="advanced"
       style={glassPopupFrameStyle()}
@@ -583,10 +590,7 @@ export function SettingsModal() {
           <div className="shrink-0 px-2 py-3 text-lead font-semibold text-ink">
             {t("settings.title")}
           </div>
-          {searchField(
-            "mb-2 mt-1 flex h-8 shrink-0 items-center gap-2 rounded-lg bg-ink/[0.05] px-[9px] text-ui focus-within:ring-2 focus-within:ring-focus/60",
-            "w-full min-w-0 bg-transparent text-ui text-ink placeholder:text-ink-tertiary focus:outline-none",
-          )}
+          {searchField("mb-2 mt-1")}
           {visibleSections.length === 0 && (
             <div className="px-2.5 py-4 text-ui leading-relaxed text-ink-secondary">
               {t("settings.noMatch", { query: query.trim() })}
@@ -645,14 +649,15 @@ export function SettingsModal() {
             <span className="hidden text-lead font-semibold text-ink sm:block">
               {sectionLabelKey ? t(sectionLabelKey) : null}
             </span>
-            <button
+            <IconButton
+              label={t("settings.close")}
+              tooltip={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
+              icon={<X size={18} />}
+              variant="ghost"
+              size="md"
               onClick={close}
-              aria-label={t("settings.close")}
-              title={`${t("settings.close")} (${shortcutLabel("close-panel")})`}
-              className="ui-icon-button cursor-pointer shrink-0 max-md:size-9 max-md:rounded-full max-md:border max-md:border-hairline max-md:bg-card"
-            >
-              <X size={18} />
-            </button>
+              className="shrink-0 max-md:size-9 max-md:rounded-full max-md:border max-md:border-hairline max-md:bg-card"
+            />
           </div>
 
           <div ref={scrollRef} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-4 sm:px-5 sm:pb-5">
@@ -662,5 +667,6 @@ export function SettingsModal() {
         </div>
       </div>
     </div>
+    </Theme>
   );
 }

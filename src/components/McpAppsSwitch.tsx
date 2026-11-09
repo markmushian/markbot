@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { api } from "@/state/store";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 
 export function McpAppsSwitch<T>({ server, disabled, onSaved }: {
   server: { name: string; apps?: boolean; hasApps?: boolean };

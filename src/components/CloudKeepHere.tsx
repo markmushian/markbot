@@ -3,7 +3,7 @@ import type { CloudSendPageBridge, KeepHereState } from "../../electron/cloud-se
 import { ipcErrorText } from "@/lib/cloud-send";
 import { t } from "@/lib/i18n";
 import { useAdvancedMode } from "@/lib/interface-mode";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 
 /**
  * Settings → Mark Bot Cloud, in Advanced mode only, for someone with a Cloud of their own the move applies to: "Keep this

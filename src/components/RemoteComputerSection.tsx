@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import { Laptop, Loader2, Unplug } from "lucide-react";
 import { Select } from "./Select";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 
 const inputClass =
   "w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2 text-body text-ink placeholder:text-ink-secondary focus:outline-none";

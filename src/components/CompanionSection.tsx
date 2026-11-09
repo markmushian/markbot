@@ -23,7 +23,7 @@ import { companionPairingMode } from "../lib/phone-setup";
 import { revealPhonePairing } from "../lib/phone-pairing";
 import { PhonesList } from "./PhonesList";
 import { ConnectionDetail } from "./ConnectionDetail";
-import { Card, Switch } from "./SettingsPrimitives";
+import { Card, Switch } from "./SettingsAstryx";
 import { productName } from "../lib/brand";
 import { useStore } from "@/state/store";
 

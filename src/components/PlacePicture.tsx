@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 import { BANNER_ACCEPT, bannerSrc, prepareBanner, removeBanner, uploadBanner, type BannerProblem, type BannerSummary } from "@/lib/place-banner";
-import { SettingRow } from "./SettingsPrimitives";
+import { SettingRow } from "./SettingsAstryx";
 
 const PROBLEM: Readonly<Record<BannerProblem | "animated" | "failed", LocaleKey>> = {
   format: "placeLook.imageFormat", read: "placeLook.imageRead", size: "placeLook.imageSize", animated: "placeLook.imageMoving", failed: "placeLook.imageFailed",

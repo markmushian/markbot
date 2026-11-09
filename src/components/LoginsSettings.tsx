@@ -8,7 +8,7 @@ import { relativeTime } from "@/lib/memory";
 import { useOwnerOrAdmin } from "@/lib/use-owner-or-admin";
 import { useStore } from "@/state/store";
 import { LoginBotPicker, LoginForm } from "./LoginForm";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 
 // Security: a row never shows the password, which no route returns.
 
