@@ -1,15 +1,14 @@
 // Astryx-backed settings controls. Same props as SettingsPrimitives, so settings
 // files import from here; surfaces outside settings keep the old module.
 import { Check, Copy, X } from "lucide-react";
-import type { ComponentProps, FocusEvent, MouseEvent, ReactNode, Ref } from "react";
-import { Card as AstryxCard } from "@astryxdesign/core/Card";
+import type { ComponentProps, FocusEvent, MouseEvent, Ref } from "react";
 import { IconButton } from "@astryxdesign/core/IconButton";
 import { Switch as AstryxSwitch } from "@astryxdesign/core/Switch";
-import { cn } from "@/lib/cn";
 import { useCopyFeedback } from "@/lib/copy-text";
 import { t } from "@/lib/i18n";
 
 export {
+  Card,
   SettingRow,
   SettingsDisclosureRow,
   SettingsGroup,
@@ -62,24 +61,6 @@ export function Switch({
       aria-labelledby={ariaLabelledBy}
       {...rest}
     />
-  );
-}
-
-export function Card({
-  title,
-  subtitle,
-  children,
-}: {
-  title?: string;
-  subtitle?: string;
-  children?: ReactNode;
-}) {
-  return (
-    <AstryxCard>
-      {title && <div className="text-16 font-semibold text-ink in-data-[settings-look=simple]:text-body in-data-[settings-look=simple]:leading-5 in-data-[settings-look=simple]:font-medium">{title}</div>}
-      {subtitle && <div className={cn(title && "mt-0.5", "text-ui leading-relaxed text-ink-secondary in-data-[settings-look=simple]:leading-[18px]")}>{subtitle}</div>}
-      {children && <div className={title || subtitle ? "mt-4" : undefined}>{children}</div>}
-    </AstryxCard>
   );
 }
 
