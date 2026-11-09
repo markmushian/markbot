@@ -83,7 +83,7 @@ export function AvatarEditorCard({ bot, onPatch, onClose }: {
                 model marks. The drawn mascot shapes are not offered here — the bot falls back
                 to one on its own, but choosing an avatar means choosing a picture. */}
             <OrganizationAvatarIcons busy={busy} onUpload={upload} />
-            <ModelAvatarIcons busy={busy} onUpload={upload} />
+            <ModelAvatarIcons busy={busy} onUpload={upload} onPatch={onPatch} />
             {showsImage && (
               <>
                 <AvatarFraming bot={bot} disabled={busy} onPatch={onPatch} />

@@ -2,9 +2,9 @@
 // forward it), and OPENAI_API_KEY makes provider:auto resolve to OpenRouter without its key ("HTTP 401:
 // Missing Authentication header"), so injects write providers.<host> and set_model `custom:<host>:<model>`.
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
 import type { ModelCatalog } from "../../contracts.ts";
@@ -14,6 +14,24 @@ import { decodeInjectId, hostApiKey, INJECT_SEP, localHost, mergeLocalInject } f
 import { createAcpDriver, type AcpSupport } from "./core.ts";
 
 const EMPTY: ModelCatalog = { default: "", options: [] };
+
+/** The Windows installer ships a standalone ACP adapter beside the CLI. `hermes.exe acp` goes
+ *  through the CLI wrapper, which starts the gateway and on Windows never answers session/new
+ *  (initialize succeeds, then the request hangs). `hermes-acp.exe` with no arguments answers in
+ *  ~12 s and reads the same config.yaml/.env. Prefer it whenever it is present. */
+const HERMES_ACP_BINARY = /hermes-acp(?:\.exe)?$/i;
+
+function hermesAcpBinary(cli: string): string {
+  if (HERMES_ACP_BINARY.test(cli)) return cli;
+  const sibling = cli.replace(/hermes(?:\.exe)?$/i, process.platform === "win32" ? "hermes-acp.exe" : "hermes-acp");
+  return sibling !== cli && existsSync(sibling) ? sibling : cli;
+}
+
+/** Both resolveCommand and spawnArgs must agree on the argv, so they share this one decision. */
+function hermesLaunch(cli: string): { command: string; args: string[] } {
+  const command = hermesAcpBinary(cli);
+  return { command, args: HERMES_ACP_BINARY.test(command) ? [] : ["acp"] };
+}
 
 export const HERMES_OPENMAUS_SCREENSHOT_COMPAT = "HERMES_OPENMAUS_SCREENSHOT_COMPAT";
 export const HERMES_OPENMAUS_SCREENSHOT_COMPAT_MODEL = "HERMES_OPENMAUS_SCREENSHOT_COMPAT_MODEL";
@@ -222,7 +240,8 @@ export async function fetchHermesAcpModels(
   return await new Promise((resolve) => {
     let child: ReturnType<typeof spawn>;
     try {
-      const resolved = resolveCli(cli, ["acp"], env);
+      const launch = hermesLaunch(cli);
+      const resolved = resolveCli(launch.command, launch.args, env);
       child = spawn(resolved.command, resolved.args, { stdio: ["pipe", "pipe", "ignore"], env: env as NodeJS.ProcessEnv, windowsHide: true });
     } catch {
       return resolve([]);
@@ -367,14 +386,25 @@ const support: AcpSupport = {
     docsUrl: "https://hermes-agent.nousresearch.com/docs/getting-started/quickstart",
     signInCommand: "hermes setup",
   },
-  spawnArgs: () => ["acp"],
+  // The standalone adapter takes no subcommand; the CLI wrapper still needs `acp`.
+  resolveCommand: async (_env, config) => ({ command: hermesLaunch(config.cli).command }),
+  spawnArgs: (config) => hermesLaunch(config.cli).args,
   // Hermes keeps the first MCP server it registers under a name for the process's life, so a new bearer needs a fresh process.
   restartOnMcpChange: true,
   resendsReasoningReply: true,
-  transformEnv: (env) => {
+  transformEnv: (env, config) => {
     // A leftover OPENAI_API_KEY makes Hermes auto-resolve to OpenRouter with no Authorization header.
     delete env.OPENAI_API_KEY;
     delete env.OPENROUTER_API_KEY;
+    // The ACP adapter reads config.yaml and .env from HERMES_HOME. A GUI launch often loses that
+    // variable, so derive it from the install directory the instance points at instead of silently
+    // falling back to an empty ~/.hermes with no provider credentials.
+    if (!env.HERMES_HOME && /[/\\]/.test(config.cli)) {
+      const bin = dirname(config.cli);
+      if (basename(bin).toLowerCase() === "bin" && existsSync(join(dirname(bin), "config.yaml"))) {
+        env.HERMES_HOME = dirname(bin);
+      }
+    }
   },
   pickAuthMethod: () => null,
   authFailure: "continue",

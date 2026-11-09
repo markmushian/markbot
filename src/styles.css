@@ -3098,3 +3098,53 @@ button:disabled.bg-danger {
 .trace-step-box { background: color-mix(in srgb, #8b7cf6 14%, var(--color-card)); border-color: color-mix(in srgb, #8b7cf6 30%, var(--color-card)); }
 .trace-step-ink { color: color-mix(in srgb, #7c6cf0 85%, var(--color-ink)); }
 .trace-tool-ink { color: color-mix(in srgb, #1f9a8c 80%, var(--color-ink)); }
+
+/* ── Astryx settings controls follow the active skin ──────────────────────────
+   The settings pilot wraps its sheet in <Theme data-astryx-theme="neutral">.
+   Astryx's neutral palette is built from light-dark(), so it follows the OS
+   colour scheme instead of [data-skin] — in a dark skin those inputs, switches
+   and icon buttons stay white. Bridge its surface/text/border/accent tokens onto
+   Mark Bot's skin tokens. These rules sit outside every @layer, so they outrank
+   Astryx's @scope declaration without changing any component.
+
+   --color-accent is defined by BOTH systems. The aliases resolve on :root, where
+   it still means the skin's accent; assigning it on the Astryx scope cannot
+   reference itself. Semantic tokens (success/error/...) are left alone and keep
+   following light-dark(), which the two colour-scheme rules below keep in sync
+   with the skin's brightness. */
+:root {
+  --markbot-accent: var(--color-accent);
+  --markbot-accent-ink: var(--color-accent-ink);
+  --markbot-accent-text: var(--color-accent-text);
+}
+[data-astryx-theme="neutral"] {
+  --color-background-surface: var(--color-card);
+  --color-background-body: var(--color-app);
+  --color-background-card: var(--color-card);
+  --color-background-popover: var(--color-card);
+  --color-background-muted: var(--color-inset);
+  --color-neutral: color-mix(in srgb, var(--color-ink) 6%, transparent);
+  --color-accent: var(--markbot-accent);
+  --color-accent-muted: color-mix(in srgb, var(--markbot-accent) 20%, transparent);
+  --color-on-accent: var(--markbot-accent-ink);
+  --color-text-accent: var(--markbot-accent-text);
+  --color-icon-accent: var(--markbot-accent-text);
+  --color-text-primary: var(--color-ink);
+  --color-text-secondary: var(--color-ink-secondary);
+  --color-text-disabled: var(--color-ink-tertiary);
+  --color-icon-primary: var(--color-ink);
+  --color-icon-secondary: var(--color-ink-secondary);
+  --color-icon-disabled: var(--color-ink-tertiary);
+  --color-border: color-mix(in srgb, var(--color-ink) 12%, transparent);
+  --color-border-emphasized: color-mix(in srgb, var(--color-ink) 28%, transparent);
+  --color-overlay-hover: color-mix(in srgb, var(--color-ink) 6%, transparent);
+  --color-overlay-pressed: color-mix(in srgb, var(--color-ink) 12%, transparent);
+  --color-skeleton: var(--color-raised);
+  --color-tint-hover: var(--color-ink);
+}
+:root:is([data-skin="midnight"], [data-skin="foundry"], [data-skin="graphite"], [data-skin="dusk"], [data-skin="halloween"]) [data-astryx-theme="neutral"] {
+  color-scheme: dark;
+}
+:root:is([data-skin="atelier"], [data-skin="lagoon"], [data-skin="linen"], [data-skin="daylight"], [data-skin="meadow"], [data-skin="pop"]) [data-astryx-theme="neutral"] {
+  color-scheme: light;
+}
