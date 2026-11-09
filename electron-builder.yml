@@ -1,6 +1,6 @@
 appId: com.markbot.app
 productName: Mark Bot
-artifactName: MarkBot-${version}-${arch}.${ext}
+artifactName: MarkBot-${arch}.${ext}
 
 protocols:
   - name: Mark Bot package install
@@ -147,7 +147,7 @@ dmg:
   # ${arch} is load-bearing: without it the x64 dmg silently overwrites
   # the arm64 one when both arches build (this section overrides both the
   # top-level and mac-level artifactName, so it must carry the arch itself)
-  artifactName: MarkBot-${version}-${arch}.dmg
+  artifactName: MarkBot-${arch}.dmg
   # x/y are icon centres in points. electron-builder 26.15.3 sizes the window
   # from build/background.png and ignores dmg.window whenever a background is set.
   iconSize: 112
@@ -197,7 +197,7 @@ nsis:
   # Versioned, like the .dmg. The README's /latest/download/ button needs a
   # STABLE filename, so ship a second copy named OpenMausBot-setup.exe on the
   # release — the same trick as OpenMausBot.dmg beside OpenMausBot-${version}.dmg.
-  artifactName: MarkBot-${version}-setup.${ext}
+  artifactName: MarkBot-setup.${ext}
 
 linux:
   target:

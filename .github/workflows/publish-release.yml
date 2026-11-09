@@ -1,0 +1,176 @@
+# Tag -> installers -> GitHub Release, for every platform this project ships.
+#
+# Pushing a version tag (v0.6.1) builds Windows, macOS (arm64 + x64) and
+# Ubuntu installers from that exact commit and publishes them to this
+# repository's Releases, under the stable file names the README and docs link
+# to. The updater feeds (latest*.yml) and blockmaps ride along, so a released
+# build can also update itself.
+#
+# Prerelease naming: a tag like v0.7.0-beta.1 is published as a prerelease.
+#
+# Code signing is NOT set up: the macOS builds are unsigned (see the note the
+# publish step writes into the release body) and the Windows installer triggers
+# SmartScreen's "unknown publisher". To sign later, add the certificates as
+# repository secrets and delete the CSC_IDENTITY_AUTO_DISCOVERY line below.
+name: Publish release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build and publish, e.g. v0.6.1"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  # Unsigned builds on purpose: without a signing identity on the runner,
+  # electron-builder must skip signing rather than fail or half-sign. Remove
+  # this once real certificates live in repository secrets.
+  CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win
+            os: windows-latest
+            script: package:win
+          - platform: mac
+            os: macos-latest
+            script: package:mac
+          - platform: linux
+            os: ubuntu-latest
+            script: package:linux
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # A manual run rebuilds the tag it names, not the branch the button sits on.
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - uses: pnpm/action-setup@v4
+        # version picked up from package.json's packageManager field
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build installers
+        run: pnpm ${{ matrix.script }}
+
+      - name: Smoke-test the packaged server
+        run: node scripts/smoke-packaged-server.mjs
+
+      - name: Collect release files
+        shell: bash
+        run: |
+          mkdir -p out
+          shopt -s nullglob
+          for f in release/*.exe release/*.zip release/*.blockmap \
+                   release/*.dmg release/*.deb release/*.AppImage \
+                   release/latest*.yml; do
+            cp "$f" out/
+          done
+          echo "collected:" && ls -la out
+          # A platform that produced nothing is a broken build, not an empty release.
+          count=$(ls out | wc -l)
+          if [ "$count" -lt 2 ]; then
+            echo "::error::only $count file(s) in out/ — the build produced nothing usable"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.platform }}
+          path: out/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish to Releases
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Sanity-check what users will download
+        run: |
+          ls -la dist
+          test -f dist/MarkBot-setup.exe || { echo "::error::Windows installer missing"; exit 1; }
+          test -f dist/MarkBot-arm64.dmg || { echo "::error::macOS arm64 dmg missing"; exit 1; }
+          test -f dist/MarkBot-x64.dmg || { echo "::error::macOS x64 dmg missing"; exit 1; }
+          test -f dist/MarkBot-x64.AppImage || { echo "::error::Linux AppImage missing"; exit 1; }
+          test -f dist/MarkBot-x64.deb || { echo "::error::Linux deb missing"; exit 1; }
+          test -f dist/latest.yml || { echo "::error::Windows updater feed missing"; exit 1; }
+          test -f dist/latest-mac.yml || { echo "::error::macOS updater feed missing"; exit 1; }
+          test -f dist/latest-linux.yml || { echo "::error::Linux updater feed missing"; exit 1; }
+          du -sh dist/*
+
+      - name: Write release notes
+        run: |
+          version="${TAG#v}"
+          case "$TAG" in
+            *-*) prerelease="--prerelease" ;;
+            *)   prerelease="" ;;
+          esac
+          cat > notes.md <<EOF
+          ## Mark Bot ${version}
+
+          ### 安装
+
+          | 系统 | 下载 | 说明 |
+          |---|---|---|
+          | **Windows** x64 | \`MarkBot-setup.exe\` | 双击安装，无需管理员。SmartScreen 提示"未知发布者"时：**更多信息 → 仍要运行**。 |
+          | **macOS** Apple 芯片 | \`MarkBot-arm64.dmg\` | 拖进"应用程序"。**未签名**：首次打开请右键 → 打开（或见下方说明）。 |
+          | **macOS** Intel | \`MarkBot-x64.dmg\` | 同上。 |
+          | **Ubuntu 24.04** x64 | \`MarkBot-x64.deb\` / \`MarkBot-x64.AppImage\` | deb 用 APT 安装；AppImage 赋予执行权限后直接运行。 |
+
+          安装后打开即用：首次启动会引导连接 AI（用已有账号一键登录，或先用免费模型）。
+          账号与数据只存在本机（\`~/.markbot-oss\` / \`%APPDATA%/Mark Bot OSS\`）。
+
+          <details>
+          <summary>macOS 提示"无法验证开发者"怎么办</summary>
+
+          本版 macOS 安装包**未做 Apple 签名/公证**。首次打开时系统会拦截，请二选一：
+          1. 右键 App 图标 → **打开** → 再点"打开"；
+          2. 或终端执行：\`xattr -dr com.apple.quarantine /Applications/Mark\\ Bot.app\`
+          </details>
+
+          *本版安装包由 GitHub Actions 从 tag ${TAG} 自动构建，未签名。*
+          EOF
+          echo "prerelease=$prerelease"
+
+      - name: Create release and upload
+        run: |
+          prerelease=""
+          case "$TAG" in *-*) prerelease="--prerelease" ;; esac
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" --title "Mark Bot ${TAG#v}" --notes-file notes.md $prerelease dist/*
+          fi
+          gh release view "$TAG" --json tagName,assets --jq '{tag: .tagName, assets: [.assets[].name]}'

@@ -1,7 +1,7 @@
 {
   "name": "markbot-desktop",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Mark Bot：本地优先的多助手 AI 工作台。",
   "homepage": "https://markbot.app",
   "repository": {
@@ -24,7 +24,7 @@
     "prepare": "node scripts/install-git-hooks.mjs",
     "lint": "oxlint --deny-warnings .",
     "check:contrast": "node scripts/check-skin-contrast.mjs",
-    "check:markbot-release": "node scripts/check-markbot-release.mjs release-v08/win-unpacked --expected-version 0.6.0",
+    "check:markbot-release": "node scripts/check-markbot-release.mjs release-v08/win-unpacked --expected-version 0.6.1",
     "i18n:check": "node scripts/generate-locale.mjs --check",
     "dev": "vite",
     "docs:dev": "pnpm --filter @markbot/docs dev",
