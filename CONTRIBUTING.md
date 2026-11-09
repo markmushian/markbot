@@ -62,7 +62,7 @@ and produces one release artifact containing:
 
 Before publishing, confirm that `package.json` has the release version and dispatch the workflow against the same
 commit used for the other platforms. Attach all five Ubuntu files to the matching release in the separate
-[OpenMausBot releases](https://github.com/milind-soni/OpenMausBot/releases). Then verify the checksum
+[OpenMausBot releases](https://github.com/markmushian/markbot/releases). Then verify the checksum
 file and install the `.deb` plus launch the AppImage in a clean Ubuntu 24.04 x86_64 GNOME environment. Never combine
 packages built from different commits under one version.
 

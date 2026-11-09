@@ -32,12 +32,12 @@ CUA supply-chain work is tracked in [issue #113](https://github.com/milind-soni/
 
 Choose one Ubuntu 24.04 x86_64 package from the latest release:
 
-- [Debian package (`OpenMausBot-amd64.deb`)](https://github.com/milind-soni/OpenMausBot/releases/latest/download/OpenMausBot-amd64.deb) — recommended; APT installs its desktop dependencies and configures the bundled bot browser's sandbox.
-- [Portable AppImage (`OpenMausBot.AppImage`)](https://github.com/milind-soni/OpenMausBot/releases/latest/download/OpenMausBot.AppImage) — does not install system files.
-- [SHA-256 checksums](https://github.com/milind-soni/OpenMausBot/releases/latest/download/SHA256SUMS-ubuntu-x64.txt)
+- [Debian package (`MarkBot-amd64.deb`)](https://github.com/markmushian/markbot/releases/latest/download/MarkBot-amd64.deb) — recommended; APT installs its desktop dependencies and configures the bundled bot browser's sandbox.
+- [Portable AppImage (`MarkBot.AppImage`)](https://github.com/markmushian/markbot/releases/latest/download/MarkBot.AppImage) — does not install system files.
+- [SHA-256 checksums](https://github.com/markmushian/markbot/releases/latest/download/SHA256SUMS-ubuntu-x64.txt)
 
 Versioned packages and previous releases remain available on the
-[releases page](https://github.com/milind-soni/OpenMausBot/releases).
+[releases page](https://github.com/markmushian/markbot/releases).
 
 ## Build packages
 
