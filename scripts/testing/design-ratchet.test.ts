@@ -59,7 +59,7 @@ describe("design ratchet", () => {
   it("keeps one easing curve and the named exits", () => {
     const bad: string[] = [];
     for (const { path, text } of readSources()) {
-      for (const match of text.matchAll(/(?<![\w-])ease-([\w\[\]().,/-]+)/g)) {
+      for (const match of text.matchAll(/(?<![\w-])ease-([\w[\]().,/-]+)/g)) {
         const name = match[1];
         // An arbitrary `ease-[…]` is a second curve by definition.
         if (!ALLOWED_EASING.has(name)) bad.push(`${path}: ${match[0]}`);
