@@ -23,7 +23,7 @@ Talk to them like contacts. Watch them work. Approve what matters.
   <img src="https://img.shields.io/github/v/release/markmushian/markbot?style=for-the-badge&label=%E2%AC%87%EF%B8%8F%20%20Download%20for%20Windows&labelColor=070707&color=4cc2ff&cacheSeconds=300" alt="Download the latest Mark Bot for Windows (.exe)" height="40">
 </a>
 
-<sub>[latest release](https://github.com/markmushian/markbot/releases/latest) &nbsp;·&nbsp; Windows: x64 一键安装（安装后打开即用） &nbsp;·&nbsp; macOS / Ubuntu: 即将提供，现在可从源码构建（见下文） &nbsp;·&nbsp; [all releases](https://github.com/markmushian/markbot/releases)</sub>
+<sub>[latest release](https://github.com/markmushian/markbot/releases/latest) &nbsp;·&nbsp; Windows 一键安装 · macOS（Apple 芯片 / Intel）· Ubuntu 24.04：.deb 或 AppImage &nbsp;·&nbsp; [all releases](https://github.com/markmushian/markbot/releases)</sub>
 
 <br>
 
@@ -318,8 +318,9 @@ See [Run OpenMausBot from scripts and CI](docs/headless-cli.md).
 | | Download | Install |
 |---|---|---|
 | **Windows** (x64) | [MarkBot-setup.exe](https://github.com/markmushian/markbot/releases/latest/download/MarkBot-setup.exe) | Run it — one-click, per-user, no admin rights. The installer isn't code-signed yet, so SmartScreen shows "unknown publisher": **More info → Run anyway**. |
-| **macOS** (Apple silicon / Intel) | *Coming soon* | Build from source below. |
-| **Ubuntu 24.04** (x64) | *Coming soon* | Build from source below. |
+| **macOS** (Apple silicon) | [MarkBot-arm64.dmg](https://github.com/markmushian/markbot/releases/latest/download/MarkBot-arm64.dmg) | Drag to Applications. Unsigned: right-click → **Open** the first time. |
+| **macOS** (Intel) | [MarkBot-x64.dmg](https://github.com/markmushian/markbot/releases/latest/download/MarkBot-x64.dmg) | Same app, built for Intel Macs. Unsigned: right-click → **Open**. |
+| **Ubuntu 24.04** (x64) | [MarkBot-x64.deb](https://github.com/markmushian/markbot/releases/latest/download/MarkBot-x64.deb) · [MarkBot-x64.AppImage](https://github.com/markmushian/markbot/releases/latest/download/MarkBot-x64.AppImage) | Install the `.deb` with APT (recommended), or make the AppImage executable and run it. |
 
 See the [Ubuntu Desktop guide](docs/linux-desktop.md) for installation, capabilities, and troubleshooting.
 Any desktop build can also pair as a client to another Windows, macOS, or Ubuntu host over Tailscale; see [desktop-to-desktop companion mode](docs/desktop-companion.md).

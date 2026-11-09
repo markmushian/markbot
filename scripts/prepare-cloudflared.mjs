@@ -222,7 +222,18 @@ export async function releaseBytes(asset) {
   for (let attempt = 1; attempt <= 3; attempt++) {
     let failure;
     try {
-      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(120_000) });
+      // A ~40MB release asset on a slow link can outlive two minutes; the browser
+      // downloader already allows ten. One retry covers a dropped connection.
+      let response;
+      for (let attempt = 1; ; attempt += 1) {
+        try {
+          response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(600_000) });
+        } catch (error) {
+          if (attempt >= 2) throw error;
+          continue;
+        }
+        break;
+      }
       if (response.ok) return Buffer.from(await response.arrayBuffer());
       await response.body?.cancel().catch(() => {});
       failure = new Error(`could not download ${asset.name}: HTTP ${response.status}`);

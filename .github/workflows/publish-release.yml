@@ -36,6 +36,8 @@ env:
   # electron-builder must skip signing rather than fail or half-sign. Remove
   # this once real certificates live in repository secrets.
   CSC_IDENTITY_AUTO_DISCOVERY: "false"
+  # tsc -b aborts (SIGABRT) when V8 runs out of heap on a 7GB runner.
+  NODE_OPTIONS: "--max-old-space-size=6144"
 
 jobs:
   build:
