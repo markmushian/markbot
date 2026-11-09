@@ -46,3 +46,4 @@ deploy/podman/.env.*
 dist-prev-*/
 .pnpm-home/
 tmp-*.log
+.tmpexp/
