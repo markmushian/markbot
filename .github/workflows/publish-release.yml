@@ -73,8 +73,34 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # The vendor binaries (cloudflared, agent-browser, the CUA driver, Electron
+      # itself) come from release CDNs that answer 504 from runner IPs. Cache
+      # them across runs keyed on the pins, so a flaky download is paid once.
+      - name: Cache vendor binaries
+        uses: actions/cache@v4
+        with:
+          path: |
+            dist-native
+            node_modules/.cache
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: vendor-${{ matrix.platform }}-${{ hashFiles('scripts/prepare-*.mjs', 'server/browser-engine-release.ts', 'server/browser-bundle-release.ts', 'electron-builder.yml') }}
+
       - name: Build installers
-        run: pnpm ${{ matrix.script }}
+        # The scripts already retry individual downloads; this retries the whole
+        # package step for the failures that outlast those attempts.
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if pnpm ${{ matrix.script }}; then
+              echo "package step succeeded on attempt $attempt"
+              exit 0
+            fi
+            echo "package step attempt $attempt/3 failed; waiting before retry"
+            sleep $((attempt * 30))
+          done
+          echo "::error::package step failed three times"
+          exit 1
 
       - name: Smoke-test the packaged server
         run: node scripts/smoke-packaged-server.mjs

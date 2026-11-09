@@ -53,7 +53,26 @@ async function officialBinary() {
   await mkdir(cache, { recursive: true });
   const url = `https://github.com/trycua/cua/releases/download/cua-driver-rs-v${release.version}/${release.file}`;
   console.log(`Downloading CUA Driver ${release.version} from the official release…`);
-  const response = await fetch(url, { headers: { "user-agent": "Mark Bot-packager" } });
+  // The release CDN answers 504 intermittently; a retry seconds later gets
+  // through. The pinned checksum below still has to match whatever arrives.
+  let response;
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      response = await fetch(url, { headers: { "user-agent": "Mark Bot-packager" }, signal: AbortSignal.timeout(120_000) });
+    } catch (error) {
+      if (attempt >= 5) throw error;
+      console.warn(`download attempt ${attempt}/5 failed: ${error.name ?? error}; retrying`);
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * 2 ** attempt));
+      continue;
+    }
+    if (!response.ok && [408, 429, 500, 502, 503, 504].includes(response.status) && attempt < 5) {
+      await response.body?.cancel().catch(() => {});
+      console.warn(`download attempt ${attempt}/5: HTTP ${response.status}; retrying`);
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * 2 ** attempt));
+      continue;
+    }
+    break;
+  }
   if (!response.ok) throw new Error(`CUA Driver download failed: HTTP ${response.status}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   const digest = createHash("sha256").update(bytes).digest("hex");
