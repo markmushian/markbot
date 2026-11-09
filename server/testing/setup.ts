@@ -7,6 +7,18 @@ import { afterAll, afterEach } from "vitest";
 
 import { removeTempDir } from "./cleanup.ts";
 
+// Astryx 0.7.11 reads requestAnimationFrame at module scope whenever window
+// exists; tests that stub a bare window before importing the settings UI
+// crash in Node, which has no requestAnimationFrame. Provide one.
+type RequestAnimationFrameFn = (callback: (time: number) => void) => number;
+const testGlobals = globalThis as typeof globalThis & { requestAnimationFrame?: RequestAnimationFrameFn };
+if (typeof testGlobals.requestAnimationFrame === "undefined") {
+  testGlobals.requestAnimationFrame = (callback) => {
+    setTimeout(() => callback(Date.now()), 0);
+    return 0;
+  };
+}
+
 const home = mkdtempSync(join(tmpdir(), "omb-test-home-"));
 process.env.HOME = home;
 process.env.USERPROFILE = home;

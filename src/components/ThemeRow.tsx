@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { SKINS, THEME_SKINS, applySkinChoice, readSkinChoice, subscribeSkin, type SkinChoice } from "@/lib/skins";
-import { SettingRow } from "./SettingsPrimitives";
+import { SettingRow } from "./SettingsAstryx";
 
 const THEMES = [
   { choice: "system", label: "settings.theme.system" },

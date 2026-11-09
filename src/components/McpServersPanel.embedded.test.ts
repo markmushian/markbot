@@ -53,8 +53,9 @@ describe("Your MCP servers inside the Apps pop-up", () => {
     expect(html).toContain("Your MCP servers");
     expect(html).toContain("Add MCP server");
     expect(html.match(/role="switch"/g)?.length).toBeGreaterThanOrEqual(3); // two servers + the Claude Code switch
-    expect(html).toMatch(/aria-label="Turn notes off" type="button" role="switch" aria-checked="true"/);
-    expect(html).toMatch(/aria-label="Turn docs on" type="button" role="switch" aria-checked="false"/);
+    expect(html).toMatch(/aria-label="Turn notes off"[^]{0,1500}?<input[^>]*checked=""/);
+    expect(html).toMatch(/aria-label="Turn docs on"[^]{0,1500}?<input[^>]*role="switch"[^>]*>/);
+    expect(html).not.toMatch(/aria-label="Turn docs on"[^]{0,1500}?<input[^>]*checked=""/);
     expect(html).toContain('aria-label="Edit notes"');
     expect(html.match(/> Test</g)).toHaveLength(2);
     expect(html).not.toContain("overflow-y-auto");

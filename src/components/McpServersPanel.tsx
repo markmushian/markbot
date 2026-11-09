@@ -24,7 +24,7 @@ import { completeMcpSignIn, mcpSignInLink, runMcpSignIn, type McpSignInStatus } 
 import { api, useStore } from "@/state/store";
 
 import { McpAppsSwitch } from "./McpAppsSwitch";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 import { ClaudeCodeSwitches } from "./ClaudeCodeSwitches";
 import { WhopIcon } from "./WhopIcon";
 import type { McpMessage } from "./McpResultBudgetField";

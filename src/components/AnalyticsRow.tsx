@@ -2,7 +2,7 @@ import { useState } from "react";
 import { analyticsEnabled, setAnalyticsEnabled } from "@/lib/analytics";
 import { t } from "@/lib/i18n";
 import { DOCS_URL } from "@/lib/app-links";
-import { SettingRow, Switch } from "./SettingsPrimitives";
+import { SettingRow, Switch } from "./SettingsAstryx";
 
 const ANALYTICS_DOC_URL = `${DOCS_URL}/analytics.md`;
 

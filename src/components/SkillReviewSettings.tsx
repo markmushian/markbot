@@ -11,7 +11,7 @@ import {
 } from "@/lib/feature-flags";
 import { api, useStore, type ConfigStatus } from "@/state/store";
 import { t } from "@/lib/i18n";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 
 export function SkillReviewSettings() {
   const { state, dispatch } = useStore();

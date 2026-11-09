@@ -6,7 +6,7 @@ import { t } from "@/lib/i18n";
 import { formatUsd, hasFiniteCost } from "@/lib/usage";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { CopyLink } from "./PeopleSection";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 
 export interface FleetWorkspaceView {
   slug: string;

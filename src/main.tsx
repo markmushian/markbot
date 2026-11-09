@@ -14,6 +14,10 @@ import { PairPage } from "./pair/PairPage";
 import { setLocale } from "./lib/i18n";
 import { shownLanguage } from "./lib/presence-client";
 import { HomeScreen, SignedOutAtHome } from "./components/HomeScreen";
+// Astryx stylesheets declare their cascade layers first, so the app's
+// Tailwind layers win where they overlap.
+import "@astryxdesign/core/reset.css";
+import "@astryxdesign/core/astryx.css";
 import "./styles.css";
 import "./mark-brand.css";
 

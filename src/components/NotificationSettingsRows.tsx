@@ -9,7 +9,7 @@ import {
   useNotificationSounds,
 } from "@/lib/notification-preferences";
 import { requestNotificationPermission } from "@/lib/notify";
-import { SettingRow, Switch } from "./SettingsPrimitives";
+import { SettingRow, Switch } from "./SettingsAstryx";
 
 export function NotificationRows({ simple = false }: { simple?: boolean }) {
   return (

@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setLocale, t } from "@/lib/i18n";
 import type { AppSettingsSection } from "@/state/store";
-import type { Switch } from "./SettingsPrimitives";
+import type { Switch } from "./SettingsAstryx";
 import { SECTIONS, SIMPLE_FOLDED, SIMPLE_HIDDEN_SECTIONS, SIMPLE_PAGES, SettingsModal, revealSettingsBlock } from "./SettingsModal";
 import { SIMPLE_ADVANCED_ONLY, SimpleLooksPage } from "./SettingsSimplePages";
 
@@ -34,6 +34,18 @@ vi.mock("@/lib/interface-mode", () => ({
 vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn() }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.ownerOrAdmin }));
 vi.mock("@/lib/chrome-rail", () => ({ useChromeRail: () => fixture.rail, setChromeRailHidden: (hidden: boolean) => fixture.railHidden.push(hidden) }));
+vi.mock("./SettingsAstryx", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./SettingsAstryx")>();
+  return {
+    ...original,
+    Switch: (props: ComponentProps<typeof Switch>) => {
+      fixture.switches.push(props);
+      return createElement(original.Switch, props);
+    },
+  };
+});
+// The chrome rail toggle still uses the old primitives, so its switch is
+// recorded through the same wrapper here.
 vi.mock("./SettingsPrimitives", async (importOriginal) => {
   const original = await importOriginal<typeof import("./SettingsPrimitives")>();
   return {
@@ -155,7 +167,10 @@ describe("Settings in Simple mode", () => {
     expect(currentPage(html)).toBe("general");
     expect(groupLabels(html)).toEqual(["Account", "Appearance", "Notifications", "System", "Import", "Organization"]);
     expect(blocks(html).at(-1)).toBe("advanced-mode");
-    expect([...html.matchAll(/<button[^>]*role="switch"[^>]*>/g)].at(-1)?.[0]).toContain('aria-label="Advanced mode"');
+    const switches = [...html.matchAll(/<input[^>]*role="switch"[^>]*>/g)];
+    const lastId = switches.at(-1)?.[0].match(/ id="([^"]+)"/)?.[1];
+    expect(lastId).toBeDefined();
+    expect(html).toMatch(new RegExp(`<label for="${lastId}"[^>]*>Advanced mode</label>`));
     expect(html).toContain("Show every control, including tools for builders. Nothing is deleted either way.");
     expect(html).not.toContain("border-accent-border/40");
     expect(html).toContain("Add your name");

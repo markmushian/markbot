@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
-import { SettingRow } from "./SettingsPrimitives";
+import { SettingRow } from "./SettingsAstryx";
 
 /**
  * Where this app's logs are, and the recent part of them to share with support. Security: the report never holds

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ManagedDesktopState } from "../../electron/managed-desktop.mjs";
 import { activeLocale, t } from "@/lib/i18n";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 import { CompanyModels } from "./CompanyModels";
 
 const providerNames: Record<string, string> = { anthropic: "Anthropic", openai: "OpenAI", openrouter: "OpenRouter" };

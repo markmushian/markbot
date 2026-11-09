@@ -3,7 +3,7 @@ import { claudeUserMcpEnabled, claudeUserSkillsEnabled } from "@/lib/feature-fla
 import { t } from "@/lib/i18n";
 import type { LocaleKey } from "@/locales";
 import { api, useStore, type ConfigStatus } from "@/state/store";
-import { Switch } from "./SettingsPrimitives";
+import { Switch } from "./SettingsAstryx";
 
 type Feature = "claudeUserMcp" | "claudeUserSkills";
 

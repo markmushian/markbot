@@ -10,7 +10,7 @@ import { readMembership, type Membership } from "../lib/membership";
 import { readSessionState, type SessionState } from "../lib/session";
 import { canPairDevices } from "./ServerPairingCard";
 import { normalizeAccessEntry, withEntry, withoutEntry, type SignInLists } from "./SignInAccessCard";
-import { Card, SettingRow } from "./SettingsPrimitives";
+import { Card, SettingRow } from "./SettingsAstryx";
 import { Select } from "./Select";
 
 export type Role = "admin" | "member";

@@ -4,7 +4,7 @@ import { t } from "@/lib/i18n";
 import { api } from "@/state/store";
 import { readSessionState, type SessionState } from "../lib/session";
 import { canPairDevices } from "./ServerPairingCard";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 
 export interface SignInLists {
   admins: string[];

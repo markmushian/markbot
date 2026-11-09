@@ -5,7 +5,7 @@ import { setLocale } from "@/lib/i18n";
 import type { SendKey } from "@/lib/send-key";
 import { en, locales } from "@/locales";
 import type { AppSettingsSection } from "@/state/store";
-import type { Switch } from "./SettingsPrimitives";
+import type { Switch } from "./SettingsAstryx";
 import { SECTIONS, sectionMatches, SettingsModal } from "./SettingsModal";
 
 const fixture = vi.hoisted(() => ({
@@ -81,6 +81,18 @@ vi.mock("@/lib/interface-mode", () => ({
 vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn() }));
 vi.mock("./PeopleSection", () => ({ PeopleSection: () => null }));
 vi.mock("@/lib/chrome-rail", () => ({ useChromeRail: () => fixture.rail, setChromeRailHidden: (hidden: boolean) => fixture.railHidden.push(hidden) }));
+vi.mock("./SettingsAstryx", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./SettingsAstryx")>();
+  return {
+    ...original,
+    Switch: (props: ComponentProps<typeof Switch>) => {
+      fixture.switches.push(props);
+      return createElement(original.Switch, props);
+    },
+  };
+});
+// The chrome rail toggle still uses the old primitives, so its switch is
+// recorded through the same wrapper here.
 vi.mock("./SettingsPrimitives", async (importOriginal) => {
   const original = await importOriginal<typeof import("./SettingsPrimitives")>();
   return {

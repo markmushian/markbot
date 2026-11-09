@@ -4,7 +4,7 @@ import { api, useStore, type ConfigStatus } from "@/state/store";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { DOCS_URL } from "@/lib/app-links";
-import { Switch } from "../SettingsPrimitives";
+import { Switch } from "../SettingsAstryx";
 import { KEY_FIELD } from "./KeyRow";
 import { cleanKey, looksLikeKey } from "./key-save";
 

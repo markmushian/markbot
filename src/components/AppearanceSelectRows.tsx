@@ -3,7 +3,7 @@ import { t } from "@/lib/i18n";
 import { CHAT_WIDTH_IDS, applyChatWidth, readChatWidth, type ChatWidthId } from "@/lib/chat-width";
 import { FONT_IDS, applyFont, readFont, type FontId } from "@/lib/fonts";
 import { parseSidebarToolsLayout, setSidebarToolsLayout, SIDEBAR_TOOLS_LAYOUTS, useSidebarToolsLayout } from "@/lib/sidebar-preferences";
-import { SettingRow } from "./SettingsPrimitives";
+import { SettingRow } from "./SettingsAstryx";
 import { Select } from "./Select";
 
 export function FontRow() {

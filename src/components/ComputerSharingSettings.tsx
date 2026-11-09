@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FolderPlus, X } from "lucide-react";
-import { Card } from "./SettingsPrimitives";
+import { Card } from "./SettingsAstryx";
 import { useStore } from "@/state/store";
 import { sharedComputersEnabled } from "@/lib/feature-flags";
 import { LendingActivityList } from "./LendingActivity";

@@ -41,7 +41,7 @@ afterEach(async () => {
   vi.unstubAllGlobals();
 });
 
-const toggle = () => container.querySelector<HTMLButtonElement>('[role="switch"]')!;
+const toggle = () => container.querySelector<HTMLInputElement>('[role="switch"]')!;
 const mount = async () => { await act(async () => root!.render(createElement(StrictMode, null, createElement(DeviceNotificationsRow)))); };
 const resume = async (event: "visibilitychange" | "focus") => {
   await act(async () => (event === "focus" ? window : document).dispatchEvent(new Event(event)));
@@ -49,16 +49,16 @@ const resume = async (event: "visibilitychange" | "focus") => {
 
 it.each(["visibilitychange", "focus"] as const)("follows a permission changed in the browser on %s, without asking", async (event) => {
   await mount();
-  expect(toggle().getAttribute("aria-checked")).toBe("true");
+  expect(toggle().checked).toBe(true);
   permission = "denied";
   await resume(event);
-  expect(toggle().disabled).toBe(true);
-  expect(toggle().getAttribute("aria-checked")).toBe("false");
+  expect(toggle().getAttribute("aria-disabled")).toBe("true");
+  expect(toggle().checked).toBe(false);
   expect(container.textContent).toContain("Notifications are blocked for this site");
   permission = "granted";
   await resume(event);
-  expect(toggle().disabled).toBe(false);
-  expect(toggle().getAttribute("aria-checked")).toBe("true");
+  expect(toggle().getAttribute("aria-disabled")).toBeNull();
+  expect(toggle().checked).toBe(true);
   expect(requestPermission).not.toHaveBeenCalled();
   expect(fixture.setFinishedNotifications).not.toHaveBeenCalled();
 });
@@ -67,7 +67,7 @@ it("asks the browser only from the switch, and turns finished notices on once al
   permission = "default";
   fixture.optedIn = false;
   await mount();
-  expect(toggle().getAttribute("aria-checked")).toBe("false");
+  expect(toggle().checked).toBe(false);
   expect(requestPermission).not.toHaveBeenCalled();
   await act(async () => toggle().click());
   expect(requestPermission).toHaveBeenCalledOnce();
@@ -79,13 +79,13 @@ it("asks the browser only from the switch, and turns finished notices on once al
   await resume("focus");
   await act(async () => toggle().click());
   expect(fixture.setFinishedNotifications).not.toHaveBeenCalled();
-  expect(toggle().disabled).toBe(true);
+  expect(toggle().getAttribute("aria-disabled")).toBe("true");
 });
 
 it("keeps a muted device muted when permission is granted elsewhere, and toggles without asking once allowed", async () => {
   fixture.optedIn = false;
   await mount();
-  expect(toggle().getAttribute("aria-checked")).toBe("false");
+  expect(toggle().checked).toBe(false);
   await act(async () => toggle().click());
   expect(requestPermission).not.toHaveBeenCalled();
   expect(fixture.setFinishedNotifications).toHaveBeenCalledWith(true);
@@ -96,7 +96,7 @@ it("ignores hidden pages and stops listening once unmounted", async () => {
   permission = "denied";
   vi.spyOn(document, "visibilityState", "get").mockReturnValue("hidden");
   await resume("focus");
-  expect(toggle().disabled).toBe(false);
+  expect(toggle().getAttribute("aria-disabled")).toBeNull();
   await act(async () => root!.unmount());
   root = undefined;
   readPermission.mockClear();

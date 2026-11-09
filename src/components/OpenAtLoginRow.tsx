@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { t } from "@/lib/i18n";
-import { SettingRow, Switch } from "./SettingsPrimitives";
+import { SettingRow, Switch } from "./SettingsAstryx";
 
 type OpenAtLogin = { available: boolean; on: boolean };
 
