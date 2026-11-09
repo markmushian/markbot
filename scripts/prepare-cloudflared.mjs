@@ -219,21 +219,12 @@ export async function releaseBytes(asset) {
 
   const url = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/${asset.name}`;
   const retryableStatuses = new Set([408, 429, 500, 502, 503, 504]);
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  // GitHub's release-asset CDN answers 504 intermittently (a retry seconds later
+  // succeeds), so this loop needs real spread: five attempts, doubling delays.
+  for (let attempt = 1; attempt <= 5; attempt++) {
     let failure;
     try {
-      // A ~40MB release asset on a slow link can outlive two minutes; the browser
-      // downloader already allows ten. One retry covers a dropped connection.
-      let response;
-      for (let attempt = 1; ; attempt += 1) {
-        try {
-          response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(600_000) });
-        } catch (error) {
-          if (attempt >= 2) throw error;
-          continue;
-        }
-        break;
-      }
+      const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(600_000) });
       if (response.ok) return Buffer.from(await response.arrayBuffer());
       await response.body?.cancel().catch(() => {});
       failure = new Error(`could not download ${asset.name}: HTTP ${response.status}`);
@@ -244,8 +235,8 @@ export async function releaseBytes(asset) {
       if (!(error instanceof TypeError) && !["TimeoutError", "AbortError"].includes(error?.name)) throw error;
       failure = error;
     }
-    if (attempt === 3) throw failure;
-    const delay = 1_000 * 2 ** (attempt - 1);
+    if (attempt === 5) throw failure;
+    const delay = 1_000 * 2 ** attempt;
     console.warn(`cloudflared download attempt ${attempt}/3 failed: ${failure.message}; retrying in ${delay}ms`);
     await new Promise((resolve) => setTimeout(resolve, delay));
   }

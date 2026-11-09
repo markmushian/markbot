@@ -115,7 +115,26 @@ export async function releaseBytes(asset, cacheDirectory) {
       rmSync(cached, { force: true });
     }
   }
-  const response = await fetch(asset.url, { signal: AbortSignal.timeout(600_000), redirect: "follow" });
+  // The release CDN this pulls from answers 504 intermittently; a retry seconds
+  // later gets through. Callers verify size and SHA-256 either way.
+  let response;
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      response = await fetch(asset.url, { signal: AbortSignal.timeout(600_000), redirect: "follow" });
+    } catch (error) {
+      if (attempt >= 5) throw error;
+      console.warn(`browser asset ${asset.asset} fetch attempt ${attempt}/5 failed: ${error.name ?? error}; retrying`);
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * 2 ** attempt));
+      continue;
+    }
+    if (!response.ok && [408, 429, 500, 502, 503, 504].includes(response.status) && attempt < 5) {
+      await response.body?.cancel().catch(() => {});
+      console.warn(`browser asset ${asset.asset} attempt ${attempt}/5: HTTP ${response.status}; retrying`);
+      await new Promise((resolve) => setTimeout(resolve, 1_000 * 2 ** attempt));
+      continue;
+    }
+    break;
+  }
   if (!response.ok) throw new Error(`Could not download ${asset.asset}: HTTP ${response.status}`);
   const parts = [];
   let size = 0;
