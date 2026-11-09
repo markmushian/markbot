@@ -402,7 +402,7 @@ function SimpleEngines({ rows, isReady, renderEngine, more }: {
               <div key={instance.instanceId} data-simple-engine={instance.instanceId} className="group">
                 <div className="flex min-h-11 flex-wrap items-center gap-x-5 gap-y-2 px-4 py-2.5">
                   <span className="flex min-w-[min(100%,15rem)] flex-1 items-center gap-3">
-                    <InstanceProviderMark instance={instance} size={14} subtle />
+                    <InstanceProviderMark instance={instance} size={14} />
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="truncate text-body leading-5 text-ink">{instance.displayName}</span>
                       <span className="truncate text-ui leading-[18px] text-ink-secondary">{simpleStatus(instance, ready)}</span>
@@ -423,7 +423,7 @@ function SimpleEngines({ rows, isReady, renderEngine, more }: {
           title={t("settings.simple.ai.more", { count: String(others.length) })}
           trailing={<span aria-hidden="true" className="flex items-center -space-x-1">
             {others.slice(0, 4).map((instance) => (
-              <span key={instance.instanceId} className="flex size-[18px] items-center justify-center rounded-full bg-menu"><InstanceProviderMark instance={instance} size={14} subtle /></span>
+              <span key={instance.instanceId} className="flex size-[18px] items-center justify-center rounded-full bg-menu"><InstanceProviderMark instance={instance} size={14} /></span>
             ))}
           </span>}
           {...more}

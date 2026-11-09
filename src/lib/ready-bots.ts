@@ -382,6 +382,31 @@ export function readyBot(id: string): ReadyBot | undefined {
 }
 
 /** Only who the bot is changes: model, approval level, computer, folder, apps and permissions stay the person's own. */
+/** The Mark Bot portrait each template wears on its card and starts with. Roles decide the
+ *  pairing; templates that share a job share a face. Anything unlisted falls back to the guide. */
+export const READY_BOT_AVATARS: Record<string, string> = {
+  assistant: "guide",
+  inbox: "communicator",
+  research: "researcher",
+  coder: "coder",
+  community: "reviewer",
+  social: "designer",
+  ops: "operator",
+  writer: "writer",
+  analyst: "analyst",
+  "meeting-notes": "planner",
+  travel: "guide",
+  study: "researcher",
+  humanizer: "writer",
+  "design-critic": "designer",
+  "call-coach": "communicator",
+  "plant-care": "operator",
+};
+
+export function readyBotAvatarPath(id: string): string {
+  return `/mark-avatars/${READY_BOT_AVATARS[id] ?? "guide"}.png`;
+}
+
 export function readyBotTemplate(defaults: NewBotDefaults, bot: ReadyBot): NewBotDefaults {
   bot = localizedReadyBot(bot);
   const template = structuredClone(defaults);
@@ -393,6 +418,8 @@ export function readyBotTemplate(defaults: NewBotDefaults, bot: ReadyBot): NewBo
     soul: bot.soul,
     color: bot.look.color,
     mascotBody: bot.look.mascotBody,
+    avatarUrl: readyBotAvatarPath(bot.id),
+    avatarCrop: "circle",
   };
   for (const [path, text] of Object.entries(bot.notes ?? {})) {
     const own = template.memory[path]?.trimEnd();

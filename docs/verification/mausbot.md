@@ -10,7 +10,7 @@ its menu's **Hide from sidebar** also turns off.
 
 ```sh
 pnpm exec vitest run server/default-bot.test.ts server/default-bot.e2e.test.ts \
-  server/team-setup-requests.test.ts src/lib/default-bot.test.ts src/components/MausBotWelcome.test.ts \
+  server/team-setup-requests.test.ts src/lib/default-bot.test.ts src/components/MarkBotWelcome.test.ts \
   src/lib/mausbot-landing.test.ts
 ```
 
@@ -39,7 +39,7 @@ pnpm exec vitest run server/default-bot.test.ts server/default-bot.e2e.test.ts \
   each within 2% of the same Chief's list without them.
 - `server/team-setup-requests.test.ts` ("Mark Bot's Chief-level team setup"):
   it adds specialists like a Chief but never changes who the Chief is.
-- `src/components/MausBotWelcome.test.ts` and `src/lib/default-bot.test.ts`:
+- `src/components/MarkBotWelcome.test.ts` and `src/lib/default-bot.test.ts`:
   the first-launch welcome shows once with its panel closed, Add pins it and Not
   now turns the switch off, a name, colour, look or uploaded picture is saved as
   the bot's own edit screen saves it, a renamed Mark Bot is still found by its

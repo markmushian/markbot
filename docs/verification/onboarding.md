@@ -168,7 +168,7 @@ window itself.
 ## Two screens, then the chat (Oct 27 2026)
 
 ```sh
-pnpm exec vitest run src/lib/onboarding.test.ts src/lib/welcome-draft.test.ts src/lib/default-bot.test.ts src/lib/corner-popup.test.ts src/components/onboarding src/components/HelperIntro.test.ts src/components/AppNotices.test.ts src/components/MausBotWelcome.gate.test.ts
+pnpm exec vitest run src/lib/onboarding.test.ts src/lib/welcome-draft.test.ts src/lib/default-bot.test.ts src/lib/corner-popup.test.ts src/components/onboarding src/components/HelperIntro.test.ts src/components/AppNotices.test.ts src/components/MarkBotWelcome.gate.test.ts
 ```
 
 - `src/components/onboarding/WelcomeFlow.test.ts` renders the flow in
@@ -190,7 +190,7 @@ pnpm exec vitest run src/lib/onboarding.test.ts src/lib/welcome-draft.test.ts sr
 - `src/lib/corner-popup.test.ts` and `src/components/AppNotices.test.ts` keep
   every corner notice out of the first conversation until a reply;
   `src/components/onboarding/FirstConversationTour.test.ts` keeps its
-  spotlights off; `src/components/MausBotWelcome.gate.test.ts` keeps Mark Bot's
+  spotlights off; `src/components/MarkBotWelcome.gate.test.ts` keeps Mark Bot's
   first-launch card for older installs only.
 - `src/components/onboarding/GuidedTour.test.ts` and
   `src/components/onboarding/WelcomeGate.test.ts` check the app tour never
