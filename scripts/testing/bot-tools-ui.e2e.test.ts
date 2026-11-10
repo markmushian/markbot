@@ -58,7 +58,7 @@ describe("bot setup and tools in the real renderer", () => {
       // already have the Access row expanded, so expand only when collapsed.
       const state = await ui("snapshot", "--interactive");
       const profile = Object.entries(state.refs as Record<string, { role: string; name: string }>)
-        .find(([, entry]) => entry.role === "button" && /Open .+ profile/.test(entry.name));
+        .filter(([, entry]) => entry.role === "button" && /Open .+ profile/.test(entry.name)).at(-1);
       expect(profile).toBeDefined();
       await ui("click", "--ref", `@${profile![0]}`);
       const accessExpanded = () => evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Access')?.getAttribute('aria-expanded')");
@@ -112,7 +112,7 @@ describe("bot setup and tools in the real renderer", () => {
     await runControlOmb(["send", "--bot", created[0].id, "--text", "Reply briefly for the sidebar test.", "--url", info.url]);
     expect((await runControlOmb(["wait", "--bot", created[0].id, "--timeout", "20", "--url", info.url]) as { status: string }).status).toBe("settled");
     await openTools();
-    await expect.poll(snapshot, { timeout: 10_000 }).toContain("No MCP servers added yet.");
+    await expect.poll(snapshot, { timeout: 10_000 }).toContain("Your MCP servers");
     const usageExpanded = () => evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Usage')?.getAttribute('aria-expanded')");
     const openHeaderUsage = async () => {
       await click("More");

@@ -35,7 +35,7 @@
         }
       },
       "input": {
-        "text": "OpenMausBot is checking that an extraction-model key works."
+        "text": "Mark Bot is checking that an extraction-model key works."
       }
     },
     "inboxTriage": {
@@ -95,7 +95,7 @@
           }
         },
         "input": {
-          "text": "OpenMausBot is checking that an extraction-model key works."
+          "text": "Mark Bot is checking that an extraction-model key works."
         }
       }
     },

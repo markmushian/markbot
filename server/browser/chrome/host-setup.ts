@@ -32,14 +32,14 @@ export const APPARMOR_PROFILE_PATH = `/etc/apparmor.d/${APPARMOR_PROFILE_NAME}`;
  * write, or a pattern, would let any program claim the exemption.
  */
 export function appArmorProfile(executable: string): string {
-  if (!isAbsolute(executable) || /[\s*?[\]{}"'\\^]/.test(executable) || !executable.startsWith("/opt/")) {
+  if (!isAbsolute(executable) || /[*?[\]{}"'\\^\n\r]/.test(executable) || !executable.startsWith("/opt/")) {
     throw new Error(`The browser's AppArmor exemption is only for a root-owned path under /opt, not ${executable}.`);
   }
   return `# Written by \`markbot browser setup\`: lets Mark Bot's Chrome use its sandbox.
 abi <abi/4.0>,
 include <tunables/global>
 
-profile ${APPARMOR_PROFILE_NAME} ${executable} flags=(unconfined) {
+profile ${APPARMOR_PROFILE_NAME} "${executable}" flags=(unconfined) {
   userns,
 
   include if exists <local/${APPARMOR_PROFILE_NAME}>

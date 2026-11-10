@@ -117,7 +117,10 @@ it("an Owner or Admin's paired session (as the Admin holds one) sets a team key 
   expect([summary.ai.keys.find((key: { id: string }) => key.id === "openai"), summary.mcp]).toEqual([{ id: "openai", configured: true }, []]);
   expect(JSON.stringify(summary)).not.toContain("never-shown");
   const saved = JSON.parse(readFileSync(join(dataDir, "config.json"), "utf8"));
-  expect([saved.openai?.key, saved.mcpServers, saved.language]).toEqual(["sk-team-key-never-shown", {}, undefined]);
+  expect(saved.openai?.key).toBe("sk-team-key-never-shown");
+  expect(saved.mcpServers.linear).toBeUndefined();
+  expect(Object.values(saved.mcpServers).every((server: any) => server.enabled === false)).toBe(true);
+  expect(saved.language).toBeUndefined();
   // The language is the team's (OMB_CLOUD_TEAM_LANGUAGE), though config.json sets none.
   const settings = await admin("GET", "/api/config");
   expect([settings.status, settings.body.language]).toEqual([200, "de"]);

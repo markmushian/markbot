@@ -135,6 +135,9 @@ describe("Preset bots in the real renderer", () => {
       await ui("screenshot", "--out", evidence(shot));
       await click("Create bot");
       await expect.poll(async () => (await bots()).length, { timeout: 15_000 }).toBe(before.length + 1);
+      // The API list can observe the new bot one render before the creation
+      // dialog unmounts. Wait for that UI transition before opening it again.
+      await expect.poll(() => evaluate("document.querySelectorAll('[role=dialog] button').length"), { timeout: 10_000 }).toBe(0);
       return (await bots()).find((bot) => !before.some((old) => old.id === bot.id))!;
     };
     const fromFile = await create(`preset:${filePreset!.id}`, "Skills, added switched off: follow-up", "new-bot-file");

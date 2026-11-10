@@ -9,7 +9,9 @@ import {
 } from "@hpke/core";
 
 export const PHONE_SECRET_PROTOCOL_VERSION = 1 as const;
-export const PHONE_SECRET_INFO = "Mark Bot phone credential v1";
+// Wire-protocol constants are deliberately not rebranded: the iOS client and
+// already-paired phones sealed v1 envelopes with these exact bytes.
+export const PHONE_SECRET_INFO = "OpenMausBot phone credential v1";
 export const PHONE_SECRET_MAX_BYTES = 4_096;
 
 const BASE64URL = /^[A-Za-z0-9_-]+$/;
@@ -100,7 +102,7 @@ export function phoneSecretAAD(context: Pick<
   "keyId" | "deviceId" | "botId" | "threadId" | "messageId" | "target" | "requestKey"
 >): Uint8Array {
   const fields = [
-    "markbot-phone-credential-v1",
+    "openmausbot-phone-credential-v1",
     context.keyId,
     context.deviceId,
     context.botId,

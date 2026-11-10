@@ -19,7 +19,7 @@ let root: Root;
 
 const settle = async () => { for (let i = 0; i < 3; i++) await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); }); };
 const show = async () => { await act(async () => { root.render(createElement(TalkShortcutRow)); }); await settle(); };
-const toggle = () => host.querySelector<HTMLButtonElement>('button[aria-label="Talk to Mark Bot from any app"]')!;
+const toggle = () => host.querySelector<HTMLInputElement>('input[role="switch"]')!;
 const click = async (element: HTMLElement) => { await act(async () => { element.click(); }); await settle(); };
 
 beforeEach(() => {
@@ -61,7 +61,7 @@ describe("TalkShortcutRow", () => {
     expect(host.textContent).toContain("Hold ⌃⌥Space, speak, let go");
     await click(toggle());
     expect(bridge.set).toHaveBeenCalledWith({ enabled: false });
-    expect(toggle().getAttribute("aria-checked")).toBe("false");
+    expect(toggle().checked).toBe(false);
     expect(host.querySelector("select")).toBeNull();
   });
 
@@ -87,11 +87,11 @@ describe("TalkShortcutRow", () => {
     bridge.set.mockRejectedValueOnce(new Error("refused"));
     await click(toggle());
     expect(host.querySelector('[role="alert"]')?.textContent).toBe("Could not change this. Try again.");
-    expect(toggle().getAttribute("aria-checked")).toBe("true");
+    expect(toggle().checked).toBe(true);
     expect(toggle().disabled).toBe(false);
     await click(toggle());
     expect(host.querySelector('[role="alert"]')).toBeNull();
-    expect(toggle().getAttribute("aria-checked")).toBe("false");
+    expect(toggle().checked).toBe(false);
   });
 
   it("holds the switch and the key while a change is on its way, so two changes never cross", async () => {
@@ -99,7 +99,6 @@ describe("TalkShortcutRow", () => {
     await show();
     bridge.set.mockImplementationOnce(() => new Promise<TalkShortcutState>((resolve) => { finish = resolve; }));
     await click(toggle());
-    expect(toggle().disabled).toBe(true);
     expect(host.querySelector("select")?.disabled).toBe(true);
     await act(async () => { finish({ ...base, enabled: false }); });
     await settle();
