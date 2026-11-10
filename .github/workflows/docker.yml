@@ -276,6 +276,7 @@ jobs:
         # home beside a live one refuses to start.
         run: |
           set -euo pipefail
+          trap 'code=$?; echo "::error::own-server cloud-home smoke failed at shell line $LINENO (exit $code)"; for name in own own2 own3 fly; do docker logs "$name" 2>&1 | tail -40 || true; done; exit $code' ERR
           rand43() { openssl rand -base64 32 | tr '+/' '-_' | tr -d '=\n'; }
           b64url() { base64 | tr '+/' '-_' | tr -d '=\n'; }
           secret=$(rand43)
