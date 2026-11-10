@@ -56,10 +56,17 @@ describe("bot setup and tools in the real renderer", () => {
     const openTools = async () => {
       // Open the profile from the chat header. A remembered section can
       // already have the Access row expanded, so expand only when collapsed.
-      await evaluate("[...document.querySelectorAll('button[aria-label*=\"profile\"]')].find(button => button.offsetParent !== null)?.click(); true");
-      const accessExpanded = () => evaluate("[...document.querySelectorAll('button')].find(b => b.textContent.trim() === 'Access')?.getAttribute('aria-expanded')");
+      const interactive = await ui("snapshot", "--interactive");
+      const profile = Object.entries(interactive.refs as Record<string, { role: string; name: string }>)
+        .find(([, entry]) => entry.role === "button" && /^Open .+'s profile$/.test(entry.name));
+      expect(profile).toBeDefined();
+      await ui("click", "--ref", `@${profile![0]}`);
+      await expect.poll(() => evaluate("Boolean(document.querySelector('[role=dialog]'))"), { timeout: 10_000 }).toBe(true);
+      const accessExpanded = () => evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Access')?.getAttribute('aria-expanded')");
       await expect.poll(accessExpanded, { timeout: 10_000 }).toMatch(/^(?:true|false)$/);
-      if ((await accessExpanded()) !== "true") await click("Access");
+      if ((await accessExpanded()) !== "true") {
+        await evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Access')?.click(); true");
+      }
     };
     const reviewReadyBot = async (name: string, title: string) => {
       await click("New or share");
