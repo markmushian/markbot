@@ -46,7 +46,10 @@ export function teamAdminSummary(input: {
         slug, status: state.status, accounts: state.accounts.map((account) => ({ id: account.id, alias: account.alias?.trim() || null, status: account.status })),
       })),
     },
-    mcp: input.mcp.map((server) => ({
+    // Built-in presets are present in the local catalog even before anyone
+    // connects them. The Team admin page is a connection inventory, not a
+    // marketplace, so keep dormant presets out of its wire response.
+    mcp: input.mcp.filter((server) => server.enabled !== false).map((server) => ({
       name: server.name,
       transport: server.url ? (server.type === "sse" ? "sse" : "http") : "stdio",
       host: host(server.url),
