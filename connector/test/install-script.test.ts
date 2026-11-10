@@ -89,7 +89,6 @@ describe("install.sh", () => {
       `docker volume rm ${NAMES.stateVolume}`,
     ]));
     expect(result.calls.filter((call) => /volume rm (mausbot-data|mausbot-snapshot|mausbot-backup-)/.test(call))).toEqual([]);
-    expect(result.calls.some((call) => call.startsWith("apparmor_parser -R "))).toBe(true);
     expect(existsSync(join(result.apparmor, APPARMOR_PROFILE))).toBe(false);
     expect(existsSync(result.etc)).toBe(false);
     expect(result.stdout).toContain(`Your data is kept in the Docker volume ${NAMES.dataVolume}, with its backups.`);

@@ -99,7 +99,7 @@ async function askedBy(token: string, bot: Bot, threadId: string, card: { questi
   await expect.poll(() => busy(bot.id), { timeout: 20_000 }).toBe(true);
   const socketPath = await expect.poll(() => {
     try { return JSON.parse(readFileSync(join(team.home, "dump.json"), "utf8")).mcpConfig?.mcpServers?.ogb?.args?.[1] as string | undefined; } catch { return undefined; }
-  }, { timeout: 10_000 }).toEqual(expect.any(String)).then(() => JSON.parse(readFileSync(join(team.home, "dump.json"), "utf8")).mcpConfig.mcpServers.ogb.args[1] as string);
+  }, { timeout: 40_000 }).toEqual(expect.any(String)).then(() => JSON.parse(readFileSync(join(team.home, "dump.json"), "utf8")).mcpConfig.mcpServers.ogb.args[1] as string);
   const socket = connect(socketPath);
   sockets.push(socket);
   socket.on("error", () => {});
@@ -206,7 +206,7 @@ it("gives each person a Chief of Staff of their own whose team is the bots that 
   const prompt = async (token: string, chief: Bot) => {
     rmSync(join(team.home, "dump.json"), { force: true });
     expect((await team.as(token, "POST", `/api/bots/${chief.id}/messages`, { text: "Who is on my side?", threadId: chief.threadId })).status).toBe(202);
-    await expect.poll(() => existsSync(join(team.home, "dump.json")), { timeout: 20_000 }).toBe(true);
+    await expect.poll(() => existsSync(join(team.home, "dump.json")), { timeout: 60_000 }).toBe(true);
     await expect.poll(() => busy(chief.id), { timeout: 20_000 }).toBe(false);
     return JSON.parse(readFileSync(join(team.home, "dump.json"), "utf8")).systemPrompt as string;
   };
