@@ -51,6 +51,7 @@ COPY . .
 # The Data engine's native modules (server/data/engine.ts), staged like the
 # desktop app's extraResources; the runtime stages copy this tree.
 RUN node scripts/prepare-duckdb.mjs && chmod -R go-w dist-native/duckdb
+ENV MARKBOT_INCLUDE_ENTERPRISE=1
 RUN pnpm build:server && pnpm exec vite build && chmod -R go-w dist dist-server skills
 
 FROM node:24-bookworm-slim AS runtime
