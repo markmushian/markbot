@@ -5,6 +5,11 @@ import { defineConfig } from "vitest/config";
 // resolve exactly as the root suite does.
 export default defineConfig({
   root: fileURLToPath(new URL("..", import.meta.url)),
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("../src", import.meta.url)),
+    },
+  },
   test: {
     environment: "node",
     include: ["evals/**/*.test.ts"],

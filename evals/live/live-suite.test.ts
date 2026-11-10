@@ -124,7 +124,7 @@ describe("committed live scenarios", () => {
 
 describe("judge prompts", () => {
   it("verify the manifest checksum and refuse unknown versions", () => {
-    const prompt = loadJudgePrompt("open-ended-v1");
+    const prompt = loadJudgePrompt("open-ended-v2");
     expect(prompt.text).toContain("{{task}}");
     expect(prompt.text).toContain("{{reply}}");
     expect(() => loadJudgePrompt("missing-v9")).toThrow(/no judge prompt version/);

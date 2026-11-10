@@ -6,6 +6,11 @@
       "sha256": "31bfc837c8c7ffcc15c9d24d8d2041674340e3284384ca95e5475dc66d5f1120"
     },
     {
+      "file": "open-ended-v2.md",
+      "version": "open-ended-v2",
+      "sha256": "ea8ed73305f996ac359d273dc73b0a1ce4dafd8714858296282535089cded5c5"
+    },
+    {
       "file": "reply-habits-v1.md",
       "version": "reply-habits-v1",
       "sha256": "b4bf93d8d5f0b8244d28423a6214a818314c872e62c30907fd6c74b4fec2e65f"

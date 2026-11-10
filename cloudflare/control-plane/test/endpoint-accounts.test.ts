@@ -69,14 +69,14 @@ describe("endpoint account configuration", () => {
   });
 
   it("deploys every account's limits at its real Cloudflare quotas", () => {
-    // markbot.app and mausbot.si are both Pro zones (3,500 DNS records;
+    // openmausbot.com and mausbot.si are both Pro zones (3,500 DNS records;
     // mausbot.si was Free, 200, until Oct 21). Both accounts allow 1,000 tunnels.
     const production = JSON.parse(env.TEST_PRODUCTION_ENDPOINT_ACCOUNTS) as unknown[];
     const deployed = readConfig(withAccounts(production)).endpointAccounts;
     expect(deployed.map(({ companionHostSuffix, dnsRecordLimit, tunnelLimit }) => (
       { companionHostSuffix, dnsRecordLimit, tunnelLimit }
     ))).toEqual([
-      { companionHostSuffix: "markbot.app", dnsRecordLimit: 3500, tunnelLimit: 1000 },
+      { companionHostSuffix: "openmausbot.com", dnsRecordLimit: 3500, tunnelLimit: 1000 },
       { companionHostSuffix: "mausbot.si", dnsRecordLimit: 3500, tunnelLimit: 1000 },
     ]);
   });
