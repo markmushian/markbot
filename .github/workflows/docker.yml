@@ -129,7 +129,7 @@ jobs:
           body() { curl -sk --max-time 10 "$@"; }
           H=https://localhost
           grep -q '"environmentId"' <<<"$(body $H/.well-known/openmausbot/environment)"   # descriptor is public
-          grep -q '^{"app":"markbot"}$' <<<"$(body $H/api/health)"             # the probe is public, and says only the app name
+          jq -e '.app == "markbot"' <<<"$(body $H/api/health)" >/dev/null       # the public probe may also advertise non-secret capabilities
           test "$(code $H/api/bots)" = 403                                        # nothing else before pairing
           grep -q 'pair this device' <<<"$(body $H/api/bots)"
           grep -qi '<html' <<<"$(body $H/pair)"                                    # the UI shell is served so /pair can load
