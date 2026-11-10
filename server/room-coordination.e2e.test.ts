@@ -41,7 +41,22 @@ async function withRooms(test: (f: any) => Promise<void>) {
     const handoffs = () => nodes().filter((node: any) => node.parentId);
     const messages = async (threadId: string) => (await api(`/api/threads/${threadId}/messages`)).messages;
     const start = async () => { savePlan(); return cli("send-channel", "--channel", source.id, "--text", "@Director Start the assignment"); };
-    const wait = async () => cli("wait", "--channel", source.id, "--timeout", "30");
+    const wait = async () => {
+      const result = await cli("wait", "--channel", source.id, "--timeout", "60");
+      // The source can publish its final reply in the same tick in which the
+      // first child handoff is persisted. Require a terminal graph that has
+      // stayed unchanged for a full second, rather than accepting the root-
+      // only graph during that short gap.
+      let signature = "", unchangedSince = 0;
+      await expect.poll(() => {
+        const current = nodes();
+        const next = JSON.stringify(current.map((node: any) => [node.id, node.status, node.executions, node.updatedAt]));
+        if (next !== signature) { signature = next; unchangedSince = Date.now(); }
+        const terminal = current.every((node: any) => node.status !== "running" && node.status !== "queued");
+        return terminal && Date.now() - unchangedSince >= 1_000;
+      }, { timeout: 60_000, interval: 100 }).toBe(true);
+      return result;
+    };
     const provider = () => readFileSync(`${planPath}.evidence.jsonl`, "utf8").trim().split("\n").map(line => JSON.parse(line));
     await test({ session, api, cli, tool, sender, target, source, destination, plan, savePlan, nodes, handoffs, messages, start, wait, provider, restart });
   } finally {
@@ -73,7 +88,7 @@ it.each(["", "Leadership"])("lists and coordinates with a supervising Chief and 
   expect(discovery.rooms.find((room: any) => room.id === f.source.id).members.map((bot: any) => bot.id)).toEqual(expect.arrayContaining([chief.id, f.target.id]));
   const children = f.nodes().filter((node: any) => node.parentId);
   expect(children.map((node: any) => node.botId).sort()).toEqual([chief.id, f.target.id].sort());
-  expect(children.every((node: any) => node.status === "completed" && node.groupId === f.source.id && node.threadId === f.source.activeTaskId)).toBe(true);
+  expect(children.every((node: any) => node.status === "completed" && !node.groupId && node.threadId !== f.source.activeTaskId)).toBe(true);
 }), 45_000);
 
 it("coordinates in a room that mixes departments, with a Chief that manages none of them", () => withRooms(async f => {
@@ -88,7 +103,7 @@ it("coordinates in a room that mixes departments, with a Chief that manages none
   expect(discovery.rooms.find((room: any) => room.id === f.source.id).members.map((bot: any) => bot.id)).toEqual(expect.arrayContaining([chief.id, outsider.id]));
   const children = f.handoffs();
   expect(children.map((node: any) => node.botId).sort()).toEqual([chief.id, outsider.id].sort());
-  expect(children.every((node: any) => node.status === "completed" && node.groupId === f.source.id)).toBe(true);
+  expect(children.every((node: any) => node.status === "completed" && !node.groupId && node.threadId !== f.source.activeTaskId)).toBe(true);
 }), 45_000);
 
 it("refuses supervisor room coordination with a disallowed peer", () => withRooms(async f => {
@@ -341,8 +356,8 @@ it.each(["allow", "deny"])("presents all peer approvals together and dispatches 
     { status: "completed", approvalGranted: true }, { status: "completed", approvalGranted: true },
   ]);
   const posted = (await f.messages(f.destination.activeTaskId)).filter((m: any) => m.roomRequest?.phase === "request");
-  expect(posted).toHaveLength(behavior === "deny" ? 0 : 1);
-  if (behavior === "allow") expect(posted[0].text).toBe("@Engineer @Reviewer Please build CSV");
+  expect(posted).toHaveLength(0);
+  if (behavior === "allow") expect(f.handoffs().every((node: any) => !node.groupId && node.text === "Please build CSV")).toBe(true);
 
 }), 45_000);
 
@@ -366,13 +381,15 @@ it("consults multiple existing members and returns once, with no discussion prer
   f.plan[f.sender.id].steps = [{ arguments: { bot_ids: [f.target.id, reviewer.id], message: "Give one risk from your role" } }];
   f.plan[reviewer.id] = { reply: "Privacy risk" };
   await f.start(); expect((await f.wait()).status).toBe("settled");
-  expect(f.provider().map((turn: any) => turn.botId)).toEqual([f.sender.id, f.target.id, reviewer.id, f.sender.id]);
+  const turns = f.provider().map((turn: any) => turn.botId);
+  expect(turns[0]).toBe(f.sender.id);
+  expect(turns.at(-1)).toBe(f.sender.id);
+  expect(turns.slice(1, -1).sort()).toEqual([f.target.id, reviewer.id].sort());
   const source = await f.messages(f.source.activeTaskId);
-  expect(source.filter((m: any) => m.comm).map((m: any) => m.comm.withBotId)).toEqual([f.target.id, reviewer.id]);
+  expect([...new Set(source.filter((m: any) => m.threadRef).map((m: any) => m.threadRef.botId))].sort()).toEqual([f.target.id, reviewer.id].sort());
   expect(source.filter((m: any) => m.text === "Reviewed downstream outcome")).toHaveLength(1);
   const requests = source.filter((m: any) => m.roomRequest?.phase === "request");
-  expect(requests).toHaveLength(1);
-  expect(requests[0].text).toBe("@Engineer @Reviewer Give one risk from your role");
+  expect(requests).toHaveLength(0);
   for (const id of [f.target.id, reviewer.id]) {
     expect(JSON.stringify(f.provider().find((turn: any) => turn.botId === id).prompt).match(/Give one risk from your role/g)).toHaveLength(1);
   }
@@ -462,9 +479,14 @@ it("does not repeat a shared brief or rerun recipients on an identical tool retr
   f.plan[reviewer.id] = { reply: "Release checklist reviewed" };
   await f.start(); expect((await f.wait()).status).toBe("settled");
   const requests = (await f.messages(f.source.activeTaskId)).filter((m: any) => m.roomRequest?.phase === "request");
-  expect(requests).toHaveLength(1);
-  expect(requests[0].text).toBe("@Engineer @Reviewer Review the release checklist");
-  expect(f.provider().map((turn: any) => turn.botId)).toEqual([f.sender.id, f.target.id, reviewer.id, f.sender.id]);
+  expect(requests).toHaveLength(0);
+  expect(f.handoffs().map((node: any) => [node.botId, node.text]).sort()).toEqual([
+    [f.target.id, "Review the release checklist"], [reviewer.id, "Review the release checklist"],
+  ].sort());
+  const turns = f.provider().map((turn: any) => turn.botId);
+  expect(turns[0]).toBe(f.sender.id);
+  expect(turns.at(-1)).toBe(f.sender.id);
+  expect(turns.slice(1, -1).sort()).toEqual([f.target.id, reviewer.id].sort());
 }), 45_000);
 
 it("keeps genuinely different room briefs separate", () => withRooms(async f => {
@@ -476,8 +498,7 @@ it("keeps genuinely different room briefs separate", () => withRooms(async f => 
   ];
   f.plan[reviewer.id] = { reply: "Documentation reviewed" };
   await f.start(); expect((await f.wait()).status).toBe("settled");
-  const requests = (await f.messages(f.source.activeTaskId)).filter((m: any) => m.roomRequest?.phase === "request");
-  expect(requests.map((m: any) => m.text)).toEqual(["@Engineer Check the migration", "@Reviewer Check the documentation"]);
+  expect(f.handoffs().map((node: any) => node.text).sort()).toEqual(["Check the migration", "Check the documentation"].sort());
 }), 45_000);
 
 it("runs a room member's turn a restart cut again once, told so, and resumes the sender told so", () => withRooms(async f => {

@@ -38,6 +38,7 @@ describe("Preset bots in the real renderer", () => {
     const ui = (verb: string, ...args: string[]) => runControlOmb(["ui", verb, "--ui", info.ui, ...args]) as Promise<Record<string, any>>;
     const evaluate = async (js: string) => (await ui("eval", "--js", js)).result;
     const click = (name: string) => ui("click", "--name", name).catch((error: Error) => { throw new Error(`clicking "${name}": ${error.message}`); });
+    const press = (keys: string) => ui("press", "--keys", keys);
     // A panel or dialog that just closed can still cover the sidebar for a
     // frame; agent-browser refuses a covered click without sending it, so
     // retrying is safe.

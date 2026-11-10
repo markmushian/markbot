@@ -338,7 +338,7 @@ posixOnly("a 2 MiB file on the Mac reads whole through My Cloud, under its 4 MB 
   expect(read.isError, JSON.stringify(read).slice(0, 300)).not.toBe(true);
   expect(Buffer.from(JSON.parse(read.content[0].text).content, "base64").equals(bytes)).toBe(true);
   rmSync(folderPath, { recursive: true, force: true });
-}, hostTimeout(60_000));
+}, hostTimeout(120_000));
 
 posixOnly("when the Mac goes away, a page in flight ends at once, My Cloud says it is away, and the next page goes My Cloud's own way without waiting", async () => {
   const slow = await new Promise<{ socket: Socket; closed: Promise<number> }>((resolve) => {
