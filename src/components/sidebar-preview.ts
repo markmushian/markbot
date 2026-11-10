@@ -11,6 +11,12 @@ import { plainPreviewText } from "@/lib/plain-preview";
 import { isClientCancellation, isStoppedTurnName } from "../../shared/client-cancel";
 import { roomWorkingPreview } from "@/lib/room-threads";
 import { localizedSeededGreeting } from "@/lib/localized-seed";
+import { stripLeakedSystemHarnessMessages } from "../../shared/system-message-guard.ts";
+
+/** A preview quotes a bot's words, so runtime notices must not become the conversation's last line. */
+function previewText(text: string, user: boolean): string {
+  return user ? text : stripLeakedSystemHarnessMessages(text);
+}
 
 /** The newest message a preview can show. A receipt or a screen frame says nothing about the conversation on its own. */
 export function lastPreviewable<T extends { kind: string }>(messages: readonly T[] | undefined): T | undefined {
@@ -54,9 +60,10 @@ export function lastLine(bot: Bot, visible: Message[], instances: InstanceInfo[]
   if (last.kind === "connector" && last.connector) return sidebarConnectorPreview(last.connector, t);
   if (last.kind === "routine.run" && last.routineRun) return automationRunPreview(last.routineRun);
   const peer = peerLine(last);
-  if (peer) return `${peer.name}: ${plainPreviewText(peer.body)}`;
+  if (peer) return `${peer.name}: ${plainPreviewText(stripLeakedSystemHarnessMessages(peer.body))}`;
   if (last.role !== "user" && isClientCancellation(last.text ?? "")) return t("chat.turnStopped");
-  return plainPreviewText(citationPreviewText(localizedSeededGreeting(last.text ?? "", last.role === "bot" && last.setupOffer)));
+  const seeded = localizedSeededGreeting(last.text ?? "", last.role === "bot" && last.setupOffer);
+  return plainPreviewText(citationPreviewText(previewText(seeded, last.role === "user")));
 }
 
 const RUN_PREVIEW = {
@@ -87,7 +94,7 @@ export function groupPreview(group: Group, bots: Bot[], instances: InstanceInfo[
       : last.kind === "connector" && last.connector
         ? sidebarConnectorPreview(last.connector, t)
         : (last.text ?? "");
-  const readable = plainPreviewText(citationPreviewText(text));
+  const readable = plainPreviewText(citationPreviewText(previewText(text, last.role === "user")));
   if (last.role === "user") return t("sidebar.preview.you", { text: readable });
   return last.from ? `${last.from.name}: ${readable}` : readable;
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { isPureLeakedSystemHarnessMessage, stripLeakedSystemHarnessMessages } from "./system-message-guard.ts";
+import { isPureLeakedSystemHarnessMessage, stripLeakedSystemHarnessMessages, stripRuntimeNoticeLines } from "./system-message-guard.ts";
+
+const HERMES_NOTICE = "Editor MCP tools changed (servers: agents, data, computer, tencent-docs, baidu-pan, wechat, github); the new tool list applies from the next turn.\n";
 
 describe("system-message-guard", () => {
   it("leaves ordinary conversational text alone", () => {
@@ -55,5 +57,28 @@ Everything compiled successfully and all tests pass!`;
 
     expect(stripLeakedSystemHarnessMessages(unclosed)).toBe("");
     expect(isPureLeakedSystemHarnessMessage(unclosed)).toBe(true);
+  });
+
+  describe("Hermes editor MCP tool-list notices", () => {
+    it("drops a notice chunk entirely and hides a message made only of it", () => {
+      expect(stripRuntimeNoticeLines(HERMES_NOTICE)).toBe("");
+      expect(stripLeakedSystemHarnessMessages(HERMES_NOTICE)).toBe("");
+      expect(isPureLeakedSystemHarnessMessage(HERMES_NOTICE)).toBe(true);
+    });
+
+    it("keeps the real answer when a notice is glued to its front", () => {
+      const mixed = `${HERMES_NOTICE}I reinstalled WeChat on the D: drive.\nAll done.`;
+      expect(stripRuntimeNoticeLines(mixed)).toBe("I reinstalled WeChat on the D: drive.\nAll done.");
+      expect(stripLeakedSystemHarnessMessages(mixed)).toBe("I reinstalled WeChat on the D: drive.\nAll done.");
+      expect(isPureLeakedSystemHarnessMessage(mixed)).toBe(false);
+    });
+
+    it("preserves streamed whitespace and ordinary text that merely mentions the phrase", () => {
+      expect(stripRuntimeNoticeLines("The answer ")).toBe("The answer ");
+      const prose = "The Editor MCP tools changed message is an internal notice, not a reply.";
+      expect(stripRuntimeNoticeLines(prose)).toBe(prose);
+      expect(stripLeakedSystemHarnessMessages(prose)).toBe(prose);
+      expect(isPureLeakedSystemHarnessMessage(prose)).toBe(false);
+    });
   });
 });

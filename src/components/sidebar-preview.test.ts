@@ -54,4 +54,17 @@ describe("sidebar previews", () => {
     const group = { id: "g", name: "Room", messages: [message({ text: "Done.", from: { botId: "ada", name: "Ada", color: "green" } }), screen()] } as unknown as Group;
     expect(groupPreview(group, [bot], [], false)).toBe("Ada: Done.");
   });
+
+  it("quotes the answer, not a Hermes MCP tool-list notice glued to its front", () => {
+    const notice = "Editor MCP tools changed (servers: agents, data, computer, wechat, github); the new tool list applies from the next turn.\n";
+    const reply = `${notice}I am Hermes, an AI assistant.`;
+    const direct = botPreview(bot, [message({ role: "user", text: "Who are you?" }), message({ text: reply })], [], false);
+    expect(direct).not.toContain("Editor MCP tools changed");
+    expect(direct).toContain("I am Hermes, an AI assistant.");
+    const from = { botId: "ada", name: "Ada", color: "green" } as Message["from"];
+    const group = { id: "g", name: "Room", messages: [message({ text: reply, from })] } as unknown as Group;
+    const inRoom = groupPreview(group, [bot], [], false);
+    expect(inRoom).not.toContain("Editor MCP tools changed");
+    expect(inRoom).toContain("I am Hermes, an AI assistant.");
+  });
 });

@@ -749,6 +749,34 @@ describe("ACP turns (fake CLI)", () => {
     expect(await send("turn 3")).toBe("turn 3");
   });
 
+  describe("Hermes editor MCP tool-list notices", () => {
+    const notice = "Editor MCP tools changed (servers: agents, data, computer, tencent-docs, baidu-pan, wechat, github); the new tool list applies from the next turn.\n";
+    const chunk = (text: string) => ({ sessionUpdate: "agent_message_chunk", content: { type: "text", text } });
+    const savedText = (events: EventRecorder["events"]) => events.flatMap((event) =>
+      event.type === "item.completed" && event.itemType === "assistant_text" ? [event.text] : []).join("");
+
+    it("keeps a standalone notice out of the live stream and the saved reply", async () => {
+      const { report, send, lastTurn } = await reportingThread("hermes-mcp-notice");
+      report(chunk(notice), chunk("The real answer is 42."));
+      await send("turn 1");
+      const events = lastTurn();
+      const streamed = events.flatMap((event) =>
+        event.type === "content.delta" && event.streamKind === "assistant_text" ? [event.delta] : []).join("");
+      expect(streamed).not.toContain("Editor MCP tools changed");
+      expect(savedText(events)).not.toContain("Editor MCP tools changed");
+      expect(savedText(events)).toContain("The real answer is 42.");
+    });
+
+    it("keeps the answer when Hermes glues the notice to the front of one chunk", async () => {
+      const { report, send, lastTurn } = await reportingThread("hermes-mcp-notice-mixed");
+      report(chunk(`${notice}The real answer is 42.`));
+      await send("turn 1");
+      const text = savedText(lastTurn());
+      expect(text).not.toContain("Editor MCP tools changed");
+      expect(text).toContain("The real answer is 42.");
+    });
+  });
+
   describe("a reply re-sent with its reasoning under the streamed messageId", () => {
     const messageId = randomUUID();
     const chunk = (sessionUpdate: string, text: string) => ({ sessionUpdate, messageId, content: { type: "text", text } });

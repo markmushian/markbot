@@ -18,7 +18,7 @@ import type { PromptSplitReceipt } from "../prompt-split.ts";
 import { describeSpawnFailure, execCli, killCliTree, spawnCli } from "../../procs.ts";
 import { runAcpOneShot } from "./background-text.ts";
 import { sanitizeAcpToolMessage } from "./tool-log.ts";
-import { stripLeakedSystemHarnessMessages } from "../../../shared/system-message-guard.ts";
+import { stripLeakedSystemHarnessMessages, stripRuntimeNoticeLines } from "../../../shared/system-message-guard.ts";
 import {
   classifyQuiet, describeQuiet, formatQuietLimit, lastSeenPhrase, LIMIT_WORDS, LogTail, promptIdleTimeoutMs, quietKey, quietNoticeMs, quietTickMs, quietVerdict, sampleProcessTree,
   type LogSignal, type ProcessSample, type QuietState,
@@ -912,16 +912,21 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
                   alt: "Generated image",
                 });
               } else if (typeof delta === "string" && delta) {
+                // Hermes sends its MCP tool-list change notice as a plain agent_message_chunk.
+                // It is a runtime notice, not an answer: drop the line from both the live stream
+                // and the saved reply so it cannot appear in every bot message or the thread preview.
+                const visible = stripRuntimeNoticeLines(delta);
+                if (!visible) break;
                 const messageId = typeof u.messageId === "string" ? u.messageId : null;
                 if (support.resendsReasoningReply && messageId && messageId === current.state.textMessageId
-                    && isHermesReasoningReplay(delta, current.state.text)) break;
+                    && isHermesReasoningReplay(visible, current.state.text)) break;
                 current.state.textMessageId = messageId;
-                current.state.text += delta;
+                current.state.text += visible;
                 const trimmed = current.state.text.trimStart();
                 if (!trimmed.startsWith("<SYSTEM_MESSAGE") &&
                     !trimmed.startsWith("The following is a <SYSTEM_MESSAGE") &&
                     !trimmed.startsWith("<SYSTEM_NOTIFICATION")) {
-                  emit({ ...base(threadId, current.turnId), type: "content.delta", streamKind: "assistant_text", delta });
+                  emit({ ...base(threadId, current.turnId), type: "content.delta", streamKind: "assistant_text", delta: visible });
                 }
               }
               break;
