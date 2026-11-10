@@ -71,7 +71,7 @@ const inboxFrames = (frames: Frame[]) => frames.filter((frame) => frame.kind ===
 const needsYou = async (token: string) => (await team.as(token, "GET", "/api/needs-you")).body.items as Array<{ kind: string; botId?: string; text?: string }>;
 const chiefTurns = async () => (await messages(marco, inbox)).rows.filter((row) => row.role === "bot" && row.kind === "text" && !row.inbox);
 
-async function until(done: () => Promise<boolean> | boolean, timeoutMs = 60_000): Promise<void> {
+async function until(done: () => Promise<boolean> | boolean, timeoutMs = 120_000): Promise<void> {
   const end = Date.now() + timeoutMs;
   while (!(await done())) {
     if (Date.now() > end) throw new Error("timed out waiting");

@@ -1594,15 +1594,15 @@ describe("Store", () => {
     const store = new Store(selection);
     store.seedIfEmpty();
     const chief = store.bots[0]!;
-    expect(chief).toMatchObject({ name: "Mark Bot", color: "chrome", chiefOfStaff: true, defaultBot: {} });
+    expect(chief).toMatchObject({ name: "Mark", color: "chrome", chiefOfStaff: true, defaultBot: {} });
     expect(store.messagesFor(chief.threadId).map((message) => [message.kind, message.helperIntro, message.card?.options.length])).toEqual([["options", true, 4]]);
-    expect(store.messagesFor(chief.threadId)[0]!.text).toContain("Hey! I'm Mark Bot. I'm new here. I'm here to be your Chief of Staff.");
+    expect(store.messagesFor(chief.threadId)[0]!.text).toContain("你好，我是 Mark，你的首席助手。");
     const later = Array.from({ length: 25 }, () => store.createBot());
     expect(later.map((bot) => bot.color)).not.toContain("silver");
     expect(later.map((bot) => bot.color)).not.toContain("chrome");
     expect(later[0]?.color).toBe("blue");
     expect(later.map((bot) => bot.name)).not.toContain("Mark Bot");
-    expect(new Store(selection).bot(chief.id)).toMatchObject({ name: "Mark Bot", color: "chrome", defaultBot: {} });
+    expect(new Store(selection).bot(chief.id)).toMatchObject({ name: "Mark", color: "chrome", defaultBot: {} });
   });
 
   it("seedIfEmpty leaves an existing workspace without a Chief as it is", () => {

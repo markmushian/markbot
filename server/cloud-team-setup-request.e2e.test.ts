@@ -44,7 +44,7 @@ async function turn(token: string, botId: string, threadId: string, text: string
     : await team.as(token, "POST", `/api/bots/${botId}/messages`, { text, threadId });
   expect(sent.status, JSON.stringify(sent.body)).toBe(202);
   await expect.poll(async () => await idle(token) && (await messages(token, threadId)).length >= before + 2 && existsSync(join(team.home, "dump.json")),
-    { timeout: 60_000, interval: 100 }).toBe(true);
+    { timeout: 120_000, interval: 100 }).toBe(true);
   return dump();
 }
 

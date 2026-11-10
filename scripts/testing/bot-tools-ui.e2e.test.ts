@@ -62,7 +62,7 @@ describe("bot setup and tools in the real renderer", () => {
       const profile = profiles.at(-1);
       expect(profile).toBeDefined();
       await ui("click", "--ref", `@${profile![0]}`);
-      const visibleDialog = "[...document.querySelectorAll('[role=dialog]')].find(dialog => dialog.getClientRects().length)";
+      const visibleDialog = "[...document.querySelectorAll('[role=dialog]')].find(dialog => dialog.getClientRects().length && [...dialog.querySelectorAll('button')].some(b => b.textContent.trim() === 'Access'))";
       await expect.poll(() => evaluate(`Boolean(${visibleDialog})`), { timeout: 10_000 }).toBe(true);
       const accessExpanded = () => evaluate(`${visibleDialog} && [...${visibleDialog}.querySelectorAll('button')].find(b => b.textContent.trim() === 'Access')?.getAttribute('aria-expanded')`);
       await expect.poll(accessExpanded, { timeout: 10_000 }).toMatch(/^(?:true|false)$/);
@@ -117,7 +117,7 @@ describe("bot setup and tools in the real renderer", () => {
     await runControlOmb(["send", "--bot", created[0].id, "--text", "Reply briefly for the sidebar test.", "--url", info.url]);
     expect((await runControlOmb(["wait", "--bot", created[0].id, "--timeout", "20", "--url", info.url]) as { status: string }).status).toBe("settled");
     await openTools();
-    await expect.poll(snapshot, { timeout: 10_000 }).toContain("Your MCP servers");
+    await expect.poll(() => evaluate("document.body.textContent.includes('Your MCP servers')"), { timeout: 10_000 }).toBe(true);
     const usageExpanded = () => evaluate("[...document.querySelectorAll('[role=dialog] button')].find(b => b.textContent.trim() === 'Usage')?.getAttribute('aria-expanded')");
     const openHeaderUsage = async () => {
       await click("More");
