@@ -1,4 +1,4 @@
-import { updateErrorMessage, updateErrorNeedsPerson } from "./update-errors.mjs";
+import { updateErrorMessage, updateErrorIsBrokenFeed, updateErrorNeedsPerson } from "./update-errors.mjs";
 
 /** electron-updater's GitHub provider gives the release body (HTML); a multi-release feed gives [{ version, note }]. */
 export function releaseNotesText(notes) {
@@ -89,7 +89,10 @@ export function createUpdaterCoordinator(
     }
     if (!shown) {
       quietFailures += 1;
-      if (quietFailures >= QUIET_FAILURES_BEFORE_NOTICE) {
+      // A release that ships no updater feed is a publishing problem, not a local one. Hourly checks
+      // keep trying (a fixed feed clears the count), but an unactionable error must not appear in the
+      // UI every three hours. A manual check still reports it through the `shown` path below.
+      if (quietFailures >= QUIET_FAILURES_BEFORE_NOTICE && !updateErrorIsBrokenFeed(error)) {
         // The notice does not own the state: hourly checks go on, and the first one that reaches the feed clears it.
         setState({ status: "error", message: `Couldn't check for updates. ${updateErrorMessage(error)}` });
         return;

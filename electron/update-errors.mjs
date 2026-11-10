@@ -2,10 +2,19 @@ const INTEGRITY = "The update failed verification. Download a fresh installer fr
 const DISK = "Not enough disk space to prepare the update. Free some space, then try again.";
 const PERMISSION = "The update could not write to the app or its cache. Check folder permissions, or use the official installer.";
 const BUSY = "An update file is in use. Close other copies of Mark Bot, then try again.";
+/** A published release without its updater feed (latest.yml) or with a malformed one. Only the
+ * publisher can fix it; retrying from the app changes nothing. */
+export const BROKEN_FEED = "The update files are missing or invalid. Check the official release page, or try again later.";
 const NEEDS_PERSON = new Set([INTEGRITY, DISK, PERMISSION, BUSY]);
 
 export function updateErrorNeedsPerson(error) {
   return NEEDS_PERSON.has(updateErrorMessage(error));
+}
+
+/** True for a release-feed problem no local retry can fix. Automatic checks stay quiet about it;
+ * a manual "Check for updates" still shows the message so the person knows why nothing happened. */
+export function updateErrorIsBrokenFeed(error) {
+  return updateErrorMessage(error) === BROKEN_FEED;
 }
 
 export function updateErrorMessage(error) {
@@ -34,7 +43,7 @@ export function updateErrorMessage(error) {
     return "The update connection could not be verified. Check your clock, VPN or proxy; do not disable certificate checks.";
   }
   if (/\b404\b|cannot find .*\.yml|cannot parse update info|no files provided|ERR_UPDATER_INVALID_RELEASE_FEED/i.test(detail)) {
-    return "The update files are missing or invalid. Check the official release page, or try again later.";
+    return BROKEN_FEED;
   }
   if (/\b(?:ENOTFOUND|ECONNREFUSED|ECONNRESET|ETIMEDOUT|EAI_AGAIN)\b|net::ERR_|\bHTTP[^\n]*\b5\d\d\b|status(?: code)?[: ]+5\d\d\b/i.test(detail)) {
     return "The update download was interrupted or the server is unavailable. Check your connection and try again.";

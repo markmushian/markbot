@@ -862,6 +862,20 @@ test("repeated silent check failures surface a retryable notice instead of stayi
   assert.notEqual(getState().retryable, false);
 });
 
+test("a release feed with no update files stays quiet, but a manual check still reports it", async () => {
+  const { updater, coordinator, getState } = harness();
+  updater.checkForUpdates = () => Promise.reject(new Error("Cannot find latest.yml in the latest release (404)"));
+
+  await coordinator.check();
+  await coordinator.check();
+  await coordinator.check();
+  assert.equal(getState().status, "idle", "a publishing problem is not an error the person can fix");
+
+  await coordinator.check(true);
+  assert.equal(getState().status, "error");
+  assert.match(getState().message, /update files are missing or invalid/);
+});
+
 test("a successful check resets the silent failure count", async () => {
   const { updater, coordinator, getState } = harness();
   updater.checkForUpdates = () => Promise.reject(new Error("offline"));

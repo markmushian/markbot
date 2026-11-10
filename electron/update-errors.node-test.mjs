@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import test from "node:test";
-import { updateErrorMessage, updateErrorNeedsPerson } from "./update-errors.mjs";
+import { updateErrorMessage, updateErrorIsBrokenFeed, updateErrorNeedsPerson } from "./update-errors.mjs";
 import { createUpdaterCoordinator } from "./updater-coordinator.mjs";
 
 test("update failures keep integrity and certificate errors distinct from recoverable environment errors", () => {
@@ -31,6 +31,15 @@ test("only failures the person must fix are theirs to see when nobody asked", ()
   assert.equal(updateErrorNeedsPerson(Object.assign(new Error("sha512 mismatch"), { code: "ERR_UPDATER_CHECKSUM_MISMATCH" })), true);
   for (const message of ["ETIMEDOUT", "ECONNRESET", "HTTP 503 Service Unavailable", "net::ERR_INTERNET_DISCONNECTED", "Cannot find latest-mac.yml: 404", "net::ERR_CERT_AUTHORITY_INVALID", "unknown failure"]) {
     assert.equal(updateErrorNeedsPerson(new Error(message)), false, message);
+  }
+});
+
+test("a release without its updater feed is recognised as a publishing problem", () => {
+  for (const message of ["Cannot find latest.yml: 404", "cannot parse update info", "no files provided", "ERR_UPDATER_INVALID_RELEASE_FEED"]) {
+    assert.equal(updateErrorIsBrokenFeed(new Error(message)), true, message);
+  }
+  for (const message of ["ETIMEDOUT", "HTTP 503 Service Unavailable", "sha512 checksum mismatch", "unknown failure"]) {
+    assert.equal(updateErrorIsBrokenFeed(new Error(message)), false, message);
   }
 });
 
