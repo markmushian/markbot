@@ -135,11 +135,11 @@ describe("Preset bots in the real renderer", () => {
       await ui("screenshot", "--out", evidence(shot));
       await click("Create bot");
       await expect.poll(async () => (await bots()).length, { timeout: 15_000 }).toBe(before.length + 1);
-      // Bot creation can leave the newly selected bot's overlay above the
-      // Templates sheet for one paint. Close the sheet through its own DOM
-      // button instead of asking the pointer driver to click through that
-      // transient backdrop.
-      await evaluate("[...document.querySelectorAll('button')].find(button => button.textContent.trim() === 'Close templates')?.click(); true");
+      // Bot creation selects the new bot and can stack its first-run overlay
+      // above Templates. Escape peels those visible layers in order; checking
+      // between presses keeps this safe when only Templates is present.
+      if ((await snapshot()).includes("Add Scout, Researcher")) await press("Escape");
+      if ((await snapshot()).includes("Add Scout, Researcher")) await press("Escape");
       await expect.poll(snapshot, { timeout: 10_000 }).not.toContain("Add Scout, Researcher");
       return (await bots()).find((bot) => !before.some((old) => old.id === bot.id))!;
     };
