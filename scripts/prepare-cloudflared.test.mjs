@@ -57,13 +57,13 @@ describe("cloudflared download retries", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
-  it("stops after three transient failures", async () => {
+  it("stops after five transient failures", async () => {
     const fetchMock = mockDownload();
     fetchMock.mockImplementation(async () => new Response("unavailable", { status: 503 }));
     const result = expect(releaseBytes({ name: "cloudflared-linux-amd64" })).rejects.toThrow(/HTTP 503/);
     await vi.runAllTimersAsync();
     await result;
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 
   it("fails immediately for a missing pinned asset", async () => {

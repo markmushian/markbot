@@ -296,13 +296,15 @@ describe("glass header", () => {
     expect(markup.slice(scroller)).toMatch(/class="glass-scroller-content[^"]*"[^>]*role="log"/);
   });
 
-  it("fades the transcript into the canvas under the header in both modes", () => {
+  it("keeps a solid header surface so transcript text never shows through its controls", () => {
     const bar = (markup: string) => markup.match(/<div data-glass-bar="top"[^>]*>/)?.[0] ?? "";
-    expect(bar(renderToStaticMarkup(createElement(ChatView, { bot })))).toContain('data-glass-fade=""');
+    expect(bar(renderToStaticMarkup(createElement(ChatView, { bot })))).toContain("bg-app");
+    expect(bar(renderToStaticMarkup(createElement(ChatView, { bot })))).not.toContain('data-glass-fade=""');
     fixture.advanced = false;
     try {
       const markup = renderToStaticMarkup(createElement(ChatView, { bot }));
-      expect(bar(markup)).toContain('data-glass-fade=""');
+      expect(bar(markup)).toContain("bg-app");
+      expect(bar(markup)).not.toContain('data-glass-fade=""');
       expect(bar(markup)).not.toContain("before:hidden");
       expect(markup).toMatch(/class="glass-scroller [^"]*" style="scroll-padding-bottom:calc\(/);
     } finally {

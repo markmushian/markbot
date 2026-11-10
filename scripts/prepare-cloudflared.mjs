@@ -237,7 +237,7 @@ export async function releaseBytes(asset) {
     }
     if (attempt === 5) throw failure;
     const delay = 1_000 * 2 ** attempt;
-    console.warn(`cloudflared download attempt ${attempt}/3 failed: ${failure.message}; retrying in ${delay}ms`);
+    console.warn(`cloudflared download attempt ${attempt}/5 failed: ${failure.message}; retrying in ${delay}ms`);
     await new Promise((resolve) => setTimeout(resolve, delay));
   }
 }

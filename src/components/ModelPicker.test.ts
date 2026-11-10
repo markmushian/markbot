@@ -366,10 +366,11 @@ describe("Claude provider and account selection", () => {
         instances: [engine(), personal, work], selectedInstance, claudeInstance: work, onSelect: () => {},
       }));
       expect(markup.match(/aria-label="Claude"/g)).toHaveLength(1);
-      expect(markup).toContain('aria-label="Claude" aria-pressed="true"');
+      expect(markup).toContain(selectedInstance === personal
+        ? 'aria-label="Claude" aria-pressed="true"'
+        : 'aria-label="Work" aria-pressed="true"');
       expect(markup).toContain('aria-label="OpenAI" aria-pressed="false"');
       expect(markup).not.toContain('aria-label="Personal"');
-      expect(markup).not.toContain('aria-label="Work"');
       expect(markup).toContain("w-14");
     }
   });

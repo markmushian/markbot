@@ -49,17 +49,18 @@ beforeEach(() => {
   fixture.values = [];
   fixture.refreshInstances.mockResolvedValue(undefined);
   fixture.refreshModels.mockResolvedValue(undefined);
-  vi.stubGlobal("window", { setTimeout, clearTimeout, ogb: { openExternal: fixture.openExternal } });
+  vi.stubGlobal("window", { setTimeout, clearTimeout, setInterval, clearInterval, ogb: { openExternal: fixture.openExternal } });
 });
 afterEach(() => vi.unstubAllGlobals());
 
 it("treats a code Claude Code accepts as the sign-in: no status request after it, models refreshed, outcome reported", async () => {
   const onDone = vi.fn();
-  fixture.api.mockResolvedValueOnce({ auth: waiting }).mockResolvedValueOnce({ ok: true });
+  fixture.api.mockResolvedValueOnce({ auth: waiting }).mockResolvedValueOnce({ ok: true }).mockResolvedValueOnce({});
   await startAndPaste(" alice-12345678 ", onDone);
   expect(fixture.openExternal).toHaveBeenCalledWith(waiting.authorizationUrl);
-  expect(fixture.api).toHaveBeenLastCalledWith("/api/instances/claude/auth/complete", { method: "POST", body: JSON.stringify({ flowId: "flow-one", code: "alice-12345678" }) });
-  expect(fixture.api).toHaveBeenCalledTimes(2);
+  expect(fixture.api).toHaveBeenCalledWith("/api/instances/claude/auth/complete", { method: "POST", body: JSON.stringify({ flowId: "flow-one", code: "alice-12345678" }) });
+  expect(fixture.api).toHaveBeenLastCalledWith("/api/claude-code-usage?refresh=1");
+  expect(fixture.api).toHaveBeenCalledTimes(3);
   expect(fixture.values[AUTH]).toMatchObject({ phase: "succeeded" });
   expect(fixture.refreshInstances).toHaveBeenCalled();
   expect(fixture.refreshModels).toHaveBeenCalledWith("claude");
@@ -87,7 +88,7 @@ it("keeps the flow open after a code Claude Code never took, so a typo can be fi
 });
 
 it("reports no sign-in when the person cancels or the code expires", async () => {
-  fixture.api.mockResolvedValueOnce({ auth: waiting }).mockResolvedValueOnce({});
+  fixture.api.mockResolvedValueOnce({ auth: waiting }).mockResolvedValue({ auth: waiting });
   render().find((node) => node.type === "button")!.props.onClick!();
   await flush();
   const cancel = render().filter((node) => node.type === "button").find((node) => JSON.stringify(node.props.children).includes("Cancel"))!;

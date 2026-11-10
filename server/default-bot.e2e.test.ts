@@ -65,7 +65,7 @@ it("makes Mark Bot a new install's first bot, never deleted, hidden by its switc
     rmSync(fixture.fixtureDumpPath, { force: true });
     const agents = launched.mcpConfig.mcpServers.agents!;
     expect(agents.env.OMB_CHIEF_OF_STAFF).toBe("1");
-    expect(launched.systemPrompt).toContain("You are also this person's Mark Bot");
+    expect(launched.systemPrompt).toContain("You are also this person's Mark assistant");
     expect(launched.systemPrompt).toContain("but you are not the Chief");
     const created = await callTool(agents, "create_bot", { name: "Scout", role: "Researcher", instructions: "Find what the person asks for." });
     expect(created.error).toBeUndefined();

@@ -48,10 +48,10 @@ describe("the apps switch", () => {
     const saved = [{ name: "excalidraw", apps: false }];
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ servers: saved }), { status: 200, headers: { "content-type": "application/json" } }));
     const onSaved = draw({ name: "excalidraw", apps: true, hasApps: true });
-    const toggle = host.querySelector<HTMLButtonElement>('[role="switch"]')!;
+    const toggle = host.querySelector<HTMLInputElement>('[role="switch"]')!;
     expect(host.textContent).toContain("Show its apps in chat");
-    expect(toggle.getAttribute("aria-checked")).toBe("true");
-    expect(toggle.getAttribute("aria-label")).toBe("Show apps from excalidraw in chat");
+    expect(toggle.checked).toBe(true);
+    expect(toggle.labels?.[0]?.textContent).toBe("Show apps from excalidraw in chat");
     await act(async () => { toggle.click(); });
     expect(fetchMock).toHaveBeenCalledWith("/api/mcp/servers/excalidraw", expect.objectContaining({ method: "PATCH", body: JSON.stringify({ apps: false }) }));
     expect(onSaved).toHaveBeenCalledWith(saved);

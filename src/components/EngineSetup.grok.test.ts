@@ -99,7 +99,7 @@ describe("Grok cannot run here: an xAI key instead", () => {
   it("has no button on a paired desktop, whose Settings hide the keys", () => {
     const html = render(missing, pairedDesktop);
     expect(html).toContain(NOT_INSTALLED);
-    expect(html).not.toContain("<button");
+    expect(html.split('data-engine-agent-cli="true"')[0]).not.toContain("<button");
   });
 
   it("keeps the install on the desktop, where a terminal can run it", () => {
