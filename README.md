@@ -1,5 +1,7 @@
 <div align="center">
 
+[English](README.md) · [简体中文](README.zh-CN.md)
+
 # Mark Bot
 
 **你的本地 AI 助手团队，就在一个聊天应用里。**

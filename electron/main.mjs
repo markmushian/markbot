@@ -169,8 +169,8 @@ function preferredLocale() {
 }
 
 const APP_ICON = app.isPackaged
-  ? path.join(process.resourcesPath, "ui", "mark-avatars", "guide.png")
-  : path.join(__dirname, "../public/mark-avatars/guide.png");
+  ? path.join(process.resourcesPath, "ui", "markbot-desktop.png")
+  : path.join(__dirname, "../public/markbot-desktop.png");
 /** The notification area is small and usually dark: the blue tile reads there, the dark grey mascot does not. A
  *  multi-size .ico is what the Windows shell wants; a downscaled PNG has painted nothing on some machines. */
 const TRAY_ICON = app.isPackaged

@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type SyntheticEvent } from "react";
 import { Crown } from "lucide-react";
-import { BotAvatar, MausAvatar } from "@/components/Avatar";
+import { BotAvatar } from "@/components/Avatar";
 import { usePrefersReducedMotion } from "@/components/mascot-clock";
 import { cn } from "@/lib/cn";
 import { chiefChoices, chiefFor, createChiefPatch, DEFAULT_BOT_NAME, myDefaultBot, setWelcomingBot, stageIntro, useViewerEmail } from "@/lib/default-bot";
 import { t } from "@/lib/i18n";
 import { FLIGHT_MS, landInSidebar } from "@/lib/mausbot-landing";
-import { useStore, type Bot } from "@/state/store";
+import { api, useStore, type Bot, type ModelSelection } from "@/state/store";
 
 /** Clicks, Enter and Space wait this long after the dialog opens, so a double click on Next never presses Create. */
 export const CHIEF_GUARD_MS = 300;
@@ -43,6 +43,12 @@ export function ChiefIntro({ replay, onDone, onLeave }: { replay: boolean; onDon
   const [choosing, setChoosing] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [personName, setPersonName] = useState(() => state.config?.profile?.name?.trim() ?? "");
+  const [chiefName, setChiefName] = useState(() => maus?.name?.trim() || DEFAULT_BOT_NAME);
+  const [providerId, setProviderId] = useState(() => maus?.modelSelection.instanceId ?? "");
+  const [modelId, setModelId] = useState(() => maus?.modelSelection.model ?? "");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const dialog = useRef<HTMLDivElement>(null);
   const avatar = useRef<HTMLSpanElement>(null);
   const armed = useRef(false);
@@ -75,9 +81,38 @@ export function ChiefIntro({ replay, onDone, onLeave }: { replay: boolean; onDon
     setTimeout(() => onDone(botId), after);
   };
 
-  const create = () => {
-    if (leaving || !maus) return;
-    const patch = createChiefPatch(maus, chief);
+  const modelInstances = state.instances.filter((instance) => Boolean(instance.models?.default?.trim() || instance.models?.options?.length));
+  const provider = modelInstances.find((instance) => instance.instanceId === providerId);
+  const models = provider?.models?.options ?? [];
+  const selection: ModelSelection | null = providerId && modelId
+    ? { instanceId: providerId, model: modelId }
+    : modelInstances.length === 0
+      ? maus?.modelSelection ?? null
+      : null;
+  const canCreate = Boolean(chiefName.trim() && selection && !saving && !leaving);
+
+  const create = async () => {
+    if (!canCreate || !maus || !selection) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const name = personName.trim();
+      if (name && name !== state.config?.profile?.name?.trim()) {
+        await api("/api/config", { method: "PUT", body: JSON.stringify({ profile: { name } }), signal: AbortSignal.timeout(10_000) });
+        dispatch({ type: "profileSaved", profile: { name } });
+      }
+    } catch {
+      setSaveError(t("onboarding.chief.saveFailed"));
+      setSaving(false);
+      return;
+    }
+    const nextName = chiefName.trim();
+    const changedModel = selection.instanceId !== maus.modelSelection.instanceId || selection.model !== maus.modelSelection.model;
+    const patch = {
+      ...createChiefPatch(maus, chief),
+      ...(nextName === maus.name ? {} : { name: nextName }),
+      ...(changedModel ? { modelSelection: selection } : {}),
+    };
     if (!replay) stageIntro(maus.id);
     landInSidebar({
       from: avatar.current,
@@ -173,13 +208,36 @@ export function ChiefIntro({ replay, onDone, onLeave }: { replay: boolean; onDon
         <>
           <div className="flex flex-col items-center gap-4 px-6 pb-4 pt-6 text-center">
             <span ref={avatar} className="relative flex">
-              {maus ? <BotAvatar bot={maus} size={AVATAR_SIZE} motion="arrive" /> : <MausAvatar color="chrome" size={AVATAR_SIZE} label={DEFAULT_BOT_NAME} />}
+              <img src="/markbot-desktop.png" alt="" width={AVATAR_SIZE} height={AVATAR_SIZE} className="size-16 rounded-[22%] object-cover shadow-sm" />
               <ChiefBadge />
             </span>
             <div className="flex flex-col gap-2">
               <h2 id="chief-intro-title" className="text-title font-medium leading-6 tracking-[-0.008em] text-ink">{t("onboarding.chief.title")}</h2>
               <p className="text-body leading-5 text-ink-secondary">{t("onboarding.chief.body")}</p>
             </div>
+            <div className="grid w-full gap-3 text-left sm:grid-cols-2">
+              <label className="text-note text-ink-secondary">{t("onboarding.chief.personName")}
+                <input value={personName} onChange={(event) => setPersonName(event.target.value)} autoComplete="name" className="mt-1 h-10 w-full rounded-xl border border-hairline/60 bg-inset px-3 text-body text-ink outline-none focus:border-accent" placeholder={t("onboarding.chief.personNamePlaceholder")} />
+              </label>
+              <label className="text-note text-ink-secondary">{t("onboarding.chief.botName")}
+                <input value={chiefName} onChange={(event) => setChiefName(event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-hairline/60 bg-inset px-3 text-body text-ink outline-none focus:border-accent" placeholder={t("onboarding.chief.botNamePlaceholder")} />
+              </label>
+              <label className="text-note text-ink-secondary">{t("onboarding.chief.provider")}
+                <select value={providerId} onChange={(event) => { setProviderId(event.target.value); setModelId(""); }} className="mt-1 h-10 w-full rounded-xl border border-hairline/60 bg-inset px-3 text-body text-ink outline-none focus:border-accent">
+                  <option value="">{t("onboarding.chief.chooseProvider")}</option>
+                  {modelInstances.map((instance) => <option key={instance.instanceId} value={instance.instanceId}>{instance.displayName}</option>)}
+                </select>
+              </label>
+              <label className="text-note text-ink-secondary">{t("onboarding.chief.model")}
+                <select value={modelId} disabled={!provider} onChange={(event) => setModelId(event.target.value)} className="mt-1 h-10 w-full rounded-xl border border-hairline/60 bg-inset px-3 text-body text-ink outline-none focus:border-accent disabled:opacity-50">
+                  <option value="">{t("onboarding.chief.chooseModel")}</option>
+                  {provider?.models.default && !models.some((model) => model.id === provider.models.default) && <option value={provider.models.default}>{provider.models.default}</option>}
+                  {models.map((model) => <option key={model.id} value={model.id}>{model.label}</option>)}
+                </select>
+              </label>
+            </div>
+            {!modelInstances.length && <p role="alert" className="text-note text-warning">{t("onboarding.chief.noModels")}</p>}
+            {saveError && <p role="alert" className="text-note text-danger">{saveError}</p>}
           </div>
           <div className={cn("p-4", choices.length > 0 && "grid grid-cols-2 gap-2")}>
             {choices.length > 0 && (
@@ -187,8 +245,8 @@ export function ChiefIntro({ replay, onDone, onLeave }: { replay: boolean; onDon
                 <span className="truncate">{t("onboarding.chief.choose")}</span>
               </button>
             )}
-            <button type="button" data-primary="" data-chief-create="" onClick={create} disabled={!maus} className={cn(PRIMARY, "w-full min-w-0")}>
-              <span className="truncate">{t("onboarding.chief.create")}</span>
+            <button type="button" data-primary="" data-chief-create="" onClick={() => void create()} disabled={!canCreate} className={cn(PRIMARY, "w-full min-w-0")}>
+              <span className="truncate">{saving ? t("onboarding.chief.saving") : t("onboarding.chief.create")}</span>
             </button>
           </div>
         </>

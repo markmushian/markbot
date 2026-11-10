@@ -32,7 +32,8 @@ export class BotCreationDraft {
     const { computer, cwd, peers, toolScope, ...profile } = this.template.profile;
     return {
       id: this.id, threadId: this.id, name: "", title: "", description: "", soul: "",
-      color: "green", notifications: true, unread: false, messages: [],
+      color: "blue", avatarUrl: "/mark-avatars/guide.png", avatarCrop: "rounded",
+      notifications: true, unread: false, messages: [],
       modelSelection: { instanceId: "", model: "" }, ...profile,
       computer: computer ?? undefined, cwd: cwd ?? undefined, peers: peers ?? undefined,
       toolScope: toolScope ?? undefined,

@@ -81,7 +81,7 @@ export function ManageMembersPanel({
     const rosterChanged =
       opened.length !== group.memberIds.length || opened.some((id, index) => id !== group.memberIds[index]);
     if (rosterChanged) {
-      setSaveError("This group's members changed while the panel was open. Close it and try again.");
+      setSaveError(t("room.members.changed"));
       return;
     }
     if (changed) {
@@ -104,12 +104,12 @@ export function ManageMembersPanel({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        aria-label={`Manage members of ${group.name}`}
+        aria-label={`${t("room.members.manage")} · ${group.name}`}
         className="w-[340px] rounded-2xl border border-hairline/50 bg-card p-4 shadow-2xl"
       >
-        <div className="mb-1 text-lead font-semibold text-ink">Manage Members</div>
+        <div className="mb-1 text-lead font-semibold text-ink">{t("room.members.manage")}</div>
         <div className="mb-3 truncate text-ui text-ink-secondary">{group.name}</div>
-        <BotPickerList bots={bots} picked={picked} onToggle={toggle} emptyHint="Create a bot first — groups are made of bots." />
+        <BotPickerList bots={bots} picked={picked} onToggle={toggle} emptyHint={t("sidebar.newChannel.emptyHint")} />
         {!memberIds.length && <div className="mt-2 text-note text-ink-secondary">{t("room.members.lastBot")}</div>}
         {saveError && (
           <div role="alert" className="mt-2 text-note text-danger">
@@ -121,14 +121,14 @@ export function ManageMembersPanel({
             onClick={onClose}
             className="flex-1 rounded-lg bg-raised py-2 text-body font-medium text-ink hover:brightness-110"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={save}
             disabled={!memberIds.length}
             className="flex-1 rounded-lg bg-accent py-2 text-body font-medium text-white hover:brightness-110 disabled:opacity-40"
           >
-            Save{memberIds.length ? ` · ${memberIds.length} ${memberIds.length === 1 ? "bot" : "bots"}` : ""}
+            {t("common.save")}{memberIds.length ? ` · ${memberIds.length}` : ""}
           </button>
         </div>
       </div>

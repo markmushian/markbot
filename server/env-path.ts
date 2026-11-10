@@ -56,6 +56,8 @@ function windowsKnownDirs(): string[] {
     join(home, ".kimi-code", "bin"), // recover Kimi installs after a GUI launch too
     join(home, ".grok", "bin"), // x.ai installer
     join(localAppData, "agy", "bin"), // Antigravity installer
+    // WorkBuddy Desktop bundles CodeBuddy here without adding it to PATH.
+    join(localAppData, "Programs", "WorkBuddy", "resources", "app.asar.unpacked", "cli", "bin"),
     // Cursor installer: cursor-agent.* and its `agent` copies
     join(localAppData, "cursor-agent"),
     join(home, ".local", "bin"), // claude native installer
@@ -168,7 +170,8 @@ export function harnessHome(name: string, env: Record<string, string | undefined
 export function findCliCandidates(name: string, path: string = augmentedPath()): string[] {
   if (!name || /[\n\r]/.test(name)) return [];
   if (/[/\\]/.test(name) || /^[a-zA-Z]:/.test(name)) return [name];
-  const exts = process.platform === "win32" ? (process.env.PATHEXT ?? ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean) : [""];
+  // Electron apps may ship an extensionless Node launcher (WorkBuddy's `codebuddy`).
+  const exts = process.platform === "win32" ? [...(process.env.PATHEXT ?? ".COM;.EXE;.BAT;.CMD").split(";").filter(Boolean), ""] : [""];
   const out: string[] = [];
   for (const dir of path.split(delimiter)) {
     if (!dir) continue;

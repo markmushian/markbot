@@ -214,7 +214,7 @@ describe("Members", () => {
   it("opens Manage members", () => {
     render(room());
     click($('[data-panel-row="members"]'));
-    expect($('[role="dialog"][aria-label="Manage members of Desk HQ"]')).not.toBeNull();
+    expect($('[role="dialog"][aria-label="Manage members · Desk HQ"]')).not.toBeNull();
   });
 });
 

@@ -3,6 +3,7 @@
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { URL as NodeURL } from "node:url";
 import { afterAll, afterEach } from "vitest";
 
 import { removeTempDir } from "./cleanup.ts";
@@ -34,7 +35,7 @@ Object.defineProperty(globalThis.navigator, "language", { value: "en", configura
 // i18n starts on its own default pack and only App settles it from the person's choice, so the pinned language has to
 // be applied here too: English assertions otherwise compare against the default pack. Files that test other languages
 // call setLocale themselves.
-const { setLocale } = (await import(/* @vite-ignore */ new URL("../../src/lib/i18n.ts", import.meta.url).href)) as {
+const { setLocale } = (await import(/* @vite-ignore */ new NodeURL("../../src/lib/i18n.ts", import.meta.url).href)) as {
   setLocale: (locale: string) => void;
 };
 setLocale("en");
@@ -45,7 +46,7 @@ setLocale("en");
 const closeMessageDb: () => void =
   !("window" in globalThis)
     ? (
-        (await import(/* @vite-ignore */ new URL("../message-db.ts", import.meta.url).href)) as {
+        (await import(/* @vite-ignore */ new NodeURL("../message-db.ts", import.meta.url).href)) as {
           closeMessageDb: () => void;
         }
       ).closeMessageDb

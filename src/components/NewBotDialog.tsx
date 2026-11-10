@@ -40,6 +40,8 @@ const SECTION_KEYS: Record<Section, LocaleKey> = {
   Model: "botSettings.sections.model", Permissions: "botSettings.sections.permissions", "Voice & alerts": "botSettings.sections.voice",
 };
 
+let cachedBotDefaults: BotDefaultsAnswer | null = null;
+
 /** The bot editor over the New bot defaults: saving them (`defaultsMode`), or a ready-made bot from Templates to review
  * before it is created. */
 export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBotId }: {
@@ -50,9 +52,12 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
 }) {
   const parent = useStore();
   const [, render] = useState(0);
-  const [draft, setDraft] = useState(() => new BotCreationDraft(EMPTY_BOT_DEFAULTS, () => render(value => value + 1)));
+  const [draft, setDraft] = useState(() => new BotCreationDraft(
+    cachedBotDefaults ? startingTemplate(cachedBotDefaults, !defaultsMode) : EMPTY_BOT_DEFAULTS,
+    () => render(value => value + 1),
+  ));
   const [active, setActive] = useState<Section>("Identity");
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
   const [localSaving, setSaving] = useState(false);
   const saving = localSaving || parent.state.botCreationPending;
   const savingRef = useRef(false);
@@ -76,6 +81,7 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
     void api<BotDefaultsAnswer>("/api/bot-defaults")
       .then(result => {
         if (cancelled) return;
+        cachedBotDefaults = result;
         const defaults = startingTemplate(result, !defaultsMode);
         const ready = defaultsMode || !readyBotId ? undefined : readyBot(readyBotId);
         const next = new BotCreationDraft(ready ? readyBotTemplate(defaults, ready) : defaults, () => render(value => value + 1));
@@ -193,7 +199,6 @@ export function NewBotDialog({ defaultsMode = false, onClose, onCreated, readyBo
             className={cn("shrink-0 rounded-lg px-3 py-2 text-left text-ui", active === label ? "bg-control text-ink" : "text-ink-secondary hover:bg-control/50")}>{t(SECTION_KEYS[label])}</button>)}
         </nav>
         <div className="min-h-0 min-w-0 flex-1 overflow-y-auto p-4 sm:p-5">
-          {!ready && !error && <div role="status" className="flex items-center gap-2 text-ui text-ink-secondary"><Loader2 size={16} className="animate-spin" />{t("newBot.loading")}</div>}
           {ready && <fieldset disabled={saving} className="min-w-0">
             <BotEditorStore value={scopedStore}><BotEditorContext.Provider value={{ request: draft.request, draft: true, uploadAvatar: draft.uploadAvatar }}>
               <DraftSection active={active} draft={draft} defaultsMode={defaultsMode}

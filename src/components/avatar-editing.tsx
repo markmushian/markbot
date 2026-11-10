@@ -22,7 +22,11 @@ export type AvatarPatch = Partial<
   Pick<Bot, "avatarCrop" | "avatarUrl" | "avatarZoom" | "avatarHue" | "avatarFocusX" | "avatarFocusY" | "color" | "mascotExpression" | "mascotBody" | "mascotFaceColor">
 >;
 
-export const RESET_MASCOT_PATCH: AvatarPatch = { avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotFaceColor: null };
+export const RESET_MASCOT_PATCH: AvatarPatch = {
+  avatarUrl: "/mark-avatars/guide.png", avatarCrop: "rounded", color: "blue",
+  avatarHue: 0, avatarZoom: AVATAR_ZOOM_MIN, avatarFocusX: AVATAR_FOCUS_CENTER,
+  avatarFocusY: AVATAR_FOCUS_CENTER, mascotExpression: null, mascotBody: null, mascotFaceColor: null,
+};
 
 export const CROP_LABEL = {
   mascot: "机器人",
@@ -150,7 +154,7 @@ export function OrganizationAvatarIcons({ busy, onUpload }: { busy: boolean; onU
 }
 
 /** Vendor marks, offered where the upload button is: the same shape of a preset as the drawings above. */
-export function ModelAvatarIcons({ busy, onUpload }: { busy: boolean; onUpload: (file: File) => Promise<boolean> }) {
+export function ModelAvatarIcons({ busy, onUpload, onPatch }: { busy: boolean; onUpload: (file: File) => Promise<boolean>; onPatch: (patch: AvatarPatch) => void }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -158,7 +162,13 @@ export function ModelAvatarIcons({ busy, onUpload }: { busy: boolean; onUpload: 
     if (busy || loading) return;
     setLoading(id);
     setError(null);
-    try { if (await onUpload(await markAvatarFile(image, id)) !== false) setSelected(id); }
+    try {
+      if (await onUpload(await markAvatarFile(image, id)) !== false) {
+        // Provider logos (including Hermes) are designed as rounded-square marks.
+        onPatch({ avatarCrop: "rounded", avatarHue: 0 });
+        setSelected(id);
+      }
+    }
     catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); }
     finally { setLoading(null); }
   };
@@ -197,7 +207,7 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
   const [savingConnection, setSavingConnection] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const crop = bot.avatarCrop ?? "mascot";
+  const crop = bot.avatarCrop ?? (bot.avatarUrl ? "rounded" : "mascot");
   const cropRef = useRef(crop);
   cropRef.current = crop;
   const busy = uploading || generating || savingConnection;
@@ -232,14 +242,7 @@ export function useAvatarImage(bot: Bot, onPatch: (patch: AvatarPatch) => void) 
 
   const removeImage = () => {
     setError(null);
-    onPatch({
-      avatarUrl: null,
-      avatarCrop: "mascot",
-      avatarHue: 0,
-      avatarZoom: AVATAR_ZOOM_MIN,
-      avatarFocusX: AVATAR_FOCUS_CENTER,
-      avatarFocusY: AVATAR_FOCUS_CENTER,
-    });
+    onPatch(RESET_MASCOT_PATCH);
   };
 
   const generate = async (direction: string) => {

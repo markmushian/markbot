@@ -88,7 +88,7 @@ export function BotProfileAvatarCard({
           )}
         </div>
         <div className="mt-1.5 text-note text-ink-secondary">{t("botIdentity.imageTypes")}</div>
-        <ModelAvatarIcons busy={busy} onUpload={upload} />
+        <ModelAvatarIcons busy={busy} onUpload={upload} onPatch={onPatch} />
 
         {crop === "mascot" && (
           <>
