@@ -290,8 +290,8 @@ process.stdin.on("data", (chunk) => {
     expect(Date.now() - started).toBeLessThan(1500);
   });
 
-  it.each(["not-a-number", "0", "-1", "0.5", "Infinity", "2147483648"])("ignores invalid timeout %s and falls back to the 15s default", async (timeout) => {
-    expect(HERMES_ACP_MODELS_DEFAULT_TIMEOUT_MS).toBe(15_000);
+  it.each(["not-a-number", "0", "-1", "0.5", "Infinity", "2147483648"])("ignores invalid timeout %s and falls back to the default", async (timeout) => {
+    expect(HERMES_ACP_MODELS_DEFAULT_TIMEOUT_MS).toBe(40_000);
     const { cli, env } = fakeCli({ FAKE_SESSION_DELAY_MS: "150", [HERMES_ACP_MODELS_TIMEOUT_ENV]: timeout });
     // Resolving at all before a realistic default proves the override was rejected.
     await expect(fetchHermesAcpModels(cli, env)).resolves.toEqual(CATALOG);

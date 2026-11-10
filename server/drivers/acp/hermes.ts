@@ -285,8 +285,9 @@ export function hermesConfiguredModel(
 
 export const HERMES_ACP_MODELS_TIMEOUT_ENV = "HERMES_ACP_MODELS_TIMEOUT_MS";
 /** Hermes with several providers answers initialize in about a second but session/new, which carries
- * the models, in ~6-7 s. */
-export const HERMES_ACP_MODELS_DEFAULT_TIMEOUT_MS = 15_000;
+ * the models, in ~6-7 s on a clean shell and up to ~21 s when Mark Bot's MCP servers ride along.
+ * A packaged Electron process is slower still, so leave generous headroom before giving up. */
+export const HERMES_ACP_MODELS_DEFAULT_TIMEOUT_MS = 40_000;
 
 function hermesAcpModelsTimeoutMs(env: Record<string, string | undefined>): number {
   const raw = env[HERMES_ACP_MODELS_TIMEOUT_ENV];
@@ -307,7 +308,14 @@ export async function fetchHermesAcpModels(
     try {
       const launch = hermesLaunch(cli);
       const resolved = resolveCli(launch.command, launch.args, env);
-      child = spawn(resolved.command, resolved.args, { stdio: ["pipe", "pipe", "ignore"], env: env as NodeJS.ProcessEnv, windowsHide: true });
+      child = spawn(resolved.command, resolved.args, {
+        stdio: ["pipe", "pipe", "ignore"], env: env as NodeJS.ProcessEnv,
+        // The catalog probe used to inherit the Electron server's cwd; Hermes resolves its data root
+        // relative to it, which can send the probe into an empty/isolated runtime instead of the
+        // configured home. Pin it to the same home the real session and the gateway use.
+        cwd: env.HERMES_HOME || dirname(resolved.command),
+        windowsHide: true,
+      });
     } catch {
       return resolve([]);
     }
@@ -463,14 +471,24 @@ const support: AcpSupport = {
   // Hermes keeps the first MCP server it registers under a name for the process's life, so a new bearer needs a fresh process.
   restartOnMcpChange: true,
   resendsReasoningReply: true,
+  // Hermes registers every MCP server during session/new. Mark Bot hands it up to 11 stdio
+  // proxies (Electron launchers, an npx install); when any of those cannot start under the box,
+  // Hermes never answers the request and the turn hangs for the full 5-minute deadline. Hermes
+  // already has its own tools through the gateway, so let it start clean instead.
+  sessionMcpServers: () => [],
+  newSessionTimeoutMs: 90_000,
   transformEnv: (env, config) => {
     // A leftover OPENAI_API_KEY makes Hermes auto-resolve to OpenRouter with no Authorization header.
     delete env.OPENAI_API_KEY;
     delete env.OPENROUTER_API_KEY;
-    // The ACP adapter reads config.yaml and .env from HERMES_HOME. A GUI launch often loses that
-    // variable, so derive it from the install directory the instance points at instead of silently
-    // falling back to an empty ~/.hermes with no provider credentials.
-    if (!env.HERMES_HOME && /[/\\]/.test(config.cli)) {
+    // This is an Electron launcher flag, meaningless to a PyInstaller CLI but inherited by the
+    // child processes Hermes starts; drop it so it cannot flip one of them into a GUI process.
+    delete env.ELECTRON_RUN_AS_NODE;
+    // Pin the data root from the CLI this instance is bound to, even when a global HERMES_HOME
+    // exists (a terminal `hermes setup` sets one). A value that differs from the gateway's cwd in
+    // slash style or encoding makes the ACP adapter bootstrap a second isolated Python runtime
+    // instead of answering session/new. Gateway, catalog probe and session must all share one path.
+    if (/[/\\]/.test(config.cli)) {
       const bin = dirname(config.cli);
       if (basename(bin).toLowerCase() === "bin" && existsSync(join(dirname(bin), "config.yaml"))) {
         env.HERMES_HOME = dirname(bin);
