@@ -182,10 +182,6 @@ export interface AcpSupport {
   clientCapabilitiesMeta?: Record<string, unknown>;
   /** The agent reaches MCP servers by URL: Mark Bot's own servers are this server's endpoints, no process each. */
   ownMcpOverHttp?: boolean;
-  /** Engines that initialize MCP servers synchronously inside session/new can stall the handshake forever
-   *  when one of those child processes cannot start (a boxed Electron launcher, an npx install). A driver
-   *  can trim the list it actually hands to session/new; the rest of the turn still sees the full set. */
-  sessionMcpServers?(servers: AcpMcpServer[]): AcpMcpServer[];
   /** Hard deadline for session/new; the default (5 min) is far too long for an agent that never answers. */
   newSessionTimeoutMs?: number;
   /** How many tools the agent lists of its own beside the MCP servers', counted against a provider's tool limit. */
@@ -1070,9 +1066,8 @@ export function createAcpDriver(support: AcpSupport): ProviderDriver<AcpConfig> 
         }
         const resolvedModel = support.resolveTurnModel?.(turn.model, env);
         const toolLimitKey = JSON.stringify([instanceId, resolvedModel ?? null]);
-        const turnMcpServers = acpMcpServers(turn, { http: support.ownMcpOverHttp === true, engine: support.driverKind,
+        const mcpServers = acpMcpServers(turn, { http: support.ownMcpOverHttp === true, engine: support.driverKind,
           toolBudget: mcpToolBudget(learnedToolCountLimit(toolLimitKey), support.engineTools ?? 32) });
-        const mcpServers = support.sessionMcpServers ? support.sessionMcpServers(turnMcpServers) : turnMcpServers;
         support.applyTurnEnv?.(env, {
           model: resolvedModel, requestedModel: turn.model, fullAuto: turnConfig.fullAuto === true, botId: turn.botId, cwd, toolScope: turn.toolScope,
           threadId, mcpServers,

@@ -471,13 +471,9 @@ const support: AcpSupport = {
   // Hermes keeps the first MCP server it registers under a name for the process's life, so a new bearer needs a fresh process.
   restartOnMcpChange: true,
   resendsReasoningReply: true,
-  // Hermes registers every MCP server during session/new. Mark Bot hands it up to 11 stdio
-  // proxies (Electron launchers, an npx install); when any of those cannot start under the box,
-  // Hermes never answers the request and the turn hangs for the full 5-minute deadline. Hermes
-  // already has its own tools through the gateway, so let it start clean instead.
-  sessionMcpServers: () => [],
-  newSessionTimeoutMs: 90_000,
-  transformEnv: (env, config) => {
+  // Five minutes is a long time to stare at a hung handshake; Hermes answers in ~10-20 s when healthy.
+  newSessionTimeoutMs: 120_000,
+  transformEnv: (env, config, _instanceId, instanceEnvironment) => {
     // A leftover OPENAI_API_KEY makes Hermes auto-resolve to OpenRouter with no Authorization header.
     delete env.OPENAI_API_KEY;
     delete env.OPENROUTER_API_KEY;
@@ -494,6 +490,13 @@ const support: AcpSupport = {
         env.HERMES_HOME = dirname(bin);
       }
     }
+    // A packaged desktop app inherits the short system PATH (no python/node/git helpers). Hermes
+    // probes its workspace and model catalog while answering session/new and silently hangs when
+    // those helpers are missing. `childEnv` sets PATH = augmentedPath() *after* the instance's
+    // environment, so an instance-level PATH never reaches the child; restore it here. The desktop
+    // shortcut has no login-shell PATH, so this is the only way a person can supply one.
+    const instancePath = instanceEnvironment?.PATH;
+    if (typeof instancePath === "string" && instancePath.trim()) env.PATH = instancePath;
   },
   pickAuthMethod: () => null,
   authFailure: "continue",
