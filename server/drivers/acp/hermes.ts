@@ -1,10 +1,11 @@
 // Hermes Agent (Nous Research's `hermes acp`), custom-only. ACP ignores `hermes -m` (cmd_acp does not
 // forward it), and OPENAI_API_KEY makes provider:auto resolve to OpenRouter without its key ("HTTP 401:
 // Missing Authentication header"), so injects write providers.<host> and set_model `custom:<host>:<model>`.
-import { spawn } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, join } from "node:path";
+import { promisify } from "node:util";
 import { parse as parseYaml } from "yaml";
 
 import type { ModelCatalog } from "../../contracts.ts";
@@ -31,6 +32,70 @@ function hermesAcpBinary(cli: string): string {
 function hermesLaunch(cli: string): { command: string; args: string[] } {
   const command = hermesAcpBinary(cli);
   return { command, args: HERMES_ACP_BINARY.test(command) ? [] : ["acp"] };
+}
+
+const execFileAsync = promisify(execFile);
+
+/** The ACP adapter is a client of Hermes' gateway: with no gateway running, every session/new answers
+ *  `Gateway inaccessible: service_manager_unavailable`. `hermes gateway ensure` needs Windows' schtasks
+ *  service manager, which is regularly unavailable, so start a detached gateway ourselves. It outlives
+ *  one ACP process (and a Mark Bot restart), so the TUI and other clients can share it. */
+let gatewayReadyAt = 0;
+let gatewayEnsure: Promise<void> | null = null;
+
+function hermesCliBinary(cli: string): string {
+  const candidate = cli.replace(/hermes-acp(?:\.exe)?$/i, process.platform === "win32" ? "hermes.exe" : "hermes");
+  return candidate !== cli && existsSync(candidate) ? candidate : cli;
+}
+
+async function gatewayIsRunning(cli: string, env: NodeJS.ProcessEnv): Promise<boolean> {
+  try {
+    const { stdout } = await execFileAsync(cli, ["gateway", "status"], {
+      env, cwd: dirname(cli), timeout: 12_000, windowsHide: true,
+    });
+    return /running/i.test(stdout) && !/not running/i.test(stdout);
+  } catch {
+    return false;
+  }
+}
+
+async function ensureHermesGateway(cli: string, env: Record<string, string | undefined>): Promise<void> {
+  if (Date.now() - gatewayReadyAt < 60_000) return;
+  if (gatewayEnsure) return await gatewayEnsure;
+  const command = hermesCliBinary(cli);
+  const childEnv = env as NodeJS.ProcessEnv;
+  gatewayEnsure = (async () => {
+    if (await gatewayIsRunning(command, childEnv)) {
+      gatewayReadyAt = Date.now();
+      return;
+    }
+    // No --idle-exit: a gateway that quits after 600 idle seconds would break the next turn.
+    try {
+      const child = spawn(command, ["gateway", "run", "--quiet"], {
+        env: childEnv,
+        cwd: env.HERMES_HOME || dirname(dirname(command)),
+        detached: true,
+        stdio: "ignore",
+        windowsHide: true,
+      });
+      child.on("error", () => {});
+      child.unref();
+    } catch {
+      return;
+    }
+    for (let attempt = 0; attempt < 12; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 750));
+      if (await gatewayIsRunning(command, childEnv)) {
+        gatewayReadyAt = Date.now();
+        return;
+      }
+    }
+  })();
+  try {
+    await gatewayEnsure;
+  } finally {
+    gatewayEnsure = null;
+  }
 }
 
 export const HERMES_OPENMAUS_SCREENSHOT_COMPAT = "HERMES_OPENMAUS_SCREENSHOT_COMPAT";
@@ -338,7 +403,10 @@ async function resolveModels(
 ): Promise<ModelCatalog> {
   const catalog = await mergeLocalInject(EMPTY, env);
   const configured = hermesConfiguredModel(env);
-  const remote = configured ? await fetchHermesAcpModels(config?.cli || "hermes", env) : [];
+  const cli = config?.cli || "hermes";
+  // The catalog probe spawns its own ACP process, which also needs a live gateway.
+  if (configured) await ensureHermesGateway(cli, env);
+  const remote = configured ? await fetchHermesAcpModels(cli, env) : [];
   const seen = new Set<string>();
   const options = [...(configured ? [configured] : []), ...remote, ...catalog.options].filter((o) => {
     if (seen.has(o.id)) return false;
@@ -387,7 +455,10 @@ const support: AcpSupport = {
     signInCommand: "hermes setup",
   },
   // The standalone adapter takes no subcommand; the CLI wrapper still needs `acp`.
-  resolveCommand: async (_env, config) => ({ command: hermesLaunch(config.cli).command }),
+  resolveCommand: async (env, config) => {
+    await ensureHermesGateway(config.cli, env);
+    return { command: hermesLaunch(config.cli).command };
+  },
   spawnArgs: (config) => hermesLaunch(config.cli).args,
   // Hermes keeps the first MCP server it registers under a name for the process's life, so a new bearer needs a fresh process.
   restartOnMcpChange: true,

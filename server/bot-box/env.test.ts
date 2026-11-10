@@ -32,6 +32,20 @@ describe("the box's environment allow-list", () => {
     for (const name of ["ANTIGRAVITY_HARNESS_PATH", "AGY_ACP_FORCE_FILE_STORAGE", "BROWSER", "GEMINI_HOME"]) expect(boxEnvironmentAllows(name), name).toBe(true);
   });
 
+  it("keeps the Windows system variables a packaged CLI needs to resolve its home", () => {
+    // Hermes' ACP adapter exits with "Could not determine home directory" before ACP initialize
+    // when USERPROFILE/APPDATA/SYSTEMROOT are stripped by the box.
+    const kept = boxEnvironment({
+      USERPROFILE: "C:\\Users\\me", APPDATA: "C:\\Users\\me\\AppData\\Roaming",
+      LOCALAPPDATA: "C:\\Users\\me\\AppData\\Local", TEMP: "C:\\Temp", SYSTEMROOT: "C:\\Windows",
+      HERMES_HOME: "E:\\Hermes", SECRET_API_TOKEN: "must-not-leak",
+    });
+    for (const name of ["USERPROFILE", "APPDATA", "LOCALAPPDATA", "TEMP", "SYSTEMROOT", "HERMES_HOME"]) {
+      expect(kept[name], name).toBeDefined();
+    }
+    expect(kept.SECRET_API_TOKEN).toBeUndefined();
+  });
+
   it("keeps the keys one spawn vouches for, under any name, past the allow-list and the deny, never past the never-list or OMB_", () => {
     const deny = new Set(["OPENCODE_API_KEY", "OMB_COMPOSIO_BROKER_TOKEN"]);
     const allow = new Set(["NANO_GPT_API_KEY", "OPENCODE_API_KEY", "OMB_LICENSE_KEY", "OMB_CLOUD_AI_TOKEN", "OMB_COMPOSIO_BROKER_TOKEN"]);
