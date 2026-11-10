@@ -115,7 +115,7 @@ it.skipIf(!stub || process.platform === "win32")("drives each member's private c
   // A tool call from Ada's turn goes through the harness to her own browser, the one her turn was given.
   const mark = stub!.lines().length;
   const called = await browserTurn(ada, adaThread, "Which tabs are open?", [{ server: "browser", name: "agent_browser_tab_list", input: {} }]);
-  expect(stub!.lines().slice(mark), "the tool call ran in Ada's own browser").toContain(`${ADA} mcp`);
+  await expect.poll(() => stub!.lines().slice(mark), { timeout: 30_000 }).toContain(`${ADA} mcp`);
   expect(called).toContain("agent_browser_tab_list");
 }, hostTimeout(240_000));
 

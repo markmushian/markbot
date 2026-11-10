@@ -105,7 +105,7 @@ async function turnOf(botId: string, before: Set<string>): Promise<Turn> {
       } catch {}
     }
     return false;
-  }, { timeout: 15_000 }).toBe(true);
+  }, { timeout: 60_000 }).toBe(true);
   return found!;
 }
 

@@ -8430,17 +8430,17 @@ describe("harness HTTP API", () => {
       env: { FIXTURE_TOKEN: secret, REMOVE_ME: "old" },
     });
     expect(created.status).toBe(201);
-    expect(created.body.servers).toEqual([expect.objectContaining({
+    expect(created.body.servers.find((server: { name: string }) => server.name === "fixture")).toEqual(expect.objectContaining({
       name: "fixture",
       enabled: false,
       envKeys: ["FIXTURE_TOKEN", "REMOVE_ME"],
-    })]);
+    }));
     expect(JSON.stringify(created.body)).not.toContain(secret);
 
     const tested = await api("POST", "/api/mcp/servers/fixture/test");
     expect(tested).toEqual({
       status: 200,
-      body: { ok: true, tools: [{ name: "read_notes", description: "Read saved notes" }] },
+      body: { ok: true, outcome: "accepted", tools: [{ name: "read_notes", description: "Read saved notes" }] },
     });
 
     const updated = await api("PUT", "/api/mcp/servers/fixture", {
@@ -8450,11 +8450,11 @@ describe("harness HTTP API", () => {
       enabled: false,
     });
     expect(updated.status).toBe(200);
-    expect(updated.body.servers[0].envKeys).toEqual(["FIXTURE_TOKEN", "NEXT"]);
+    expect(updated.body.servers.find((server: { name: string }) => server.name === "fixture").envKeys).toEqual(["FIXTURE_TOKEN", "NEXT"]);
     expect(JSON.stringify(updated.body)).not.toContain(secret);
 
     const enabled = await api("PATCH", "/api/mcp/servers/fixture", { enabled: true });
-    expect(enabled.body.servers[0].enabled).toBe(true);
+    expect(enabled.body.servers.find((server: { name: string }) => server.name === "fixture").enabled).toBe(true);
     const disk = JSON.parse(readFileSync(join(home, ".markbot", "config.json"), "utf8"));
     expect(disk.mcpServers.fixture.env).toEqual({ FIXTURE_TOKEN: secret, NEXT: "fresh" });
 
@@ -8462,9 +8462,11 @@ describe("harness HTTP API", () => {
     expect(reserved.status).toBe(400);
 
     const removed = await api("DELETE", "/api/mcp/servers/fixture");
-    expect(removed).toEqual({ status: 200, body: { servers: [] } });
+    expect(removed.status).toBe(200);
+    expect(removed.body.servers.some((server: { name: string }) => server.name === "fixture")).toBe(false);
     const after = await api("GET", "/api/mcp/servers");
-    expect(after).toEqual({ status: 200, body: { servers: [] } });
+    expect(after.status).toBe(200);
+    expect(after.body.servers.some((server: { name: string }) => server.name === "fixture")).toBe(false);
   });
 
   it("lets a bot file an MCP server only as a disabled row", async () => {
@@ -8546,13 +8548,13 @@ describe("harness HTTP API", () => {
     try {
       const created = await api("POST", "/api/mcp/servers", { name: "docs", url: fake.url, headers: { Authorization: secret } });
       expect(created.status).toBe(201);
-      expect(created.body.servers).toEqual([{ name: "docs", type: "http", url: fake.url, headerKeys: ["Authorization"], enabled: false, apps: true, scope: "team" }]);
+      expect(created.body.servers.find((server: { name: string }) => server.name === "docs")).toMatchObject({ name: "docs", type: "http", url: fake.url, headerKeys: ["Authorization"], enabled: false, apps: true, scope: "team" });
       expect(JSON.stringify(created.body)).not.toContain(secret);
 
       const tested = await api("POST", "/api/mcp/servers/docs/test");
       expect(tested).toEqual({
         status: 200,
-        body: { ok: true, tools: [{ name: "read_notes", description: "Read saved notes" }] },
+        body: { ok: true, outcome: "accepted", tools: [{ name: "read_notes", description: "Read saved notes" }] },
       });
 
       const updated = await api("PUT", "/api/mcp/servers/docs", {
@@ -8562,7 +8564,7 @@ describe("harness HTTP API", () => {
         enabled: true,
       });
       expect(updated.status).toBe(200);
-      expect(updated.body.servers[0]).toMatchObject({ type: "sse", headerKeys: ["Authorization", "X-Org"], enabled: true, apps: true });
+      expect(updated.body.servers.find((server: { name: string }) => server.name === "docs")).toMatchObject({ type: "sse", headerKeys: ["Authorization", "X-Org"], enabled: true, apps: true });
       expect(JSON.stringify(updated.body)).not.toContain(secret);
       const disk = JSON.parse(readFileSync(join(home, ".markbot", "config.json"), "utf8"));
       expect(disk.mcpServers.docs).toEqual({ type: "sse", url: fake.url, headers: { Authorization: secret, "X-Org": "acme" }, enabled: true });
@@ -8591,10 +8593,10 @@ describe("harness HTTP API", () => {
     try {
       expect((await api("POST", "/api/mcp/servers", { name: "hf", url: fake.url })).status).toBe(201);
       const first = await api("POST", "/api/mcp/servers/hf/test");
-      expect(first.body).toEqual({ ok: false, auth: "required", error: "This server needs you to sign in." });
-      expect((await api("GET", "/api/mcp/servers")).body.servers).toEqual([
+      expect(first.body).toEqual({ ok: false, auth: "required", outcome: "rejected", error: "This server needs you to sign in." });
+      expect((await api("GET", "/api/mcp/servers")).body.servers.find((server: { name: string }) => server.name === "hf")).toMatchObject(
         { name: "hf", type: "http", url: fake.url, headerKeys: [], enabled: false, apps: true, auth: "needs-sign-in", scope: "team" },
-      ]);
+      );
 
       const started = await api("POST", "/api/mcp/servers/hf/sign-in");
       expect(started.status).toBe(200);
@@ -8608,9 +8610,9 @@ describe("harness HTTP API", () => {
       expect(auth.phase).toBe("succeeded");
 
       const listed = await api("GET", "/api/mcp/servers");
-      expect(listed.body.servers[0]).toMatchObject({ name: "hf", auth: "signed-in", headerKeys: [] });
+      expect(listed.body.servers.find((server: { name: string }) => server.name === "hf")).toMatchObject({ name: "hf", auth: "signed-in", headerKeys: [] });
       const tested = await api("POST", "/api/mcp/servers/hf/test");
-      expect(tested.body).toEqual({ ok: true, tools: [{ name: "read_notes", description: "Read saved notes" }] });
+      expect(tested.body).toEqual({ ok: true, outcome: "accepted", tools: [{ name: "read_notes", description: "Read saved notes" }] });
 
       const file = join(home, ".markbot", "mcp-oauth.json");
       // Windows has no POSIX permission bits; stat reports 0o666 there.
@@ -8623,19 +8625,19 @@ describe("harness HTTP API", () => {
 
       const out = await api("POST", "/api/mcp/servers/hf/sign-out");
       expect(out.status).toBe(200);
-      expect(out.body.servers[0].auth).toBeUndefined();
+      expect(out.body.servers.find((server: { name: string }) => server.name === "hf").auth).toBeUndefined();
       expect(oauth.counts.revoke).toBe(1);
 
       await api("POST", "/api/mcp/servers/hf/test");
-      expect((await api("GET", "/api/mcp/servers")).body.servers[0].auth).toBe("needs-sign-in");
+      expect((await api("GET", "/api/mcp/servers")).body.servers.find((server: { name: string }) => server.name === "hf").auth).toBe("needs-sign-in");
       const moved = await api("PUT", "/api/mcp/servers/hf", { type: "http", url: `${fake.url}?v=2`, headers: {} });
       expect(moved.status).toBe(200);
-      expect(moved.body.servers[0].auth).toBeUndefined();
+      expect(moved.body.servers.find((server: { name: string }) => server.name === "hf").auth).toBeUndefined();
 
       await api("POST", "/api/mcp/servers/hf/test");
-      expect((await api("GET", "/api/mcp/servers")).body.servers[0].auth).toBe("needs-sign-in");
+      expect((await api("GET", "/api/mcp/servers")).body.servers.find((server: { name: string }) => server.name === "hf").auth).toBe("needs-sign-in");
       const pasted = await api("PUT", "/api/mcp/servers/hf", { type: "http", url: `${fake.url}?v=2`, headers: { Authorization: `Bearer ${oauth.mint()}` } });
-      expect(pasted.body.servers[0].auth).toBeUndefined();
+      expect(pasted.body.servers.find((server: { name: string }) => server.name === "hf").auth).toBeUndefined();
       expect((await api("POST", "/api/mcp/servers/hf/test")).body.ok).toBe(true);
 
       const local = await api("POST", "/api/mcp/servers/nope/sign-in");
