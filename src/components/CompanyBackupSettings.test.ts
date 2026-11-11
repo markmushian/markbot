@@ -347,7 +347,7 @@ describe("optional Company cloud backup settings", () => {
   });
 
   const scheduleSwitch = () => render().nodes.find(node => node.props["aria-label"] === "Daily backups")!;
-  const scheduleChecked = () => scheduleSwitch().props.checked;
+  const scheduleChecked = () => (scheduleSwitch().props as { checked?: boolean }).checked;
   const scheduleOff = { busy: false, schedule: { enabled: false, status: "off" as const } };
   it("keeps daily backups off without any automatic setting mutation or password request", async () => {
     vi.mocked(bridge.state).mockResolvedValueOnce(scheduleOff);
