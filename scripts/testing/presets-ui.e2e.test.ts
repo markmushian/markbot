@@ -135,14 +135,18 @@ describe("Preset bots in the real renderer", () => {
       await expect.poll(snapshot, { timeout: 10_000 }).toContain(expected);
       await ui("screenshot", "--out", evidence(shot));
       await click("Create bot");
-      await expect.poll(async () => (await bots()).length, { timeout: 15_000 }).toBe(before.length + 1);
+      let created: Awaited<ReturnType<typeof bots>>[number] | undefined;
+      await expect.poll(async () => {
+        created = (await bots()).find((bot) => !before.some((old) => old.id === bot.id));
+        return created;
+      }, { timeout: 15_000 }).toBeDefined();
       // Bot creation selects the new bot and can stack its first-run overlay
       // above Templates. Escape peels those visible layers in order; checking
       // between presses keeps this safe when only Templates is present.
       if ((await snapshot()).includes("Add Scout, Researcher")) await press("Escape");
       if ((await snapshot()).includes("Add Scout, Researcher")) await press("Escape");
       await expect.poll(snapshot, { timeout: 10_000 }).not.toContain("Add Scout, Researcher");
-      return (await bots()).find((bot) => !before.some((old) => old.id === bot.id))!;
+      return created!;
     };
     const fromFile = await create(`preset:${filePreset!.id}`, "Skills, added switched off: follow-up", "new-bot-file");
     expect(fromFile).toMatchObject({ name: expect.stringMatching(/^Sky/), installedPackage: { source: "file", presetKey: "new-bot-defaults" } });
