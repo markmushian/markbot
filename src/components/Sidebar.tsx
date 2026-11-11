@@ -1,6 +1,6 @@
 import { EngineUsageRail } from "./EngineUsageRail";
 import { GroupMemoryDialog } from "./GroupMemoryDialog";
-import { NewBotDialog } from "./NewBotDialog";
+import { NewBotDialog } from "./lazy-screens";
 import { OrganizationIdentity } from "./OrganizationIdentity";
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type Dispatch } from "react";
 import { createPortal } from "react-dom";

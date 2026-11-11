@@ -520,7 +520,7 @@ export function isClaudeApiKeyInstance(instance: InstanceInfo): boolean {
  */
 function ClaudeCliLinkSetup({ instance, className, unframed }: { instance: InstanceInfo; className?: string; unframed: boolean }) {
   const { dispatch, refreshInstances } = useStore();
-  const [candidates, setCandidates] = useState<string[] | null>(instance.cliCandidates ?? null);
+  const [candidates, setCandidates] = useState<string[] | null>(Array.isArray(instance.cliCandidates) ? instance.cliCandidates : null);
   const [selected, setSelected] = useState("");
   const [manual, setManual] = useState(instance.cli && !(instance.cliCandidates ?? []).includes(instance.cli) ? instance.cli : "");
   const [busy, setBusy] = useState(false);
@@ -530,7 +530,7 @@ function ClaudeCliLinkSetup({ instance, className, unframed }: { instance: Insta
   useEffect(() => {
     let live = true;
     api(`/api/cli-candidates?name=${encodeURIComponent(instance.cliDefault ?? "claude")}`)
-      .then(({ candidates: found }: { candidates: string[] }) => { if (live) setCandidates(found); })
+      .then(({ candidates: found }: { candidates?: unknown }) => { if (live) setCandidates(Array.isArray(found) ? found.filter((item): item is string => typeof item === "string") : []); })
       .catch(() => { if (live) setCandidates((prev) => prev ?? []); });
     return () => { live = false; };
   }, [instance.cliDefault]);
@@ -653,7 +653,7 @@ function ZcodePlanSignIn() {
 
 function AgentCliSetup({ instance }: { instance: InstanceInfo }) {
   const { dispatch, refreshInstances } = useStore();
-  const [candidates, setCandidates] = useState<string[] | null>(instance.cliCandidates ?? null);
+  const [candidates, setCandidates] = useState<string[] | null>(Array.isArray(instance.cliCandidates) ? instance.cliCandidates : null);
   const [selected, setSelected] = useState("");
   const [manual, setManual] = useState("");
   const [busy, setBusy] = useState<"test" | "save" | "reset" | null>(null);
@@ -664,7 +664,7 @@ function AgentCliSetup({ instance }: { instance: InstanceInfo }) {
   useEffect(() => {
     let live = true;
     api(`/api/cli-candidates?name=${encodeURIComponent(instance.cliDefault ?? instance.displayName)}`)
-      .then(({ candidates: found }: { candidates: string[] }) => { if (live) setCandidates(found); })
+      .then(({ candidates: found }: { candidates?: unknown }) => { if (live) setCandidates(Array.isArray(found) ? found.filter((item): item is string => typeof item === "string") : []); })
       .catch(() => { if (live) setCandidates((prev) => prev ?? []); });
     return () => { live = false; };
   }, [instance.cliDefault, instance.displayName]);

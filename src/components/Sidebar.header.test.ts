@@ -122,7 +122,7 @@ describe("sidebar top row", () => {
     expect(spacer).toBeGreaterThan(slot);
     expect(switcher).toBeGreaterThan(spacer);
     expect(buttons).toBeGreaterThan(switcher);
-    expect(row.slice(buttons).match(/<button/g)).toHaveLength(3);
+    expect(row.slice(buttons).match(/<button/g)).toHaveLength(4);
     const rowClasses = classesOf(row, "data-sidebar-top-row");
     expect(rowClasses).toEqual(expect.arrayContaining(["relative", "pl-4", "pr-2"]));
     expect(rowClasses).not.toContain("px-4");
@@ -140,6 +140,7 @@ describe("sidebar top row", () => {
     expect(row).toContain('title="Collapse to avatars"');
     expect(row).toContain('aria-label="Collapse sidebar to avatars"');
     expect(row).toContain('title="Active Threads"');
+    expect(row).toContain('title="Cockpit"');
     expect(html.match(/Switch server:/g)).toHaveLength(1);
   });
 
@@ -158,11 +159,12 @@ describe("sidebar top row", () => {
     expect(slot).toBeGreaterThan(lights);
     expect(buttons).toBeGreaterThan(slot);
     expect(classesOf(row, "data-sidebar-top-buttons")).toEqual(expect.arrayContaining(["shrink-0", "gap-2"]));
-    expect(row.slice(buttons).match(/<button/g)).toHaveLength(2);
+    expect(row.slice(buttons).match(/<button/g)).toHaveLength(3);
     expect(row).toMatch(/data-sidebar-search-toggle="true" aria-label="Search bots and messages" aria-expanded="false" title="Search bots and messages" class="[^"]*\bsize-9\b[^"]*\brounded-full\b[^"]*\btext-ink\/90\b[^"]*\bbg-composer\b/);
     expect(html).toMatch(/aria-label="New or share" class="[^"]*\bsize-9\b[^"]*\brounded-full\b/);
     expect(html).toMatch(/data-sidebar-edge-toggle="true" aria-label="Collapse sidebar to avatars" aria-expanded="true" title="Collapse to avatars" style="-webkit-app-region:no-drag" class="[^"]*\babsolute\b[^"]*\bpointer-events-none opacity-0\b[^"]*\btouch:pointer-events-auto touch:opacity-100\b[^"]*\btop-\[14px\]/);
     expect(html).not.toContain('title="Active Threads"');
+    expect(row).toContain('title="Cockpit"');
     expect(html).not.toContain("data-sidebar-search-pill");
   });
 

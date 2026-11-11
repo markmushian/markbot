@@ -347,11 +347,12 @@ describe("optional Company cloud backup settings", () => {
   });
 
   const scheduleSwitch = () => render().nodes.find(node => node.props["aria-label"] === "Daily backups")!;
+  const scheduleChecked = () => scheduleSwitch().props.checked;
   const scheduleOff = { busy: false, schedule: { enabled: false, status: "off" as const } };
   it("keeps daily backups off without any automatic setting mutation or password request", async () => {
     vi.mocked(bridge.state).mockResolvedValueOnce(scheduleOff);
     await ready();
-    expect(render().html).toContain('aria-checked="false"');
+    expect(scheduleChecked()).toBe(false);
     expect(render().html).toContain("Off. No scheduled uploads");
     expect(bridge.configureSchedule).not.toHaveBeenCalled();
     expect(passwords()).toHaveLength(0);
@@ -373,7 +374,7 @@ describe("optional Company cloud backup settings", () => {
     checkbox.props.onChange!({ target: { checked: true } });
     const submitForm = form(); submit(submitForm); submit(submitForm); await flush();
     expect(bridge.configureSchedule).toHaveBeenCalledExactlyOnceWith({ enabled: true, confirmation: "BACK UP THIS WORKSPACE DAILY" });
-    expect(render().html).toContain('aria-checked="true"');
+    expect(scheduleChecked()).toBe(true);
     expect(render().html).toContain("Next attempt:");
     expect(render().html).not.toContain(PASSWORD);
     expect([...storage.values()]).not.toContain(PASSWORD);
@@ -387,7 +388,7 @@ describe("optional Company cloud backup settings", () => {
     scheduleSwitch().props.onClick!(); await flush();
     expect(bridge.configureSchedule).toHaveBeenCalledExactlyOnceWith({ enabled: false });
     expect(bridge.cancel).not.toHaveBeenCalled();
-    expect(render().html).toContain('aria-checked="false"');
+    expect(scheduleChecked()).toBe(false);
   });
 
   it("does not enable while a restore is pending and clears cancelled schedule passwords", async () => {
@@ -410,7 +411,7 @@ describe("optional Company cloud backup settings", () => {
     await ready(); scheduleSwitch().props.onClick!();
     pushBackup(scheduleOff);
     resolve({ busy: false, schedule: { enabled: true, status: "waiting" } }); await flush();
-    expect(render().html).toContain('aria-checked="false"');
+    expect(scheduleChecked()).toBe(false);
   });
 
   it("refreshes the archive list once when a scheduled backup completes in the background", async () => {

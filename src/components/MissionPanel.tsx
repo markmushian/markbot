@@ -88,7 +88,7 @@ export function MissionPanel({ chief, agents }: {
       <div className="mt-4 flex flex-wrap items-end gap-2">
         <textarea value={goal} onChange={(event) => setGoal(event.target.value)} rows={2} disabled={running}
           placeholder={chief ? `给 ${chief.name} 一个可以拆成多个子任务的目标…` : "请先建立一名总监 Agent"}
-          className="min-h-14 min-w-[240px] flex-1 resize-none rounded-xl border border-hairline/50 bg-app px-3 py-2 text-ui leading-5 text-ink outline-none placeholder:text-ink-secondary/60 focus:border-accent disabled:opacity-50" />
+          className="min-h-14 min-w-[240px] flex-1 resize-none rounded-xl border border-hairline/50 bg-app px-3 py-2 text-ui leading-5 text-ink outline-none placeholder:text-ink-tertiary focus:border-accent disabled:opacity-50" />
         {reviewers.length > 0 && (
           <label className="flex h-9 items-center gap-1.5 rounded-xl border border-hairline/50 bg-app px-2.5 text-meta text-ink-secondary">
             审核

@@ -53,6 +53,7 @@ import { GlassBar, GlassScrollFrame, GlassScroller } from "./GlassScrollFrame";
 import { SidebarSectionHeader } from "./SidebarSectionHeader";
 import { SidebarEdgeToggle, SidebarSearchPill, SidebarSearchToggle } from "./SidebarSimpleTop";
 import { SidebarRailSeparator, SimpleRailFooter } from "./SidebarSimpleRail";
+import { NewBotDialog } from "./lazy-screens";
 
 const bot = (id: string, extra: Partial<Bot> = {}): Bot => ({
   id, threadId: `${id}-thread`, name: id, title: "", description: "", notifications: true,
@@ -314,7 +315,7 @@ describe("Simple-mode sidebar layout", () => {
     expect(render().tree.some((node) => node.type === SimpleRailFooter)).toBe(false);
   });
 
-  it("New Bot makes a bot at once in both modes, Chief of Staff or not; Advanced keeps Create department and Templates", () => {
+  it("New Bot opens guided setup in both modes; Advanced keeps Create department and Templates", () => {
     fixture.state = { ...fixture.state, bots: [bot("atlas", { chiefOfStaff: true }), bot("bea")] };
     const openMenu = () => {
       const plus = () => render().tree.find((node) => node.type === "button" && node.props["aria-label"] === "New or share")!;
@@ -323,7 +324,8 @@ describe("Simple-mode sidebar layout", () => {
       return (label: string) => tree.find((node) => node.type === "button" && nodes(node.props.children).concat(node).some((part) => Children.toArray(part.props.children).includes(label)));
     };
     (openMenu()("New bot")!.props.onClick as () => void)();
-    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "newBot" }]);
+    expect(render().tree.some((node) => node.type === NewBotDialog)).toBe(true);
+    expect(fixture.dispatch).not.toHaveBeenCalled();
     fixture.dispatch.mockClear();
     fixture.values = [];
     fixture.advanced = true;
@@ -331,7 +333,8 @@ describe("Simple-mode sidebar layout", () => {
     expect(item("Create department")).toBeDefined();
     expect(item("Templates")).toBeDefined();
     (item("New Bot")!.props.onClick as () => void)();
-    expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([{ type: "newBot" }]);
+    expect(render().tree.some((node) => node.type === NewBotDialog)).toBe(true);
+    expect(fixture.dispatch).not.toHaveBeenCalled();
   });
 
   const railSearch = (tree: ReactElement<Props>[]) => tree.find((node) => node.type === "button" && node.props["aria-label"] === "Search bots and messages")!.props.onClick as () => void;

@@ -513,9 +513,13 @@ describe("the avatar editor", () => {
     expect(ofType(pictured, AvatarFraming)?.props.bot).toBe(bot);
   });
 
-  it("resets the mascot as the Advanced card does", () => {
+  it("resets to the default Mark Bot portrait", () => {
     click(find(editor(makeBot()), "data-avatar-reset"));
-    expect(patch).toHaveBeenLastCalledWith({ avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotFaceColor: null });
+    expect(patch).toHaveBeenLastCalledWith({
+      avatarCrop: "rounded", avatarFocusX: 0.5, avatarFocusY: 0.5, avatarHue: 0,
+      avatarUrl: "/mark-avatars/guide.png", avatarZoom: 1, color: "blue",
+      mascotBody: null, mascotExpression: null, mascotFaceColor: null,
+    });
   });
 
 
@@ -539,7 +543,11 @@ describe("the avatar editor", () => {
     expect(ofType(withImage, AvatarFraming)!.props.bot).toBe(pictured);
     expect(has(withImage, "data-avatar-crop", "circle")).toBe(false);
     click(find(withImage, "aria-label", "Remove custom avatar image"));
-    expect(patch).toHaveBeenLastCalledWith({ avatarUrl: null, avatarCrop: "mascot", avatarZoom: AVATAR_ZOOM_MIN, avatarHue: 0, avatarFocusX: AVATAR_FOCUS_CENTER, avatarFocusY: AVATAR_FOCUS_CENTER });
+    expect(patch).toHaveBeenLastCalledWith({
+      avatarCrop: "rounded", avatarFocusX: AVATAR_FOCUS_CENTER, avatarFocusY: AVATAR_FOCUS_CENTER,
+      avatarHue: 0, avatarUrl: "/mark-avatars/guide.png", avatarZoom: AVATAR_ZOOM_MIN,
+      color: "blue", mascotBody: null, mascotExpression: null, mascotFaceColor: null,
+    });
   });
 
   it("closes on Escape without letting the dialog close settings", () => {

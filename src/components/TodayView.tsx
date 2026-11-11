@@ -51,7 +51,7 @@ export function TodayView() {
         return <div className="flex items-end gap-2 rounded-2xl border border-hairline/60 bg-app/70 p-2">
           <textarea value={brief} onChange={(event) => setBrief(event.target.value)} rows={2} disabled={!selectedChief}
             placeholder={selectedChief ? `告诉 ${selectedChief.name} 要完成什么…` : "请先建立一名总监 Agent"}
-            className="min-h-14 flex-1 resize-none bg-transparent px-2 py-1.5 text-ui leading-5 text-ink outline-none placeholder:text-ink-secondary/60" />
+            className="min-h-14 flex-1 resize-none bg-transparent px-2 py-1.5 text-ui leading-5 text-ink outline-none placeholder:text-ink-tertiary" />
           <button type="button" onClick={dispatchBrief} disabled={!selectedChief || !brief.trim()} aria-label="下达目标"
             className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-white disabled:opacity-35"><SendHorizontal size={17} /></button>
         </div>;
@@ -144,7 +144,7 @@ export function TodayView() {
               {chiefs.length > 0 && <select aria-label="选择总监" value={selectedChief?.id ?? ""} onChange={(event) => setChiefId(event.target.value)} className="relative h-9 max-w-44 rounded-xl border border-hairline bg-card px-3 text-meta font-medium text-ink outline-none focus:border-accent">{chiefs.map((chief) => <option key={chief.id} value={chief.id}>{chief.name} · {chief.section || "团队"}</option>)}</select>}
             </div>
             <div className="relative mt-4 flex items-end gap-2 rounded-2xl border border-hairline/60 bg-app/80 p-2 shadow-inner">
-              <textarea value={brief} onChange={(event) => setBrief(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); dispatchBrief(); } }} rows={2} placeholder={selectedChief ? `告诉 ${selectedChief.name} 要完成什么…` : "请先建立一名总监 Agent"} disabled={!selectedChief} className="min-h-14 flex-1 resize-none bg-transparent px-2 py-1.5 text-ui leading-5 text-ink outline-none placeholder:text-ink-secondary/60 disabled:opacity-50" />
+              <textarea value={brief} onChange={(event) => setBrief(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); dispatchBrief(); } }} rows={2} placeholder={selectedChief ? `告诉 ${selectedChief.name} 要完成什么…` : "请先建立一名总监 Agent"} disabled={!selectedChief} className="min-h-14 flex-1 resize-none bg-transparent px-2 py-1.5 text-ui leading-5 text-ink outline-none placeholder:text-ink-tertiary disabled:opacity-50" />
               <button type="button" onClick={dispatchBrief} disabled={!selectedChief || !brief.trim()} className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-white shadow-sm transition-transform hover:scale-105 disabled:opacity-35 disabled:hover:scale-100" aria-label="下达目标"><SendHorizontal size={17} /></button>
             </div>
           </article>
@@ -196,7 +196,7 @@ export function TodayView() {
                                 <span className="mt-0.5 block truncate text-tiny text-ink-secondary">{bot.name} · {task.modelSelection?.model || bot.modelSelection.model}</span>
                               </span>
                               <span className={cn("rounded-lg px-2 py-1 text-tiny font-medium", style.badge)}>{style.label}</span>
-                              <ArrowRight size={14} className="text-ink-secondary opacity-0 transition-opacity group-hover:opacity-100" />
+                              <ArrowRight size={14} className="text-ink-secondary opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 touch:opacity-100" />
                             </button>
                           </li>
                         );

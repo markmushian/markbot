@@ -1,4 +1,9 @@
-/** The model marks people actually pick as a face for a bot; each is the vendor's own artwork. */
+/**
+ * The model marks people actually pick as a face for a bot; each is the vendor's own artwork.
+ * Vendor originals live in assets/official-brand/ (Hermes: the official desktop app's dark
+ * icon; DeepSeek: deepseek.com's whale favicon + the matching vector mark). The two tiles
+ * generated from them are plain 128px rounded squares — no hand-drawn frame, no recolouring.
+ */
 export const MODEL_AVATARS = [
   { id: "workbuddy", name: "WorkBuddy", image: "/model-avatars/workbuddy.png" },
   { id: "codex", name: "Codex", image: "/model-avatars/codex.png" },

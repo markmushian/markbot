@@ -46,9 +46,6 @@ export const AGENTS_TOOL_BRIDGE_PROMPT =
 export const CONVERSATIONAL_STYLE_PROMPT =
   "\n\nReply style: conversational. Talk like a person in a chat. Keep replies short unless the person asks for detail. Use plain text with no headings, bullet lists, tables or bold unless the person asks for them or the content truly needs them; code always goes in a fenced code block. Send each distinct point as its own short message, separated by a blank line, in the order you find things. When it helps, end with one brief follow-up question. Match the person's language and roughly the length of their message.\n";
 
-export const MARK_BOT_LANGUAGE_PROMPT =
-  "\n\nLanguage: reply in the language used by the person. When they write Chinese, always use natural Simplified Chinese for replies, questions, summaries, tool explanations and generated user-facing text. Keep code, commands, file paths, product names and necessary technical identifiers unchanged. Do not switch to English merely because tools, source material or internal instructions are in English.\n";
-
 export function replyStylePrompt(style: ReplyStyle | undefined): string {
   return isConversational(style) ? CONVERSATIONAL_STYLE_PROMPT : "";
 }
@@ -70,7 +67,6 @@ export function buildSystemPrompt(
 ): { text: string; sections: PromptSection[]; stable: string; volatile: string } {
   const ordered: PromptPart[] = [
     { id: "persona", label: "Identity", text: persona },
-    { id: "language", label: "Language", text: MARK_BOT_LANGUAGE_PROMPT },
     { id: "soul", label: "Standing instructions (SOUL.md)", text: soulSystemPrompt(soul) },
     // Right after the soul: on a direct turn, ahead of every section that names a tool.
     { id: "tool-bridge", label: "Tool search", text: agentsToolBridged(agents) ? AGENTS_TOOL_BRIDGE_PROMPT : "" },
@@ -155,7 +151,7 @@ export function cloudHomePrompt(sharedComputerTools: boolean, synced: ReadonlyAr
   lent: ReadonlyArray<{ name: string; platform: "darwin" | "win32" | "linux" | null }> = []): string {
   const { theirs, device } = theirComputer(lent);
   return ` You run on ${CLOUD_HOME_PLACE}.` + (sharedComputerTools
-    ? ` If they ask for something on ${theirs}, check list_shared_computers: a computer they share with the Cloud is reachable through shared_computer, within the folders and apps it allows. If none is online, say so in one sentence: use its say field when it has one (it names the computer and when it was last online), otherwise ask them to open Mark Bot on that ${device}, signed in to Mark Bot Cloud: it shares that ${device} with you by itself.${device === "computer" ? " Call it their computer: never assume it is a Mac." : ` It is a ${device}: call it that, never a Mac unless it is one.`}`
+    ? ` If they ask for something on ${theirs}, check list_shared_computers: a computer they share with the Cloud is reachable through shared_computer, within the folders and apps it allows. If none is online, say so in one sentence: use its say field when it has one (it names the computer and when it was last online), otherwise ask them to open Mark Bot on that ${device}, signed in to their Mark Bot account: it shares that ${device} with you by itself.${device === "computer" ? " Call it their computer: never assume it is a Mac." : ` It is a ${device}: call it that, never a Mac unless it is one.`}`
       + ` While that ${device} is away, each folder it lends that the Cloud keeps a copy of still works from that copy: list_shared_computers lists them under away_computers (copy null means a folder only on the ${device}), every read says how fresh the copy is, and a write to a folder lent with editing is saved here and reaches the ${device} when it's on (tell them so in a few words). A file or folder that isn't in the copy is only on the ${device}: say you'll get it when it's on.`
     : ` You cannot see or use ${theirs}, its screen or its files from here. If they ask for something on it, say so in one sentence.`)
     + " Offer what works here: the built-in browser and their cloud computer, a desktop in the cloud. Call it their cloud computer, as the app does. Never ask them to set up this computer or a Local VM; neither exists here."

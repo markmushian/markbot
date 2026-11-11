@@ -127,7 +127,7 @@ describe("Adding an MCP server from one paste box", () => {
     expect(calls("PATCH", "/api/mcp/servers/my-mcp")).toEqual([{ url: "/api/mcp/servers/my-mcp", body: { enabled: true } }]);
     expect(host.querySelector("[data-mcp-editor]")).toBeNull();
     expect(host.textContent).toContain("Connected: 12 tools");
-    expect(host.querySelector('[role="switch"][aria-label="Turn my-mcp off"]')?.getAttribute("aria-checked")).toBe("true");
+    expect(host.querySelector<HTMLInputElement>('[role="switch"][aria-label="Turn my-mcp off"]')?.checked).toBe(true);
     expect(host.innerHTML).not.toContain(SECRET);
     expect(calls("PUT")).toEqual([]);
   });
