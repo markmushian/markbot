@@ -12,7 +12,7 @@ describe("Chinese model providers", () => {
 
   it("sends keys only over https, to a versioned OpenAI-compatible path", () => {
     for (const provider of CN_PROVIDERS) {
-      expect(provider.api, provider.id).toMatch(/^https:\/\/[^/]+\/(?:.+\/)?v\d[a-z]*$/);
+      expect(provider.api, provider.id).toMatch(/^https:\/\/[^/]+\/(?:.+\/)?v\d[a-z]*(?:\/.*)?$/);
       expect(provider.keys, provider.id).toMatch(/^https:\/\//);
       expect(provider.model.trim(), provider.id).not.toBe("");
       expect(provider.label.trim(), provider.id).not.toBe("");

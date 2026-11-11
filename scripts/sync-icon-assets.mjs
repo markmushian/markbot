@@ -13,6 +13,7 @@ const avatarDir = join(publicDir, "model-avatars");
 
 const assets = [
   ...readdirSync(avatarDir).filter((name) => name.endsWith(".png")).map((name) => `model-avatars/${name}`),
+  ...readdirSync(join(publicDir, "engine-icons")).map((name) => `engine-icons/${name}`),
   "app-icon-192.png",
   "app-icon-512.png",
   "apple-touch-icon.png",

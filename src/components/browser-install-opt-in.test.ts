@@ -45,9 +45,18 @@ function BotAccess({ bot }: { bot: Bot }) {
 
 const bot = { id: "install-fixture", name: "Scout", modelSelection: { instanceId: "fixture" }, browser: false } as Bot;
 const switchTag = (markup: string, label: string) => {
-  const match = markup.match(new RegExp(`<button[^>]*aria-label="${label}"[^>]*>`));
-  expect(match, `missing switch: ${label}`).not.toBeNull();
-  return match![0];
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let toggle = markup.match(new RegExp(`<(?:button|input)[^>]*aria-label="${escaped}"[^>]*>`))?.[0];
+  if (!toggle) {
+    const labelAt = markup.indexOf(label);
+    const afterLabel = markup.indexOf("</", labelAt);
+    const controlAt = Math.min(
+      ...[markup.indexOf("<button", afterLabel), markup.indexOf("<input", afterLabel)].filter((at) => at >= 0),
+    );
+    if (labelAt >= 0 && Number.isFinite(controlAt)) toggle = markup.slice(controlAt, markup.indexOf(">", controlAt) + 1);
+  }
+  expect(toggle, `missing switch: ${label}`).toBeDefined();
+  return toggle!;
 };
 const settings = () => renderToStaticMarkup(createElement(SettingsModal));
 const access = () => renderToStaticMarkup(createElement(BotAccess, { bot }));
@@ -63,7 +72,7 @@ afterAll(() => vi.unstubAllGlobals());
 describe("browser installation opt-in", () => {
   it("exposes the fresh workspace opt-in before installation without enabling it automatically", () => {
     const toggle = switchTag(settings(), "Enable the built-in browser");
-    expect(toggle).toContain('aria-checked="false"');
+    expect(toggle).not.toContain('checked=""');
     expect(toggle).not.toContain("disabled=");
     expect(panel(false)).not.toContain("Install the browser");
     expect(fixture.dispatch).not.toHaveBeenCalled();
@@ -74,7 +83,7 @@ describe("browser installation opt-in", () => {
     fixture.config.features = { browser: true };
     const markup = access();
     const toggle = switchTag(markup, "Give this bot a built-in browser");
-    expect(toggle).toContain('aria-checked="false"');
+    expect(toggle).not.toContain('checked=""');
     expect(toggle).not.toContain("disabled=");
     expect(markup.match(/<button[^>]*>Browser<\/button>/)).toBeNull();
     expect(panel(false)).not.toContain("Install the browser");

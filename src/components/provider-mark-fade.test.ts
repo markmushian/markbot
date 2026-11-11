@@ -11,7 +11,8 @@ import { InstanceProviderMark, PresetProviderMark, ProviderMark } from "./Provid
 const source = readFileSync(join(process.cwd(), "src", "components", "ProviderIcons.tsx"), "utf8");
 const driverSwitch = source.slice(source.indexOf("export function ProviderMark("), source.indexOf("export function PresetProviderMark("));
 const DRIVERS = [...[...driverSwitch.matchAll(/case "([^"]+)":/g)].map((match) => match[1]!), "anEngineWithNoMark"];
-const coloured = (html: string) => /#[0-9a-f]{3,8}\b|url\(#/i.test(html);
+// A bitmap mark (the official Hermes/DeepSeek artwork) carries its own colours too.
+const coloured = (html: string) => /#[0-9a-f]{3,8}\b|url\(#|<image[^>]+href="data:image\//i.test(html);
 
 describe("the faded provider mark", () => {
   it("finds every engine the mark switch draws", () => {

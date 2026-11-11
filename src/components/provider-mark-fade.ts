@@ -2,7 +2,9 @@ import type { InstanceInfo } from "@/state/store";
 
 export type ProviderMarkTone = "brand" | "mono";
 
-const BRAND_DRIVERS: ReadonlySet<string> = new Set(["claudeAgent", "mistral", "meta", "museCode", "kimiAgent", "deepseekAgent"]);
+// hermesAgent draws the official Nous Research bitmap (dark tile + white line art), so it
+// carries its own colours just like the DeepSeek whale — never ink it like a mono mark.
+const BRAND_DRIVERS: ReadonlySet<string> = new Set(["claudeAgent", "mistral", "meta", "museCode", "kimiAgent", "deepseekAgent", "hermesAgent"]);
 const MONO_PRESETS: ReadonlySet<string> = new Set(["openai", "xai", "qwen"]);
 
 export function providerMarkTone(instance: Pick<InstanceInfo, "driverKind" | "icon">): ProviderMarkTone {

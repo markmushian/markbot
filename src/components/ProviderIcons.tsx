@@ -6,7 +6,7 @@ import { GrokBotMark } from "./GrokBotMark";
 import type { InstanceInfo } from "@/state/store";
 import type { ProviderIconPreset } from "../../shared/provider-icon";
 import { FADED_PROVIDER_MARK, providerMarkTone } from "./provider-mark-fade";
-import { ENGINE_BRAND_ICONS, engineBrandIcon, engineBrandIconForDriver } from "./engine-brand-icons";
+import { ENGINE_BRAND_ICONS, OFFICIAL_DEEPSEEK_MARK, engineBrandIcon, engineBrandIconForDriver } from "./engine-brand-icons";
 
 export { HermesMark, CursorMark, GrokBotMark };
 
@@ -112,8 +112,9 @@ export function PiMark({ size = 16, className }: IconProps) {
 }
 
 export function DeepSeekMark({ size = 16, className }: IconProps) {
-  // DeepSeek whale, path from Simple Icons (CC0 1.0), brand blue.
-  return <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true"><path fill="#5786FE" d="M23.748 4.651c-.254-.124-.364.113-.512.233-.423.437-.857.794-1.51.763-.829-.046-1.537.214-2.163.848-.133-.782-.575-1.248-1.247-1.548-.789-.347-1.077-.626-1.26-1.424-.055-.16-.11-.323-.293-.35-.2-.031-.278.136-.356.276-.313.572-.434 1.202-.422 1.84.027 1.436.633 2.58 1.838 3.393.137.094.172.187.129.323l-.266.833c-.055.179-.137.218-.328.14a5.5 5.5 0 0 1-1.737-1.179c-1.06-1.024-1.97-2.183-3.286-2.93-.985-.957.13-1.743.387-1.836.27-.098.094-.433-.778-.428-1.27.006-2.312.621-3.152.821a9.6 9.6 0 0 0-2.883-.101c-3.75.419-5.994 3.589-5.757 7.395.218 3.496 2.247 6.521 5.258 8.037 2.52 1.269 5.649 1.474 8.484-.924.47.234.962.328 1.78.398.629.058 1.235-.031 1.705-.129.735-.155.684-.836.418-.961-2.155-1.004-1.682-.595-2.112-.926 2.056-2.431 3.44-5.604 3.392-7.847-.004-.171.035-.238.23-.257 2.371-.246 3.642-1.764 3.838-3.992.02-.23-.004-.467-.247-.588M11.58 18.168c-2.088-1.642-3.101-2.183-3.52-2.16-.39.024-.32.472-.234.763.09.288.207.487.371.74.114.167.192.416-.113.603-.673.416-1.842-.14-1.897-.168-2.919-1.718-4.443-4.959-4.6-7.788-.02-.385.094-.522.477-.592 2.602-.471 5.025.581 6.997 2.736 1.652 1.807 2.631 4.049 4.682 5.785.348.291.626.513.892.677-.802.09-2.14.109-3.055-.615zm1.001-6.44a.306.306 0 1 1 .614.001.306.306 0 0 1-.614 0m3.11 1.596c-.494.199-.931.222-1.389-.094-.274-.23-.47-.358-.551-.758-.122-.602.111-.903-.223-1.315-.188-.156-.426-.199-.689-.199-.454 0-.553-.298-.368-.636.356-.422.859-.442 1.338-.29.72.294 1.319 1.129 1.706 1.743.176.264.336.536.446.848.066.194-.02.353-.25.45" /></svg>;
+  // Official deepseek.com favicon whale (brand blue on a plain white tile).
+  // Shared with ENGINE_BRAND_ICONS so every DeepSeek mark is the same artwork.
+  return <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden="true"><image href={OFFICIAL_DEEPSEEK_MARK} width="64" height="64" /></svg>;
 }
 
 export function CopilotMark({ size = 16, className }: IconProps) {

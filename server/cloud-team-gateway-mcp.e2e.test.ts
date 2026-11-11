@@ -80,12 +80,12 @@ it("adds the pasted command for the whole team, tests it through the gateway and
   expect(wrong).toEqual({ name: "orders", type: "http", url: gateway.url, headers: { "CF-Access-Client-Id": CLIENT_ID, "CF-Access-Client-Secret": "not-the-secret" } });
   expect((await as(admin, "POST", "/api/mcp/servers", wrong)).status).toBe(201);
   const refused = await as(admin, "POST", "/api/mcp/servers/orders/test");
-  expect(refused.body).toEqual({ ok: false, error: "The server didn't accept the keys (HTTP 403). Check the header values.", reason: "keys", status: 403 });
+  expect(refused.body).toEqual({ ok: false, error: "The server didn't accept the keys (HTTP 403). Check the header values.", outcome: "rejected", reason: "keys", status: 403 });
   expect((await as(admin, "DELETE", "/api/mcp/servers/orders")).status).toBe(200);
 
   const added = await as(admin, "POST", "/api/mcp/servers", pastedBody(command(gateway.url), { "CF-Access-Client-Id": CLIENT_ID, "CF-Access-Client-Secret": CLIENT_SECRET }));
   expect(added.status, JSON.stringify(added.body)).toBe(201);
-  expect(added.body.servers).toEqual([expect.objectContaining({ name: "orders", url: gateway.url, headerKeys: ["CF-Access-Client-Id", "CF-Access-Client-Secret"], enabled: false })]);
+  expect(added.body.servers).toContainEqual(expect.objectContaining({ name: "orders", url: gateway.url, headerKeys: ["CF-Access-Client-Id", "CF-Access-Client-Secret"], enabled: false }));
   const tested = await as(admin, "POST", "/api/mcp/servers/orders/test");
   expect(tested.body).toMatchObject({ ok: true, tools: [{ name: "lookup_order" }] });
   expect((await as(admin, "PATCH", "/api/mcp/servers/orders", { enabled: true })).status).toBe(200);

@@ -1492,7 +1492,13 @@ describe("ClaudeDriver turns (fake CLI)", () => {
     const dump = join(scratch, "workbuddy-no-snapshot.json");
     const checkDump = join(scratch, "workbuddy-background.json");
     await create(undefined, { FAKE_CLAUDE_DUMP: dump, FAKE_CLAUDE_TEXT_DUMP: checkDump, FAKE_CLAUDE_VERSION: "2.165.0", CODEBUDDY_FORCE_LITE_WB_BUNDLE: "1" });
-    expect(instance.models).toEqual({ default: "auto", options: [{ id: "auto", label: "Auto" }] });
+    expect(instance.models.default).toBe("auto");
+    expect(instance.models.options[0]).toEqual({ id: "auto", label: "Auto (WorkBuddy routing)" });
+    expect(instance.models.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "hy4std" }),
+      expect.objectContaining({ id: "deepseek-v4.1-flash" }),
+      expect.objectContaining({ id: "glm-5.3" }),
+    ]));
     await instance.snapshot();
     expect(instance.models).toEqual({ default: "auto", options: [{ id: "auto", label: "Auto" }] });
     expect(instance.adapter.capabilities.strictResume).toBe(false);

@@ -28,8 +28,8 @@ async function pill(services: Record<string, { connected: boolean }>, circle = f
 }
 
 it("asks to connect apps until one is connected, then is simply the way into Apps", async () => {
-  expect(await pill({})).toEqual({ label: "Connect apps", faces: ["gmail", "slack", "notion"] });
-  expect(await pill({ github: { connected: false } }), "an app that is only listed is not connected").toEqual({ label: "Connect apps", faces: ["gmail", "slack", "notion"] });
-  expect(await pill({ github: { connected: true } })).toEqual({ label: "Apps", faces: ["github", "gmail", "slack"] });
+  expect(await pill({})).toEqual({ label: "Connect apps", faces: ["qqmail", "tencent-docs", "feishu"] });
+  expect(await pill({ github: { connected: false } }), "an app that is only listed is not connected").toEqual({ label: "Connect apps", faces: ["qqmail", "tencent-docs", "feishu"] });
+  expect(await pill({ github: { connected: true } })).toEqual({ label: "Apps", faces: ["github", "qqmail", "tencent-docs"] });
   expect((await pill({ github: { connected: true } }, true)).label, "and on the collapsed rail").toBe("Apps");
 });

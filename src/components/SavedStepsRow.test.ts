@@ -32,7 +32,8 @@ describe("the saved-steps setting", () => {
   it("is on when the config does not mention it, and titled in plain words", () => {
     const view = render();
     expect(view.html).toContain("Repeat computer tasks without AI");
-    expect(view.html).toContain('aria-checked="true"');
+    expect(view.html).toContain('role="switch"');
+    expect(view.html).toContain('checked=""');
   });
 
   it("draws nothing where the server cannot run saved steps (Windows, a Cloud home) or does not say", () => {
@@ -44,7 +45,8 @@ describe("the saved-steps setting", () => {
 
   it("shows off when the config turns it off", () => {
     fixture.config = { features: { ...HERE, savedSteps: false } };
-    expect(render().html).toContain('aria-checked="false"');
+    expect(render().html).toContain('role="switch"');
+    expect(render().html).not.toContain('checked=""');
   });
 
   it("the switch saves the opposite value", async () => {
