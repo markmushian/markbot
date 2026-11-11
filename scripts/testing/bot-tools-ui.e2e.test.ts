@@ -162,11 +162,13 @@ describe("bot setup and tools in the real renderer", () => {
     await click("Add");
     const registry = async () => (await fetch(`${info.url}/api/mcp/servers`).then((response) => response.json())).servers;
     // It exits before answering, so it is saved but stays off, with the reason on its row.
-    await expect.poll(registry, { timeout: 10_000 }).toMatchObject([{ name: "fixture", enabled: false }]);
+    await expect.poll(async () => (await registry()).find((server: { name: string }) => server.name === "fixture"), { timeout: 10_000 })
+      .toMatchObject({ name: "fixture", enabled: false });
     await expect.poll(() => evaluate("document.body.textContent.includes(\"Couldn't connect, so it stays off.\")"), { timeout: 20_000 }).toBe(true);
     await expect.poll(snapshot, { timeout: 10_000 }).toContain("Turn fixture on");
     await click("Turn fixture on");
-    await expect.poll(registry, { timeout: 10_000 }).toMatchObject([{ name: "fixture", enabled: true }]);
+    await expect.poll(async () => (await registry()).find((server: { name: string }) => server.name === "fixture"), { timeout: 10_000 })
+      .toMatchObject({ name: "fixture", enabled: true });
     await press("Escape");
     await openTools();
     await expect.poll(() => evaluate("document.querySelector('[aria-label=\"Let this bot use fixture\"]')?.getAttribute('aria-checked')"), { timeout: 10_000 }).toBe("true");

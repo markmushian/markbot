@@ -137,7 +137,8 @@ describe("Preset bots in the real renderer", () => {
       await click("Create bot");
       let created: Awaited<ReturnType<typeof bots>>[number] | undefined;
       await expect.poll(async () => {
-        created = (await bots()).find((bot) => !before.some((old) => old.id === bot.id));
+        created = (await bots()).find((bot) =>
+          !before.some((old) => old.id === bot.id) && bot.installedPackage?.presetKey === "new-bot-defaults");
         return created;
       }, { timeout: 15_000 }).toBeDefined();
       // Bot creation selects the new bot and can stack its first-run overlay
