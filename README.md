@@ -14,6 +14,10 @@ delegates it to specialist agents, tracks progress, and returns one finished del
 ![Electron](https://img.shields.io/badge/Electron-Windows%20%C2%B7%20macOS%20%C2%B7%20Linux-2B2E3A?logo=electron&logoColor=9FEAF9)
 [![Release](https://img.shields.io/github/v/release/markmushian/markbot?label=release&color=1084fe&cacheSeconds=300)](https://github.com/markmushian/markbot/releases/latest)
 
+<br>
+
+<img src="docs/screenshots/markbot-social-preview.png" alt="Mark Bot — one chief agent leads the whole AI team" width="100%">
+
 </div>
 
 ## What Mark Bot is
@@ -116,16 +120,25 @@ pnpm exec vite build
 
 ## Product screenshots
 
-The old upstream screenshots have been removed from this page. Mark Bot screenshots will
-be added here after they are captured from the current desktop build with private data,
-computer names, local paths, and credentials hidden.
+### Individual agents and conversations
 
-Planned images:
+<img src="docs/screenshots/markbot-hero.png" alt="Mark Bot desktop workspace with several local AI agents" width="100%">
 
-1. Main workspace with the chief and at least four specialist agents.
-2. Team room showing the chief delegating to two agents.
-3. Workflow canvas with a trigger, two agent nodes, and a delivery node.
-4. AI settings showing connected Codex, Claude Code, and WorkBuddy providers.
+### Chief-led team room
+
+<img src="docs/screenshots/markbot-team.png" alt="Mark Bot team room where a chief agent delegates work to specialists" width="100%">
+
+### Executable workflow canvas
+
+<img src="docs/screenshots/markbot-workflow.png" alt="Mark Bot workflow canvas with agent and control nodes" width="100%">
+
+### Local AI providers
+
+<img src="docs/screenshots/markbot-models.png" alt="Mark Bot AI settings with local providers and models" width="100%">
+
+### Connected applications and MCP
+
+<img src="docs/screenshots/markbot-apps.png" alt="Mark Bot connected applications and MCP marketplace" width="100%">
 
 ## Project identity and attribution
 

@@ -10,7 +10,9 @@
 
 [下载 Windows 版](https://github.com/markmushian/markbot/releases/latest) · [查看版本](https://github.com/markmushian/markbot/releases) · [问题反馈](https://github.com/markmushian/markbot/issues)
 
-> 产品主图将替换为 Mark Bot 实机截图；为避免把报错、隐私或旧版界面放进项目首页，截图要求见本页末尾。
+<br>
+
+<img src="docs/screenshots/markbot-social-preview.png" alt="Mark Bot：一个总管指挥整个 AI 团队" width="100%">
 
 </div>
 
@@ -75,16 +77,27 @@ pnpm typecheck
 pnpm exec vite build
 ```
 
-## 需要的产品截图
+## 产品界面
 
-为了让 GitHub 首页全部使用 Mark Bot 自己的图片，请提供以下 4 张无报错、无隐私信息的 PNG，推荐窗口尺寸 1440×900：
+### 多个独立助手与会话
 
-1. **主界面**：左侧至少 4 个不同职责助手，中间显示总管的中文回复。
-2. **团队群聊**：总管 `@` 两个助手并展示任务分工。
-3. **工作流画布**：至少包含触发器、两个助手节点和交付节点。
-4. **模型设置**：显示 Codex、Claude、WorkBuddy 已接入，以及模型下拉框。
+<img src="docs/screenshots/markbot-hero.png" alt="Mark Bot 桌面端的多个本地 AI 助手" width="100%">
 
-截图前请隐藏真实邮箱、密钥、电脑名、路径和私人聊天。收到图片后将分别保存为 `docs/screenshots/markbot-hero.png`、`markbot-team.png`、`markbot-workflow.png`、`markbot-models.png` 并接入本页。
+### 总管带领的团队群聊
+
+<img src="docs/screenshots/markbot-team.png" alt="Mark Bot 总管在群聊中向多个专业助手派发工作" width="100%">
+
+### 可执行的工作流画布
+
+<img src="docs/screenshots/markbot-workflow.png" alt="Mark Bot 工作流画布与助手、条件、审批和输出节点" width="100%">
+
+### 本机 AI 服务商与模型
+
+<img src="docs/screenshots/markbot-models.png" alt="Mark Bot 本机 AI 服务商和模型设置" width="100%">
+
+### 应用连接与 MCP 工具
+
+<img src="docs/screenshots/markbot-apps.png" alt="Mark Bot 应用市场与 MCP 工具" width="100%">
 
 ## 开源说明
 
