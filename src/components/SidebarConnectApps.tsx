@@ -2,6 +2,7 @@ import { Puzzle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/cn";
+import { connectorIcon } from "@/lib/connector-icons";
 import { t } from "@/lib/i18n";
 import { useStore } from "@/state/store";
 
@@ -50,7 +51,7 @@ function useSidebarApps(): SidebarApps {
 }
 
 function AppFaceIcon({ face, className }: { face: AppFace; className?: string }) {
-  const sources = [face.logo, face.domain ? `https://www.google.com/s2/favicons?domain=${face.domain}&sz=64` : null].filter((src): src is string => Boolean(src));
+  const sources = [connectorIcon(face.slug) ?? face.logo, face.domain ? `https://www.google.com/s2/favicons?domain=${face.domain}&sz=64` : null].filter((src): src is string => Boolean(src));
   const [failed, setFailed] = useState(0);
   const src = sources[failed];
   return (

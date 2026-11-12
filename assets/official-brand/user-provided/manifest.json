@@ -1,0 +1,42 @@
+{
+  "source": "User-supplied official vendor artwork (2026-11-11)",
+  "note": "These three brands override the LobeHub tiles. Other brands remain LobeHub official tiles.",
+  "brands": {
+    "hermes": {
+      "original": "E:/豆包/Hermes/hermes-agent/apps/desktop/release/win-unpacked/resources/icon.ico",
+      "frame": "256x256",
+      "archive": "hermes-desktop-icon.ico",
+      "avatar": "avatars/hermes.png",
+      "mark": "marks/hermesagent.png"
+    },
+    "deepseek": {
+      "original": "C:/Users/Administrator/AppData/Local/Programs/DeepSeek Harness/resources/tray.ico",
+      "frame": "64x64",
+      "archive": "deepseek-harness-tray.ico",
+      "avatar": "avatars/deepseek.png",
+      "mark": "marks/deepseek.png"
+    },
+    "openai": {
+      "reference": "screenshot OpenAI (ChatGPT) #000 knot",
+      "archive": "openai-chatgpt-mark.svg",
+      "vector": "OpenAIMark path, fill #000000",
+      "mark": "marks/openai.png"
+    },
+    "github": {
+      "source": "Simple Icons GitHub mark (CC0 1.0) / public/app-icons/github.png",
+      "archive": "restored/github-octocat-64.png",
+      "mark": "marks/github.png",
+      "note": "White octocat on #111318 rounded tile, same style as the other dark brand tiles."
+    }
+  },
+  "restored_from_git_HEAD": {
+    "doubao": "public/model-avatars/doubao.png (round 3D girl)",
+    "githubCopilot": "REPLACED: GitHub official octocat mark (Simple Icons CC0), white on dark rounded tile; archived restored/github-octocat-64.png"
+  },
+  "codex": "OpenAI #000 knot (same artwork as openai), per user request",
+  "enlarged": {
+    "deepseek": "58/116px whale, padding stripped",
+    "openai": "54/108px knot (was 46px)"
+  },
+  "githubCopilot": "GitHub octocat, not the old Copilot robot face (looked like a pig head). Simple Icons CC0 path, no border/recolor."
+}

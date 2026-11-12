@@ -11,7 +11,7 @@ export function createSystemTray({
   // that per GUID forever, so a GUID whose icon was hidden once stays invisible even after a reinstall. Every
   // "the tray icon is gone" report is fixed by minting a new one, never by touching the image.
   const tray = new Tray(nativeImage.createFromPath(iconPath),
-    "d22dfc2f-a4f1-4b40-92f2-72cf665d3347");
+    "f6b591ba-8033-48e1-8971-7834edad8919");
   let hidden = false;
   const show = () => {
     const win = getWindow();

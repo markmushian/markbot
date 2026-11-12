@@ -14,6 +14,9 @@ const avatarDir = join(publicDir, "model-avatars");
 const assets = [
   ...readdirSync(avatarDir).filter((name) => name.endsWith(".png")).map((name) => `model-avatars/${name}`),
   ...readdirSync(join(publicDir, "engine-icons")).map((name) => `engine-icons/${name}`),
+  // Brand marks for the Apps catalog. Bundled so the list never depends on
+  // google.com/s2/favicons, which is unreachable from mainland China.
+  ...readdirSync(join(publicDir, "app-icons", "connectors")).map((name) => `app-icons/connectors/${name}`),
   "app-icon-192.png",
   "app-icon-512.png",
   "apple-touch-icon.png",

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
+import { connectorIcon } from "@/lib/connector-icons";
 
 /** One connectable app as the Apps catalog lists it. */
 export interface ToolkitCard {
@@ -21,9 +22,9 @@ const BUNDLED_LOGOS: Record<string, string> = {
   github_copilot: "/app-icons/github.png",
 };
 
-/** An app's own bundled mark, then its catalog logo, then its site's favicon, then its initial. */
+/** A bundled app mark, then the catalog logo, then its site's favicon, then its initial. */
 export function ServiceIcon({ card, className = "size-11" }: { card: Pick<ToolkitCard, "logo" | "domain" | "label"> & { slug?: string }; className?: string }) {
-  const bundled = BUNDLED_LOGOS[card.slug?.toLowerCase() ?? ""];
+  const bundled = BUNDLED_LOGOS[card.slug?.toLowerCase() ?? ""] ?? connectorIcon(card.slug);
   const logo = bundled ?? card.logo;
   const [stage, setStage] = useState(logo ? 0 : card.domain ? 1 : 2);
   if (stage === 0 && logo) {

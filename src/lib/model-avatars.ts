@@ -1,8 +1,12 @@
 /**
  * The model marks people actually pick as a face for a bot; each is the vendor's own artwork.
- * Vendor originals live in assets/official-brand/ (Hermes: the official desktop app's dark
- * icon; DeepSeek: deepseek.com's whale favicon + the matching vector mark). The two tiles
- * generated from them are plain 128px rounded squares — no hand-drawn frame, no recolouring.
+ * All tiles (except the project-specific ZCode mark) come from LobeHub's official icon set:
+ * https://github.com/lobehub/lobe-icons / @lobehub/icons-static-avatar.
+ * Vendor originals and the slug manifest live in assets/official-brand/lobehub/.
+ * Tiles are 128px rounded squares generated from the originals — no frames, no redraws.
+ * Exceptions: hermes.png / deepseek.png come from vendor ico files; doubao.png keeps the
+ * earlier round 3D girl and codex.png uses the OpenAI knot. Originals live in
+ * assets/official-brand/user-provided/ (restored/ holds the pre-LobeHub artwork).
  */
 export const MODEL_AVATARS = [
   { id: "workbuddy", name: "WorkBuddy", image: "/model-avatars/workbuddy.png" },

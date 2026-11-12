@@ -1,6 +1,7 @@
-// Official Hermes Agent (Nous Research) desktop app icon. The same artwork is
-// inlined in engine-brand-icons.ts; this component just wraps that one source
-// of truth so driver marks and name-matched brand marks stay identical.
+// Official Hermes Agent desktop app ico supplied by the user
+// (assets/official-brand/user-provided/). The same artwork is inlined in
+// engine-brand-icons.ts as OFFICIAL_HERMES_MARK, so driver marks, name-matched
+// brand marks and this component all stay identical.
 import { cn } from "@/lib/cn";
 import { OFFICIAL_HERMES_MARK } from "./engine-brand-icons";
 

@@ -6,7 +6,7 @@ import { GrokBotMark } from "./GrokBotMark";
 import type { InstanceInfo } from "@/state/store";
 import type { ProviderIconPreset } from "../../shared/provider-icon";
 import { FADED_PROVIDER_MARK, providerMarkTone } from "./provider-mark-fade";
-import { ENGINE_BRAND_ICONS, OFFICIAL_DEEPSEEK_MARK, engineBrandIcon, engineBrandIconForDriver } from "./engine-brand-icons";
+import { ENGINE_BRAND_ICONS, OFFICIAL_CODEX_MARK, OFFICIAL_DEEPSEEK_MARK, OFFICIAL_GITHUB_MARK, engineBrandIcon, engineBrandIconForDriver } from "./engine-brand-icons";
 
 export { HermesMark, CursorMark, GrokBotMark };
 
@@ -32,12 +32,17 @@ export function ClaudeMark({ size = 16, className }: IconProps) {
   );
 }
 
-export function CodexMark({ size = 16, className }: IconProps) {
+export function OpenAIMark({ size = 16, className }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 256 260" preserveAspectRatio="xMidYMid" className={cn("fill-[var(--color-ink)]", className)}>
       <path d="M239.184 106.203a64.716 64.716 0 0 0-5.576-53.103C219.452 28.459 191 15.784 163.213 21.74A65.586 65.586 0 0 0 52.096 45.22a64.716 64.716 0 0 0-43.23 31.36c-14.31 24.602-11.061 55.634 8.033 76.74a64.665 64.665 0 0 0 5.525 53.102c14.174 24.65 42.644 37.324 70.446 31.36a64.72 64.72 0 0 0 48.754 21.744c28.481.025 53.714-18.361 62.414-45.481a64.767 64.767 0 0 0 43.229-31.36c14.137-24.558 10.875-55.423-8.083-76.483Zm-97.56 136.338a48.397 48.397 0 0 1-31.105-11.255l1.535-.87 51.67-29.825a8.595 8.595 0 0 0 4.247-7.367v-72.85l21.845 12.636c.218.111.37.32.409.563v60.367c-.056 26.818-21.783 48.545-48.601 48.601Zm-104.466-44.61a48.345 48.345 0 0 1-5.781-32.589l1.534.921 51.722 29.826a8.339 8.339 0 0 0 8.441 0l63.181-36.425v25.221a.87.87 0 0 1-.358.665l-52.335 30.184c-23.257 13.398-52.97 5.431-66.404-17.803ZM23.549 85.38a48.499 48.499 0 0 1 25.58-21.333v61.39a8.288 8.288 0 0 0 4.195 7.316l62.874 36.272-21.845 12.636a.819.819 0 0 1-.767 0L41.353 151.53c-23.211-13.454-31.171-43.144-17.804-66.405v.256Zm179.466 41.695-63.08-36.63L161.73 77.86a.819.819 0 0 1 .768 0l52.233 30.184a48.6 48.6 0 0 1-7.316 87.635v-61.391a8.544 8.544 0 0 0-4.4-7.213Zm21.742-32.69-1.535-.922-51.619-30.081a8.39 8.39 0 0 0-8.492 0L99.98 99.808V74.587a.716.716 0 0 1 .307-.665l52.233-30.133a48.652 48.652 0 0 1 72.236 50.391v.205ZM88.061 139.097l-21.845-12.585a.87.87 0 0 1-.41-.614V65.685a48.652 48.652 0 0 1 79.757-37.346l-1.535.87-51.67 29.825a8.595 8.595 0 0 0-4.246 7.367l-.051 72.697Zm11.868-25.58 28.138-16.217 28.188 16.218v32.434l-28.086 16.218-28.188-16.218-.052-32.434Z" />
     </svg>
   );
+}
+
+/** Codex is an OpenAI product and uses the same #000 OpenAI knot as OpenAIMark. */
+export function CodexMark({ size = 16, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden="true"><image href={OFFICIAL_CODEX_MARK} width="64" height="64" /></svg>;
 }
 
 export function KimiMark({ size = 16, className }: IconProps) {
@@ -112,15 +117,17 @@ export function PiMark({ size = 16, className }: IconProps) {
 }
 
 export function DeepSeekMark({ size = 16, className }: IconProps) {
-  // Official deepseek.com favicon whale (brand blue on a plain white tile).
+  // DeepSeek Harness tray.ico supplied by the user (dark whale on a plain white tile).
   // Shared with ENGINE_BRAND_ICONS so every DeepSeek mark is the same artwork.
   return <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden="true"><image href={OFFICIAL_DEEPSEEK_MARK} width="64" height="64" /></svg>;
 }
 
 export function CopilotMark({ size = 16, className }: IconProps) {
-  // GitHub Copilot, path from Simple Icons (CC0 1.0).
-  return <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true"><path fill="var(--color-ink)" d="M23.922 16.997C23.061 18.492 18.063 22.02 12 22.02 5.937 22.02.939 18.492.078 16.997A.641.641 0 0 1 0 16.741v-2.869a.883.883 0 0 1 .053-.22c.372-.935 1.347-2.292 2.605-2.656.167-.429.414-1.055.644-1.517a10.098 10.098 0 0 1-.052-1.086c0-1.331.282-2.499 1.132-3.368.397-.406.89-.717 1.474-.952C7.255 2.937 9.248 1.98 11.978 1.98c2.731 0 4.767.957 6.166 2.093.584.235 1.077.546 1.474.952.85.869 1.132 2.037 1.132 3.368 0 .368-.014.733-.052 1.086.23.462.477 1.088.644 1.517 1.258.364 2.233 1.721 2.605 2.656a.841.841 0 0 1 .053.22v2.869a.641.641 0 0 1-.078.256Zm-11.75-5.992h-.344a4.359 4.359 0 0 1-.355.508c-.77.947-1.918 1.492-3.508 1.492-1.725 0-2.989-.359-3.782-1.259a2.137 2.137 0 0 1-.085-.104L4 11.746v6.585c1.435.779 4.514 2.179 8 2.179 3.486 0 6.565-1.4 8-2.179v-6.585l-.098-.104s-.033.045-.085.104c-.793.9-2.057 1.259-3.782 1.259-1.59 0-2.738-.545-3.508-1.492a4.359 4.359 0 0 1-.355-.508Zm2.328 3.25c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm-5 0c.549 0 1 .451 1 1v2c0 .549-.451 1-1 1-.549 0-1-.451-1-1v-2c0-.549.451-1 1-1Zm3.313-6.185c.136 1.057.403 1.913.878 2.497.442.544 1.134.938 2.344.938 1.573 0 2.292-.337 2.657-.751.384-.435.558-1.15.558-2.361 0-1.14-.243-1.847-.705-2.319-.477-.488-1.319-.862-2.824-1.025-1.487-.161-2.192.138-2.533.529-.269.307-.437.808-.438 1.578v.021c0 .265.021.562.063.893Zm-1.626 0c.042-.331.063-.628.063-.894v-.02c-.001-.77-.169-1.271-.438-1.578-.341-.391-1.046-.69-2.533-.529-1.505.163-2.347.537-2.824 1.025-.462.472-.705 1.179-.705 2.319 0 1.211.175 1.926.558 2.361.365.414 1.084.751 2.657.751 1.21 0 1.902-.394 2.344-.938.475-.584.742-1.44.878-2.497Z" /></svg>;
+  // GitHub's official octocat mark. The old Copilot robot-face path looked like a
+  // pig's head at 16px, so every Copilot surface now uses the GitHub brand tile.
+  return <svg width={size} height={size} viewBox="0 0 64 64" className={className} aria-hidden="true"><image href={OFFICIAL_GITHUB_MARK} width="64" height="64" /></svg>;
 }
+
 
 export function ProviderMark({ driverKind, size, className }: IconProps & { driverKind: string }) {
   switch (driverKind) {
@@ -171,7 +178,7 @@ export function ProviderMark({ driverKind, size, className }: IconProps & { driv
  * from Simple Icons (CC0 1.0). The Cohere path is from Lobe Icons (MIT). */
 export function PresetProviderMark({ preset, size = 16, className }: IconProps & { preset: ProviderIconPreset }) {
   switch (preset) {
-    case "openai": return <CodexMark size={size} className={className} />;
+    case "openai": return <OpenAIMark size={size} className={className} />;
     case "anthropic": return <ClaudeMark size={size} className={className} />;
     case "xai": return <GrokMark size={size} className={className} />;
     case "qwen": return <QwenMark size={size} className={className} />;
@@ -202,7 +209,7 @@ export function PresetProviderMark({ preset, size = 16, className }: IconProps &
 
 /** Brands whose bitmap is unfillable dark artwork: render their theme-aware mark instead.
  *  openai / openaiCompat are the OpenAI knot drawn with no fill (SVG default = black), which
- *  disappears on the dark skins — CodexMark draws the same knot in `--color-ink`. */
+ *  disappears on the dark skins — OpenAIMark draws the same knot in `--color-ink`. */
 const BRAND_THEME_PRESETS: Partial<Record<string, ProviderIconPreset>> = {
   openai: "openai",
   openaiCompat: "openai",
