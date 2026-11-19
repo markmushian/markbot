@@ -1,0 +1,105 @@
+import { useEffect, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
+
+import { ANDROID_APK_URL, hasPhoneApp, IOS_APP_STORE_URL, openExternalLink } from "@/lib/app-links";
+import { t } from "@/lib/i18n";
+import type { LocaleKey } from "@/locales";
+
+export const PHONE_APPS: ReadonlyArray<{ id: "ios" | "android"; nameKey: LocaleKey; actionKey: LocaleKey; url: string }> = [
+  { id: "ios", nameKey: "phoneApp.ios", actionKey: "phoneApp.iosAction", url: IOS_APP_STORE_URL },
+  { id: "android", nameKey: "phoneApp.android", actionKey: "phoneApp.androidAction", url: ANDROID_APK_URL },
+];
+
+/** The stores that answer: none until Mark Bot ships a phone app of its own. Showing a row without one would put a
+ * link to another product in the person's hands. */
+export const LISTED_PHONE_APPS = PHONE_APPS.filter((app) => hasPhoneApp(app.url));
+
+export interface PhoneAppConnect {
+  key: string;
+  subtitle: string;
+  onSelect: () => void;
+}
+
+export function PhoneAppDialog({ open, onClose, connect = [] }: { open: boolean; onClose: () => void; connect?: PhoneAppConnect[] }) {
+  const closeRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    closeRef.current?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-6"
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="phone-app-dialog-title"
+        className="max-h-full w-full max-w-[460px] overflow-y-auto rounded-2xl border border-hairline/50 bg-panel p-6 shadow-2xl"
+      >
+        <h2 id="phone-app-dialog-title" className="text-title font-semibold text-ink">
+          {t("phoneApp.title")}
+        </h2>
+        <p className="mt-1 text-ui leading-relaxed text-ink-secondary">{t("phoneApp.subtitle")}</p>
+        <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {LISTED_PHONE_APPS.map((app) => (
+            <li key={app.id} data-phone-app={app.id} className="flex flex-col items-center gap-3 rounded-xl bg-card p-4 text-center">
+              <div className="text-body font-medium text-ink">{t(app.nameKey)}</div>
+              <div className="rounded-md bg-white p-2">
+                <QRCodeSVG value={app.url} size={132} level="M" bgColor="#ffffff" fgColor="#111111" title={t(app.actionKey)} />
+              </div>
+              <button type="button" onClick={() => void openExternalLink(app.url)} className="text-ui text-accent hover:underline">
+                {t(app.actionKey)}
+              </button>
+            </li>
+          ))}
+        </ul>
+        {LISTED_PHONE_APPS.length ? null : (
+          <p className="mt-4 text-ui leading-relaxed text-ink-secondary">{t("phoneApp.none")}</p>
+        )}
+        {connect.length ? (
+          <div className="mt-4 flex flex-col gap-2">
+            <p className="text-ui leading-relaxed text-ink-secondary">{t("phoneApp.next")}</p>
+            {connect.map((destination, index) => (
+              <button
+                key={destination.key}
+                type="button"
+                data-phone-app-connect={destination.key}
+                onClick={() => {
+                  onClose();
+                  destination.onSelect();
+                }}
+                className={index === 0
+                  ? "flex w-full flex-col items-center rounded-xl bg-accent px-4 py-2 text-ui font-medium text-accent-ink hover:opacity-90"
+                  : "flex w-full flex-col items-center rounded-xl border border-hairline/50 px-4 py-2 text-ui font-medium text-ink hover:bg-raised"}
+              >
+                <span>{t("sidebar.menu.connectPhone")}</span>
+                <span className="text-note font-normal opacity-80">{destination.subtitle}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          className="mt-3 w-full rounded-xl bg-raised px-4 py-2 text-ui font-medium text-ink hover:brightness-110"
+        >
+          {t("common.close")}
+        </button>
+      </div>
+    </div>
+  );
+}

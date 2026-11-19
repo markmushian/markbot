@@ -1,0 +1,10 @@
+{
+  "name": "markbot-connector",
+  "private": true,
+  "type": "module",
+  "description": "Runs a Mark Bot Cloud home on a server of its owner's, under Mark Bot's control, over one outbound connection.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  }
+}

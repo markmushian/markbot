@@ -1,0 +1,54 @@
+import type { InstanceInfo } from "@/state/store";
+
+export function configuredModelInstances(instances: readonly InstanceInfo[], selectedInstanceId?: string): InstanceInfo[] {
+  return instances.filter((instance) =>
+    instance.instanceId === selectedInstanceId
+      || (instance.snapshot.state === "available" && (instance.models.options.length > 0 || instance.snapshot.chatgptPlan === true)));
+}
+
+/**
+ * True only when the engine has nothing but user-entered models. A custom-access engine that
+ * ships its own catalogue (WorkBuddy · CodeBuddy, ACP extensions) keeps access "custom" so the
+ * rail can group it, but judging by that flag alone hid every model it actually supports.
+ */
+export function isCustomOnly(instance: {
+  access?: InstanceInfo["access"];
+  models?: Pick<InstanceInfo["models"], "options">;
+} | undefined): boolean {
+  if (instance?.access !== "custom") return false;
+  const options = instance.models?.options;
+  if (!options || options.length === 0) return true;
+  return options.every((option) => option.custom === true);
+}
+
+export type SignInFamily = "claude" | "openai";
+
+export function signInFamily(instance: { driverKind: string; access?: InstanceInfo["access"] } | undefined): SignInFamily | undefined {
+  if (!instance || instance.access === "api" || instance.access === "custom") return undefined;
+  if (instance.driverKind === "claudeAgent") return "claude";
+  if (instance.driverKind === "codex") return "openai";
+  return undefined;
+}
+
+export const SIGN_IN_FAMILY_LABEL: Record<SignInFamily, string> = { claude: "Claude", openai: "OpenAI" };
+
+export function isClaudeAccount(instance: { driverKind: string; access?: InstanceInfo["access"] } | undefined): boolean {
+  return signInFamily(instance) === "claude";
+}
+
+export function splitEngineRail<T>(instances: readonly T[]): {
+  subscription: T[];
+  api: T[];
+  custom: T[];
+} {
+  const subscription: T[] = [];
+  const api: T[] = [];
+  const custom: T[] = [];
+  for (const instance of instances) {
+    const access = (instance as { access?: InstanceInfo["access"] }).access;
+    if (access === "custom") custom.push(instance);
+    else if (access === "api") api.push(instance);
+    else subscription.push(instance);
+  }
+  return { subscription, api, custom };
+}

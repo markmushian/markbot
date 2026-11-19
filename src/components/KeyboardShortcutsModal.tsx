@@ -1,0 +1,159 @@
+import { useLayoutEffect, useRef, useState } from "react";
+import { Keyboard, Search, X } from "lucide-react";
+
+import {
+  filterShortcutGroups,
+  isMacPlatform,
+  shortcutGroupsFor,
+  shortcutKeysForPlatform,
+  type ShortcutItem,
+} from "@/lib/keyboard-shortcuts";
+import { useSendKey } from "@/lib/send-key";
+import { activeLocale } from "@/lib/i18n";
+
+export interface KeyboardShortcutsModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function ShortcutRow({ item, isMac }: { item: ShortcutItem; isMac: boolean }) {
+  const keys = shortcutKeysForPlatform(item, isMac);
+
+  return (
+    <div className="flex items-center justify-between gap-4 py-1.5">
+      <span className="text-ui text-ink">{activeLocale() === "zh" ? (ZH_SHORTCUTS[item.id] ?? item.description) : item.description}</span>
+      <div className="flex shrink-0 items-center gap-1">
+        {keys.map((key, index) => (
+          <kbd
+            key={index}
+            className="inline-flex min-w-[22px] items-center justify-center rounded-md border border-hairline/60 bg-control px-1.5 py-0.5 font-mono text-note font-semibold text-ink shadow-xs"
+          >
+            {key}
+          </kbd>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const ZH_CATEGORIES: Record<string, string> = {
+  Navigation: "导航", "Chat & Composer": "聊天与输入", Calls: "通话", "Management & Groups": "管理与群组",
+};
+const ZH_SHORTCUTS: Record<string, string> = {
+  "command-palette": "打开命令面板（切换助手和搜索聊天记录）", "new-bot": "创建新助手",
+  "jump-bot": "跳转到助手列表中的第 1–9 个助手", "toggle-sidebar": "收起或展开侧边栏",
+  "switch-bot": "切换到上一个或下一个助手", "find-conversation": "在当前聊天中查找",
+  "send-message": "发送消息", "new-line": "换行但不发送", "edit-last-message": "输入框为空时编辑上一条消息",
+  "close-panel": "关闭当前抽屉、弹窗或查找栏", "shortcuts-cheat-sheet": "显示键盘快捷键",
+  "live-call-mute": "通话静音或取消静音", "live-call-hang-up": "结束通话",
+  "save-bulletin": "保存群组说明的修改", "reorder-section": "调整侧边栏分组顺序（先聚焦分组标题）",
+};
+
+export function KeyboardShortcutsModal({ open, onClose }: KeyboardShortcutsModalProps) {
+  const [query, setQuery] = useState("");
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isMac = isMacPlatform();
+  const sendKey = useSendKey();
+
+  useLayoutEffect(() => {
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    setQuery("");
+    dialog.showModal();
+    inputRef.current?.focus();
+    // Close before unmount so the browser restores focus to the opener.
+    return () => dialog.close();
+  }, [open]);
+
+  if (!open) return null;
+
+  const groups = filterShortcutGroups(shortcutGroupsFor(sendKey), query, isMac);
+
+  return (
+    <dialog
+      ref={dialogRef}
+      aria-labelledby="shortcuts-dialog-title"
+      className="m-auto w-[min(500px,calc(100%-32px))] max-h-[85vh] overflow-hidden rounded-2xl border border-hairline/50 bg-panel p-0 text-ink shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-xs"
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
+      onKeyDown={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    >
+      <div
+        className="flex max-h-[85vh] flex-col"
+      >
+        <div className="flex items-center justify-between border-b border-hairline/40 px-5 py-4">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
+              <Keyboard size={18} />
+            </span>
+            <div>
+              <h2 id="shortcuts-dialog-title" className="text-16 font-semibold text-ink">
+                {activeLocale() === "zh" ? "键盘快捷键" : "Keyboard Shortcuts"}
+              </h2>
+              <p className="text-note text-ink-secondary">
+                {activeLocale() === "zh" ? "常用命令与导航" : "Quick commands and navigation"}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={activeLocale() === "zh" ? "关闭键盘快捷键" : "Close keyboard shortcuts"}
+            className="rounded-lg p-1.5 text-ink-secondary hover:bg-raised hover:text-ink"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="border-b border-hairline/30 px-5 py-2.5">
+          <div className="flex items-center gap-2 rounded-xl border border-hairline/40 bg-inset px-3 py-1.5 focus-within:border-focus">
+            <Search size={14} className="shrink-0 text-ink-secondary" />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={activeLocale() === "zh" ? "搜索快捷键…" : "Search shortcuts…"}
+              aria-label={activeLocale() === "zh" ? "搜索快捷键" : "Search shortcuts"}
+              className="w-full bg-transparent text-ui text-ink placeholder:text-ink-secondary focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
+          {groups.length === 0 ? (
+            <div className="py-8 text-center text-ui text-ink-secondary">
+              {activeLocale() === "zh" ? `没有找到与“${query}”匹配的快捷键` : `No shortcuts found for “${query}”`}
+            </div>
+          ) : (
+            groups.map((group) => (
+              <div key={group.category} className="space-y-1">
+                <div className="text-meta font-semiboldr text-ink-tertiary">
+                  {activeLocale() === "zh" ? (ZH_CATEGORIES[group.category] ?? group.category) : group.category}
+                </div>
+                <div className="divide-y divide-hairline/20 rounded-xl bg-card/40 px-3 py-1 border border-hairline/30">
+                  {group.items.map((item) => (
+                    <ShortcutRow key={item.id} item={item} isMac={isMac} />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-hairline/40 bg-card/30 px-5 py-2.5 text-note text-ink-secondary">
+          <span>
+            {activeLocale() === "zh" ? <>未输入文字时按 <kbd className="rounded bg-control px-1 py-0.5 font-mono text-meta">?</kbd> 打开</> : <>Press <kbd className="rounded bg-control px-1 py-0.5 font-mono text-meta">?</kbd> when not typing to open</>}
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="ui-button ui-button-md"
+          >
+            {activeLocale() === "zh" ? "完成" : "Done"}
+          </button>
+        </div>
+      </div>
+    </dialog>
+  );
+}

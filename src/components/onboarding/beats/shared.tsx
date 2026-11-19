@@ -1,0 +1,52 @@
+import type { CSSProperties } from "react";
+import { cn } from "@/lib/cn";
+import type { MarkMotion, MarkState } from "@/lib/mascot";
+
+export interface BeatProps {
+  onNext: () => void;
+  onSkip: () => void;
+  setMascot: (state: MarkState) => void;
+  bump: (motion: Exclude<MarkMotion, "none">) => void;
+}
+
+export const inputClass =
+  "w-full rounded-lg border border-hairline/40 bg-inset px-3 py-2.5 text-lead text-ink placeholder:text-ink-secondary focus:outline-none";
+
+export function staggerIndex(i: number): CSSProperties {
+  return { "--i": i } as CSSProperties;
+}
+
+export function PrimaryButton({
+  children,
+  className,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      data-primary=""
+      {...rest}
+      className={cn(
+        "w-full shrink-0 rounded-lg bg-accent py-2.5 text-lead font-medium text-white transition-[transform,opacity] duration-150 active:scale-[0.98] disabled:opacity-40",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+export function QuietButton({
+  children,
+  className,
+  ...rest
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      {...rest}
+      className={cn("text-note text-ink-secondary transition-colors hover:text-ink", className)}
+    >
+      {children}
+    </button>
+  );
+}
+

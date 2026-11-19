@@ -1,0 +1,36 @@
+import type { HelperFollowupField } from "./helper-followup.ts";
+import type { MarkColor } from "./wire.ts";
+
+/** Mark Bot: every person's built-in helper. A new install's first bot (its Chief of Staff too); an existing place or
+ * person without one is given one once. It can be renamed and recoloured, hidden from the sidebar, never deleted. */
+export const DEFAULT_BOT_NAME = "Mark";
+export const DEFAULT_BOT_COLOR: MarkColor = "chrome";
+
+export interface DefaultBotMark {
+  /** Team Cloud only: the lowercased email of the member this Mark Bot belongs to. Absent: the place's own. */
+  person?: string;
+}
+
+export interface DefaultBotFields {
+  /** This bot is its place's (or, on a Team Cloud, its member's) Mark Bot. Never deleted or archived. */
+  defaultBot?: DefaultBotMark;
+  /** Settings → General "Show Mark Bot in the sidebar" is off: the bot keeps working, only its sidebar row is gone. */
+  sidebarHidden?: boolean;
+  /** Its person has seen Mark Bot's first-launch welcome here and chose Add or Not now. */
+  welcomed?: boolean;
+}
+
+export interface HelperIntroField extends HelperFollowupField {
+  /** Mark Bot's introduction. Clients that know it say it in the viewer's language with example asks; `text` is the
+   * English fallback the model and older clients read. */
+  helperIntro?: true;
+}
+
+export const defaultBotPerson = (bot: DefaultBotFields): string => bot.defaultBot?.person?.trim().toLowerCase() ?? "";
+
+/** The Mark Bot a viewer sees as theirs: their own on a Team Cloud (by email), else the place's. */
+export function viewersDefaultBot<T extends DefaultBotFields>(bots: readonly T[], email?: string | null): T | undefined {
+  const person = email?.trim().toLowerCase() ?? "";
+  return (person ? bots.find((bot) => bot.defaultBot && defaultBotPerson(bot) === person) : undefined)
+    ?? bots.find((bot) => bot.defaultBot && !defaultBotPerson(bot));
+}
